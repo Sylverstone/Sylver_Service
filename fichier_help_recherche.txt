@@ -1,0 +1,7 @@
+Dans cette espace recherche vous avez la possibilité d'utilisez diverses option ! --- GERER LE TYPE DE RECHERCHE --- d'abord, pour
+changer le type de celle-ci il vous suffit d'appuyer sur le carré bleu en dessous de 'RECHERCHE PAR' OPTION 1 : - LES RECHERCHES PAR NOM - avec
+celle-ci vous pourrez rechercher l'ensemble des tutos disponibles dans la base de donnée par leur nom. OPTION 2 : - LES RECHERCHES PAR AUTEUR -
+avec cette option vous pourrez retrouver tout les tutos fait par un auteur précis (avec son Pseudo).
+--- GERER LA BARRE DE RECHERCHE --- pour l'utiliser il vous suffit de l'activer ! afin de  l'activer vous avez juste a clickez dessus,
+pour le désactiver vous avez juste a reclickez. BONNE CHANCE ! (Pour certaine personne quand vous ouvrirez des tutos qui sont des images
+ceux-ci s'ouvriront mais pas par dessus votre fenetre, donc pensez a verifier pour ne pas ouvrir de nombreuses fenetre tuto)
