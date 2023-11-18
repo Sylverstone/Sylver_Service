@@ -1,6 +1,0 @@
-#mettre un fichier sql dans une base de données mysql
- Get-Content 'db.sql' | mysql --user=root --password --database=f 
-
-#mettre une db dans un fichier
-
-mysqldump -u root -p db > fichier.sql
