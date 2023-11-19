@@ -1,7 +1,4 @@
-from concurrent.futures import thread
-import glob
-from tkinter import font
-import pygame,os,datetime,sys,threading,keyboard,time
+import pygame,os,datetime,sys,threading,keyboard,time,pyperclip
 from Sylver_class_import import Gerer_requete,User,noFileException, userNonCharger
 from Z_Prototype_resize_image import AnnuleCropPhoto, resizeImage
 
@@ -101,24 +98,13 @@ def decoupe_text(coupage,line,text_info) :
             limite = len(text_info)
         all_text.append(text_info[start:limite].strip())
     return all_text
-
-def make_barre_input(dictionnaire : dict,font20: pygame.font.Font,barre_input : pygame.Surface):
-    global continuer
-    
-    while continuer:
-        print("in")
-        for keys,elt in dictionnaire.items():
-            if elt["active"]:
-                add = 1 if keys == "input_titre" else 0
-                elt["surf"].blit(barre_input, (elt["x"] + font20.size(elt["input"][elt["zone_ecrit"]])[0], 10+ elt["y"] * (elt["zone_ecrit"]+add) - font20.size(elt["input"][elt["zone_ecrit"]])[1]/2)) #le y le met a la position du texte adapter en fonction de zone_ecrit
         
-
 def type_tuto():
     for event in pygame.event.get():
         pass
     global fond_nav
     global continuer
-    barre_input = pygame.Surface((2,30))
+    barre_input = pygame.Surface((2,20))
     barre_input.fill(noir)
     font_paragraphe = apple_titre
     font20 = pygame.font.Font(font_paragraphe, 20)
@@ -134,9 +120,7 @@ def type_tuto():
     surf_ecrit = pygame.Surface((w_origine - 20, h_origine - 250 ))
     rect_titre = pygame.Rect(10,120,200,50)
     rect_surf_ecrit = pygame.Rect(10,175,surf_ecrit.get_width(),surf_ecrit.get_height())
-    active = True
-    line = 0
-    
+
     #peut etre remplacer par des classes jsp
     dict_input = {
         "input_titre" : { "max" : 50,"x" : 10,"y" : rect_titre.h/2 - font20.size("m")[1]/2,"surf" : surf_titre,"input" : ["Titre",],
@@ -145,11 +129,7 @@ def type_tuto():
         "input_text" : {"max" : 10000,"x" : 10,"y" : 20 ,"surf" : surf_ecrit, "input" : ["Contenu",], "zone_ecrit" : 0,
                         "can_do_multiple_lines" : True, "base" : "Contenu", "active" : False,"rect" : rect_surf_ecrit,"time": 0, "take_time" : False}
     }
-    time = 0
     menos = False
-    take_time = False
-    threadbarre = threading.Thread(target=make_barre_input, args=(dict_input,font20,barre_input))
-    threadbarre.start()
     rect_goback = pygame.Rect(5,5,20,20)
     go_back = False
     while continuer:
@@ -182,11 +162,42 @@ def type_tuto():
                         if event.key == pygame.K_UP and elt["can_do_multiple_lines"]:
                             #changer de zone d'ecriture vers le haut
                             elt["zone_ecrit"] -= 1 if len(elt["input"]) > 1 else 0
+                        
                         elif event.key == pygame.K_DOWN and elt["can_do_multiple_lines"]:
                             #ajouter une zone d'ecriture
                             elt["zone_ecrit"] += 1
                             elt["input"].append("")
-                        if event.key == pygame.K_SPACE:
+                            
+                        if event.key == pygame.K_v and pygame.key.get_mods() & pygame.KMOD_CTRL:
+                            print("colle")
+                            # CTRL + V pour coller
+                            text_pasted = pyperclip.paste()  # Colle le texte du presse-papiers
+                            # Faites quelque chose avec le texte collé (par exemple, l'afficher)
+                            all_len = [len(i) for i in elt["input"]]
+                            somme_len = sum(all_len)
+                            caractere_restant = elt["max"] - somme_len
+                            if len(text_pasted) > caractere_restant:
+                                fin = caractere_restant
+                            else:
+                                fin = len(text_pasted)
+                            elt["input"][elt["zone_ecrit"]] += text_pasted[:fin]
+                            enum = 0
+                            save_input = elt["input"][elt["zone_ecrit"]]
+                            while True:
+                                if enum > len(elt["input"][elt["zone_ecrit"]]):
+                                    break
+                                if font20.size(elt["input"][elt["zone_ecrit"]][:enum])[0] > surf_ecrit.get_width() - 40:                                    
+                                    elt["input"][elt["zone_ecrit"]] = elt["input"][elt["zone_ecrit"]][:enum]
+                                    save_enum = enum
+                                    elt["input"].append("")
+                                    elt["zone_ecrit"] += 1
+                                    enum = 0
+                                enum += 1
+                            if elt["input"][elt["zone_ecrit"]] == "":
+                                elt["input"][elt["zone_ecrit"]] = "-" + save_input[save_enum:]
+                                                           
+                            
+                        elif event.key == pygame.K_SPACE:
                             elt["input"][elt["zone_ecrit"]] += " "
                         elif event.key == pygame.K_BACKSPACE:
                             if elt["input"][elt["zone_ecrit"]] != "":
@@ -228,11 +239,9 @@ def type_tuto():
                 else:
                     add = 0
                 draw_text(i,importer=True,contener=elt["surf"], x = elt["x"], y = elt["y"]*(enum+add), font=font_paragraphe)
-            """
             if elt["active"]:
                 add = 1 if keys == "input_titre" else 0
-                elt["surf"].blit(barre_input, (10 + font20.size(elt["input"][elt["zone_ecrit"]])[0], 2 + elt["y"] * (elt["zone_ecrit"]+add) - font20.size(elt["input"][elt["zone_ecrit"]])[1]/2)) #le y le met a la position du texte adapter en fonction de zone_ecrit
-            """
+                elt["surf"].blit(barre_input, (10 + font20.size(elt["input"][elt["zone_ecrit"]])[0], 2 + elt["y"] * (elt["zone_ecrit"]+add))) #le y le met a la position du texte adapter en fonction de zone_ecrit
         
             
         screen.blit(surf_titre,(rect_titre[0],rect_titre[1]))
