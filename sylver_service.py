@@ -100,6 +100,7 @@ def decoupe_text(coupage,line,text_info) :
         all_text.append(text_info[start:limite].strip())
     return all_text
 
+    
 def type_tuto():
     for event in pygame.event.get():
         pass
@@ -144,29 +145,34 @@ def type_tuto():
     #peut etre remplacer par des classes jsp
     dict_input = {
         "input_titre" : {"max" : 50,"x" : 10,"y" : rect_titre.h/2 - font20.size("m")[1]/2,"surf" : surf_titre,"input" : ["Titre",],
-                         "zone_ecrit" : 0,"can_do_multiple_lines" : False, "base" : "Titre", "active" : False,"rect" : rect_titre},
+                         "zone_ecrit" : 0,"can_do_multiple_lines" : False, "base" : "Titre", "active" : False,"rect" : rect_titre, "time": 0, "take_time" : False},
         
         "input_text" : {"max" : 10000,"x" : 10,"y" : 20 ,"surf" : surf_ecrit, "input" : ["Contenu",], "zone_ecrit" : 0,
-                        "can_do_multiple_lines" : True, "base" : "Contenu", "active" : False,"rect" : rect_surf_ecrit}
+                        "can_do_multiple_lines" : True, "base" : "Contenu", "active" : False,"rect" : rect_surf_ecrit,"time": 0, "take_time" : False}
     }
     time = 0
     menos = False
     take_time = False
     while continuer:
         screen.fill((100,100,100))
-        fond_nav.fill((0,0,0))
-        title("Ecrivez ici votre tutoriel")
+        fond_nav.fill((0,0,0))        
         mouse = pygame.mouse.get_pos()
         mouse_click = pygame.mouse.get_pressed()[0]
         for event in pygame.event.get():
             for elt in dict_input.values():
                 if elt["rect"].collidepoint(mouse):
-                    if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    if mouse_click:
                         elt["active"] = not elt["active"]
                         if elt["active"] == False and len(elt["input"]) == 1 and elt["input"][0] == "":
                             elt["input"][0] = elt["base"]
                         elif elt["active"] == True and len(elt["input"]) == 1 and elt["input"][0] == elt["base"]:
                             elt["input"][0] = ""
+                        for elt2 in dict_input.values():
+                            if elt2 != elt:
+                                elt2["active"] = False
+                                if len(elt2["input"]) == 1 and elt2["input"][0] == "":
+                                    elt2["input"][0] = elt2["base"]
+                               
                         
                                
                 if elt["active"]:
@@ -189,11 +195,7 @@ def type_tuto():
                                         #supprimer la ligne
                                         del(elt["input"][elt["zone_ecrit"]])
                                         elt["zone_ecrit"] -= 1 
-                                        menos = True
-                                        print("menos")        
-                                    else:
-                                        print("wut")   
-                                    
+                                        menos = True                                    
                         elif event.key == pygame.K_RETURN and elt["can_do_multiple_lines"]:
                             elt["input"].append("")
                             #ajouter une zone d'ecriture
@@ -210,12 +212,8 @@ def type_tuto():
                                 elt["zone_ecrit"] +=1
                                 print("add")
                                 #ajouter une zone d'ecriture
-                        menos = False
-                        
-                    
-            
-        
-        
+                        menos = False                  
+    
         surf_titre.fill(blanc)        
         surf_ecrit.fill((255,255,255))
         pygame.draw.rect(surf_titre,(0,0,0), (0,0,rect_titre[2],rect_titre[3]),1)
@@ -224,9 +222,7 @@ def type_tuto():
             for enum,i in enumerate(elt["input"]):
                 #ecrire tout les lignes dans all_input
                 if keys == "input_titre":
-                    print(i,"u")
                     add = 1
-                    print(elt["surf"],elt["x"],elt["y"])
                 else:
                     add = 0
                 draw_text(i,importer=True,contener=elt["surf"], x = elt["x"], y = elt["y"]*(enum+add), font=font_paragraphe)
@@ -234,19 +230,21 @@ def type_tuto():
             if elt["active"]:
                 if not take_time:
                     time_start = pygame.time.get_ticks()
-                    take_time = True
-                time = int(pygame.time.get_ticks() - time_start)/1000
-                surf_ecrit.blit(barre_input, (10 + font20.size(elt["input"][elt["zone_ecrit"]])[0], 20 * (elt["zone_ecrit"]+1) - font20.size(elt["input"][elt["zone_ecrit"]])[1]/2)) #le y le met a la position du texte adapter en fonction de zone_ecrit
-            
-                if int(time) % 2 == 0:
-                    surf_ecrit.fill(blanc, (10 + font20.size(elt["input"][elt["zone_ecrit"]])[0],20 * (elt["zone_ecrit"]+1) - font20.size(elt["input"][elt["zone_ecrit"]])[1]/2, 2,15))
+                    elt["take_time"] = True
+                add = 1 if keys == "input_titre" else 0
+                elt["time"] = int(pygame.time.get_ticks() - time_start)/1000
+                elt["surf"].blit(barre_input, (10 + font20.size(elt["input"][elt["zone_ecrit"]])[0], elt["y"] * (elt["zone_ecrit"]+add) - font20.size(elt["input"][elt["zone_ecrit"]])[1]/2)) #le y le met a la position du texte adapter en fonction de zone_ecrit
+                print(elt["time"])
+                if int(elt["time"]) % 2 == 0:
+                    elt["surf"].fill(blanc, (10 + font20.size(elt["input"][elt["zone_ecrit"]])[0],elt["y"] * (elt["zone_ecrit"]+add) - font20.size(elt["input"][elt["zone_ecrit"]])[1]/2, 2,15))
             else:
-                time = 0
-                take_time = False
+                elt["time"] = 0
+                elt["take_time"] = False
         screen.blit(surf_titre,(rect_titre[0],rect_titre[1]))
         screen.blit(surf_valider,(w_origine - s_width - 30, h_origine - s_height - 20))
         screen.blit(surf_ecrit,(10,175))
         screen.blit(fond_nav,(0,0))        
+        title("Ecrivez ici votre tutoriel")
         pygame.display.flip()
         
 def page_info(id_ = 0,text = None,nom_projet = None,auteur = None,date = None, id_tuto = None):
