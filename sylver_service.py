@@ -274,7 +274,7 @@ def page_info(id_ = 0,text = None,nom_projet = None,auteur = None,date = None, i
             text_title = f"{nom_projet.upper()} par {auteur}"
         text_info = text
     if id_ == 0:
-        with open("fichier_info.txt", "r+") as fichier:
+        with open("./Ressource/fichier_info.txt", "r+") as fichier:
             text_info = fichier.read().replace("\n"," ")
         text_info = text_info.replace("Ã©","é")
         text_info = text_info.replace("Ã¨","è")
@@ -691,11 +691,11 @@ def compte():
         return len(dict_input[zone]["input_mdp"]["input_visible"]) >= dict_input[zone]["input_mdp"]["min"]
         
     def write_connection_tools(pseudo,mdp):
-        with open("compte_connecter.txt","w") as fichier:
+        with open("./Ressource/compte_connecter.txt","w") as fichier:
             fichier.write(f"{pseudo}\n{mdp}")
     
     def look_for_connection_tools():
-        with open("./compte_connecter.txt", "r") as fichier:
+        with open("./Ressource/compte_connecter.txt", "r") as fichier:
             return len(fichier.read().splitlines()) != 0
         
     text_edit = "Clickez pour editer"
@@ -767,7 +767,7 @@ def compte():
                 ]
     
     if look_for_connection_tools():
-        with open("./compte_connecter.txt","r") as fichier:
+        with open("./Ressource/compte_connecter.txt","r") as fichier:
             li = fichier.read().splitlines()
             con_pseudo = li[0]
             con_mdp = li[1]

@@ -58,7 +58,7 @@ class User:
         return ans
     
     @staticmethod
-    def get_only_pseudo(text) -> str:
+    def get_only_pseudo(text : str) -> str:
         return text.split(",")[0]
     
     def get_tuto(self) -> int:
