@@ -1,9 +1,8 @@
 from typing import Tuple
-import pygame
-
-from Sylver_class_import import User
-
+import pygame,tkinter.filedialog
 pygame.init()
+
+#Egalement un mini-projet git
 
 class AnnuleCropPhoto(Exception):
     def __init__(self, what) -> None:
@@ -37,6 +36,12 @@ class resizeImage:
         
     @staticmethod
     def rendre_transparent(image : pygame.Surface,rect):
+        """renvoie une image avec les pixels transparents pour les pixels de l'ellipse
+
+            args :
+            image (pygame.Surface): l'image a modifier
+            rect (pygame.Rect): rectangle de l'ellipse
+        """
         start_x = rect[0] + rect[2]/2
         start_y = rect[1] + rect[3]/2
         size=(rect[2], rect[3])
@@ -47,7 +52,7 @@ class resizeImage:
         return image
                       
     def try_to_resize(self,screen : pygame.Surface) -> Tuple[pygame.Surface,pygame.Rect,pygame.Surface]:
-        """créé une mini surface où l'utilisteur pourras selectionner la partie de son image qu'il veut en photo de profil
+        """créé une mini surface où l'utilisteur pourras selectionner la partie d'une image qu'il souhaite
 
         Args:
             screen (pygame.Surface): surface ou afficher la mini surface pour crop
@@ -62,6 +67,8 @@ class resizeImage:
         width = resolution.current_w
         height = resolution.current_h
         image = pygame.image.load(self.chemin).convert_alpha()
+        #processus suspect de resize de l'image (fonctionne mal pour les images portraits)
+        
         old_width, old_height = image.get_size()
         # Définir la nouvelle largeur (ou hauteur)
         new_width = 500
@@ -69,19 +76,27 @@ class resizeImage:
         new_height = int(old_height * new_width / old_width)
         # Redimensionner l'image
         image = pygame.transform.smoothscale(image, (new_width,new_height))
+        #fin processus suspect
         screen_ = pygame.Surface((image.get_size()[0], image.get_size()[1]))
-        pos = (width/2 - screen_.get_rect().w/2, 200)
-        L = screen_.get_rect()[3]
-        l = screen_.get_rect()[2]
+        pos = (width/2 - screen_.get_rect().w/2, 200) #position de où l'image va être mise
+        L = screen_.get_rect()[3] #Largeur
+        l = screen_.get_rect()[2] #Longueur
         continuer = True
-        mouse_click = False
         can_affiche = False
         new_image = image.copy()
-        size = (200,200)
+        size = [200,200] #taille original du carré qui continient le cercle, vous pouvez la changer
         start_x = start_y = 0
         rect = pygame.Rect(start_x - size[0]/2,start_y - size[0]/2,*size)
 
         def verif_sortie(rect : pygame.Rect):
+            """Verifie si le Rect sort sort du screen, le repositionne si oui
+
+            Args:
+                rect (pygame.Rect): Rect ciblé
+
+            Returns:
+                Pygame.Rect: Return le rect ciblé avec ces nouvelles positions
+            """
             scr = screen_.get_rect()
             if rect.left < 0:
                 rect.left = scr.left
@@ -93,7 +108,16 @@ class resizeImage:
                 rect.right = scr.right
             return rect
         
-        def gerer_souris(start_x,start_y):
+        def gerer_souris(start_x : float,start_y :float):
+            """Transforme la position de la souris en position relative a screen_
+
+            Args:
+                start_x (float): Coordonné x de la souris
+                start_y (float): Coordonné y de de la souris
+
+            Returns:
+                Tuple(float,float): Coordonnés x et y relative a screen_ de la souris
+            """
             if start_x < size[0]/2:
                 start_x = 0 + size[0]/2
             if start_y < size[0]/2:
@@ -103,7 +127,8 @@ class resizeImage:
             if start_y > screen_.get_rect().bottom - size[0]/2:
                 start_y = screen_.get_rect().bottom - size[0]/2
             return start_x,start_y
-        text = "Bouger votre souris pour faire deplacer le cercle, appuyer sur 'c' pour valider, ou 'q','Echap' pour quitter"
+        
+        text = "Bouger votre souris pour faire deplacer le cercle, appuyer sur 'c' pour valider, ou 'q','Echap' pour quitter" #mettez le texte que vous voulez
         font = pygame.font.SysFont("Arial",40)
         draw_text(text = text, contener= screen,
                   x = width/2 - font.size(text)[0]/2, y = 20, font = "Arial",size=40)   
@@ -114,11 +139,20 @@ class resizeImage:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     continuer = False
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_UP:
+                        if size[0] + 20 < new_height: 
+                            size[0] += 20
+                            size[1] += 20
+                    elif event.key == pygame.K_DOWN:
+                        if size[0] - 20 > 20: #vous pouvez changer cette taille minimum, meme la retirez
+                            size[0] -= 20
+                            size[1] -= 20
                 if event.type == pygame.KEYDOWN and (event.key == pygame.K_q or event.key == pygame.K_ESCAPE):
                     continuer = False
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_c:
-                    #technique pour sauvegarder: enregistrer le rect de l'image en base de données. puis a chaque fois que l'user se connect ducoup on re rend transparent son image avec la bonne ellipse et bonne formule puis on met le blit en surf3 avec le bon rect
                     new_image = self.rendre_transparent(image,rect)
+                    #créé les surfaces qui vont servir a designer une image ronde
                     surf2 = pygame.Surface((size[0], size[1]), pygame.SRCALPHA)
                     surf3 = pygame.Surface((size[0], size[1]), pygame.SRCALPHA)
                     can_affiche = True
@@ -144,6 +178,7 @@ class resizeImage:
     
     
 if __name__ == "__main__":
+    #simulationd de l'integrer dans votre code pygame
     resolution = pygame.display.Info()
     width = resolution.current_w
     height = resolution.current_h
@@ -161,11 +196,11 @@ if __name__ == "__main__":
                 continuer = False
         
         if not resize_finish:
-            path = User.get_file()[0]
+            path = tkinter.filedialog.askopenfilename(filetypes=[("*","*.png"),("*","*.jpg")])
             image = resizeImage(path)
             image,rect_ellipse,img = image.try_to_resize(screen)
-            image = pygame.transform.smoothscale(image, (125,125))
+            image = pygame.transform.smoothscale(image, (125,125)) #mettez la taille du l'ellipse que vous souhaitez
             resize_finish = True
-        screen.blit(image,(mouse[0] - 125/2,mouse[1] - 125/2))
+        screen.blit(image,(mouse[0] - 125/2,mouse[1] - 125/2)) #mettez les tailles que vous voulez a la place des 2 125
         pygame.display.flip()
 pygame.quit()

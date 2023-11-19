@@ -1,6 +1,6 @@
 
-import tkinter as tk
 import tkinter.filedialog
+import tkinter as tk
 from typing import Self
 import mysql.connector as sql
 import dotenv,os,datetime
