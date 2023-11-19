@@ -2,27 +2,27 @@ import sys
 from cx_Freeze import setup, Executable
 
 # Define the executables
-executables = [Executable("sylver_service.py", base=None)]
+executables = [Executable("../sylver_service.py", base=None)]
 
 
 build_options = {
-    "packages": ["pygame","os","datetime","sys","threading","keyboard","tkinter","mysql.connector","tkinter.filedialog","time"],
+    "packages": ["pygame","os","datetime","sys","threading","keyboard","tkinter","mysql.connector","tkinter.filedialog","time","pyperclip"],
     "include_files": [
-        ("Image", "Image"),
-        ("Sylver_class_import.py", "Sylver_class_import.py"),
-        ("img_base","img_base"),
-        ("img_center","img_center"),
-        ("font","font"),
-        ("dossier_police","dossier_police"),
-        ("fichier_help_recherche.txt","fichier_help_recherche.txt"),
-        ("fichier_info.txt","fichier_info.txt")
+        ("../Image", "Image"),
+        ("../Sylver_class_import.py", "Sylver_class_import.py"),
+        ("../img_base","img_base"),
+        ("../img_center","img_center"),
+        ("../font","font"),
+        ("../Ressource","Ressoure"),
+        ("../Resize_image.py","Resize_image.py"),
+        ("../.env", ".env"),
     ],
 }
 
 # Set up the setup function
 setup(
     name="sylver_service",
-    version='1.0',
+    version='v0.1.1',
     options={"build_exe": build_options},
     author = "by Sylvio Pelage-Maxime",
     executables=executables,
