@@ -1,5 +1,4 @@
 import time
-from tkinter import font
 import pygame,os,datetime,sys,threading,keyboard
 from Sylver_class_import import Gerer_requete,User,noFileException, userNonCharger
 from Z_Prototype_resize_image import AnnuleCropPhoto, resizeImage
@@ -112,7 +111,7 @@ def type_tuto():
     font20 = pygame.font.Font(font_paragraphe, 20)
     font40 = pygame.font.Font(font_paragraphe, 40)
     surf_valider = pygame.Surface((200,50), pygame.SRCALPHA)
-    surf_titre = pygame.Surface((20,100))
+    surf_titre = pygame.Surface((200,50))
     surf_valider.fill((0,0,0,0))
     s_width = surf_valider.get_width()
     s_height = surf_valider.get_height()
@@ -120,10 +119,36 @@ def type_tuto():
     pygame.draw.rect(surf_valider,(0,0,0),rect_valider,1)
     draw_text(text = "valider", contener = surf_valider,x= s_width/2 - font40.size("valider")[0]/2, font = font_paragraphe, importer=True, size = 40)    
     surf_ecrit = pygame.Surface((w_origine - 20, h_origine - 250 ))
+    rect_titre = pygame.Rect(10,120,200,50)
+    rect_surf_ecrit = pygame.Rect(10,175,surf_ecrit.get_width(),surf_ecrit.get_height())
     active = True
     line = 0
-    zone_ecrit = 0    
-    all_input = [""]
+    class Input:
+        def __init__(self,max_ : int, x : float, y :float, surface : pygame.Surface, input_ : list[str], zone_ecrit : int,
+                     can_do_multiple_line : bool, base : str, active : bool, rect : pygame.Rect):
+            self.max = max_
+            self.x =x
+            self.y = y
+            self.surface = surface
+            self.input = input_
+            self.zone_ecrit = zone_ecrit
+            self.can_do_multiple_line = can_do_multiple_line
+            self.base = base
+            self.active = active
+            self.rect = rect
+    
+    input_titre = Input(max_ = 50,x = 10,y = rect_titre.h/2 - font20.size("m")[1]/2,surface = surf_titre,
+                        input_ = ["Titre",""],zone_ecrit=0,can_do_multiple_line=False,base="Titre",active=False,rect=rect_titre)
+    input_text = Input(max_ = 10000,x = 10,y = 20,surface = surf_ecrit,
+                        input_ = ["Contenu"],zone_ecrit=0,can_do_multiple_line=True,base="Contenu",active=False,rect=rect_surf_ecrit)
+    #peut etre remplacer par des classes jsp
+    dict_input = {
+        "input_titre" : {"max" : 50,"x" : 10,"y" : rect_titre.h/2 - font20.size("m")[1]/2,"surf" : surf_titre,"input" : ["Titre",],
+                         "zone_ecrit" : 0,"can_do_multiple_lines" : False, "base" : "Titre", "active" : False,"rect" : rect_titre},
+        
+        "input_text" : {"max" : 10000,"x" : 10,"y" : 20 ,"surf" : surf_ecrit, "input" : ["Contenu",], "zone_ecrit" : 0,
+                        "can_do_multiple_lines" : True, "base" : "Contenu", "active" : False,"rect" : rect_surf_ecrit}
+    }
     time = 0
     menos = False
     take_time = False
@@ -133,70 +158,91 @@ def type_tuto():
         mouse = pygame.mouse.get_pos()
         mouse_click = pygame.mouse.get_pressed()[0]
         for event in pygame.event.get():
-            if active:
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_UP:
-                        #changer de zone d'ecriture vers le haut
-                        zone_ecrit -= 1 if len(all_input) > 1 else 0
-                    elif event.key == pygame.K_DOWN:
-                        #ajouter une zone d'ecriture
-                        zone_ecrit += 1
-                        all_input.append("")
-                    if event.key == pygame.K_SPACE:
-                        all_input[zone_ecrit] += " "
-                    elif event.key == pygame.K_BACKSPACE:
-                        if all_input[zone_ecrit] != "":
-                            all_input[zone_ecrit] = all_input[zone_ecrit][:-1]
-                        else:
-                            if len(all_input) > 1:
-                                #supprimer la ligne
-                                del(all_input[zone_ecrit])
-                                zone_ecrit -= 1 
-                                menos = True
-                                print("menos")        
-                            else:
-                                print("wut")   
-                                
-                    elif event.key == pygame.K_RETURN:
-                        all_input.append("")
-                        #ajouter une zone d'ecriture
-                        zone_ecrit+=1
-                    elif event.key == pygame.K_ESCAPE:
-                        pass
-                    else:
-                        all_input[zone_ecrit] += event.unicode
-                    if len(all_input[zone_ecrit]) > 0 and not menos:
-                        if font20.size(all_input[zone_ecrit])[0] >= surf_ecrit.get_width() - 40:
-                            all_input.append("")
-                            zone_ecrit +=1
-                            print("add")
+            for elt in dict_input.values():
+                if elt["rect"].collidepoint(mouse):
+                    if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                        elt["active"] = not elt["active"]
+                        if elt["active"] == False and len(elt["input"]) == 1 and elt["input"][0] == "":
+                            elt["input"][0] = elt["base"]
+                        elif elt["active"] == True and len(elt["input"]) == 1 and elt["input"][0] == elt["base"]:
+                            elt["input"][0] = ""
+                        
+                               
+                if elt["active"]:
+                    if event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_UP and elt["can_do_multiple_lines"]:
+                            #changer de zone d'ecriture vers le haut
+                            elt["zone_ecrit"] -= 1 if len(elt["input"]) > 1 else 0
+                        elif event.key == pygame.K_DOWN and elt["can_do_multiple_lines"]:
                             #ajouter une zone d'ecriture
-                    menos = False
+                            elt["zone_ecrit"] += 1
+                            elt["input"].append("")
+                        if event.key == pygame.K_SPACE:
+                            elt["input"][elt["zone_ecrit"]] += " "
+                        elif event.key == pygame.K_BACKSPACE:
+                            if elt["input"][elt["zone_ecrit"]] != "":
+                                elt["input"][elt["zone_ecrit"]] = elt["input"][elt["zone_ecrit"]][:-1]
+                            else:
+                                if elt["can_do_multiple_lines"]:
+                                    if len(elt["input"]) > 1:
+                                        #supprimer la ligne
+                                        del(elt["input"][elt["zone_ecrit"]])
+                                        elt["zone_ecrit"] -= 1 
+                                        menos = True
+                                        print("menos")        
+                                    else:
+                                        print("wut")   
+                                    
+                        elif event.key == pygame.K_RETURN and elt["can_do_multiple_lines"]:
+                            elt["input"].append("")
+                            #ajouter une zone d'ecriture
+                            elt["zone_ecrit"]+=1
+                        elif event.key == pygame.K_ESCAPE:
+                            pass
+                        else:
+                            if len(elt["input"][elt["zone_ecrit"]]) < elt["max"]:
+                                elt["input"][elt["zone_ecrit"]] += event.unicode
+                            
+                        if len(elt["input"][elt["zone_ecrit"]]) > 0 and not menos and elt["can_do_multiple_lines"]:
+                            if font20.size(elt["input"][elt["zone_ecrit"]])[0] >= surf_ecrit.get_width() - 40:
+                                elt["input"].append("")
+                                elt["zone_ecrit"] +=1
+                                print("add")
+                                #ajouter une zone d'ecriture
+                        menos = False
+                        
                     
-            if rect_surf_ecrit.collidepoint(mouse):
-                if mouse_click:
-                    active = not active
+            
         
         
-        text = "Vous pouvez écrire" if active else "Vous ne pouvez pas ecrire"
-        draw_text(text, x = w_origine/2 - font40.size(text)[0]/2, y = 100, importer=True,font = font_paragraphe, size = 40)
+        surf_titre.fill(blanc)        
         surf_ecrit.fill((255,255,255))
-        rect_surf_ecrit = pygame.draw.rect(surf_ecrit,(0,0,0),(0,0,surf_ecrit.get_width(),surf_ecrit.get_height()),1)
-        for enum,i in enumerate(all_input):
-            #ecrire tout les lignes dans all_input
-            draw_text(i,importer=True,contener=surf_ecrit, x = 10, y = 20*enum, font=font_paragraphe)
-        if active:
-            if not take_time:
-                time_start = pygame.time.get_ticks()
-                take_time = True
-            time = int(pygame.time.get_ticks() - time_start)/1000
-            surf_ecrit.blit(barre_input, (10 + font20.size(all_input[zone_ecrit])[0], 20 * (zone_ecrit+1) - font20.size(all_input[zone_ecrit])[1]/2)) #le y le met a la position du texte adapter en fonction de zone_ecrit
-        
-            if int(time) % 2 == 0:
-                surf_ecrit.fill(blanc, (10 + font20.size(all_input[zone_ecrit])[0],20 * (zone_ecrit+1) - font20.size(all_input[zone_ecrit])[1]/2, 2,15))
-        else:
-            time = 0
-            take_time = False
+        pygame.draw.rect(surf_titre,(0,0,0), (0,0,rect_titre[2],rect_titre[3]),1)
+        pygame.draw.rect(surf_ecrit,(0,0,0),(0,0,rect_surf_ecrit[2],rect_surf_ecrit[3]),1)
+        for keys,elt in dict_input.items():
+            for enum,i in enumerate(elt["input"]):
+                #ecrire tout les lignes dans all_input
+                if keys == "input_titre":
+                    print(i,"u")
+                    add = 1
+                    print(elt["surf"],elt["x"],elt["y"])
+                else:
+                    add = 0
+                draw_text(i,importer=True,contener=elt["surf"], x = elt["x"], y = elt["y"]*(enum+add), font=font_paragraphe)
+                
+            if elt["active"]:
+                if not take_time:
+                    time_start = pygame.time.get_ticks()
+                    take_time = True
+                time = int(pygame.time.get_ticks() - time_start)/1000
+                surf_ecrit.blit(barre_input, (10 + font20.size(elt["input"][elt["zone_ecrit"]])[0], 20 * (elt["zone_ecrit"]+1) - font20.size(elt["input"][elt["zone_ecrit"]])[1]/2)) #le y le met a la position du texte adapter en fonction de zone_ecrit
+            
+                if int(time) % 2 == 0:
+                    surf_ecrit.fill(blanc, (10 + font20.size(elt["input"][elt["zone_ecrit"]])[0],20 * (elt["zone_ecrit"]+1) - font20.size(elt["input"][elt["zone_ecrit"]])[1]/2, 2,15))
+            else:
+                time = 0
+                take_time = False
+        screen.blit(surf_titre,(rect_titre[0],rect_titre[1]))
         screen.blit(surf_valider,(w_origine - s_width - 30, h_origine - s_height - 20))
         screen.blit(surf_ecrit,(10,175))
         screen.blit(fond_nav,(0,0))
