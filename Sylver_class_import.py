@@ -3,9 +3,12 @@ import tkinter as tk
 import tkinter.filedialog
 from typing import Self
 import mysql.connector as sql
-import os,datetime
+import dotenv,os,datetime
 
-import pygame   
+
+
+
+env = dotenv.dotenv_values()
 
 
 class Doc:
@@ -65,7 +68,7 @@ class User:
             connection = sql.connect(
                 host = "localhost",
                 user = "root",
-                password  = "Daryll08Sylvio08",
+                password  = env.get('SQL_MOT_DE_PASSE'),
                 db="sylver_service",
                 auth_plugin='mysql_native_password')
             cursor = connection.cursor()
@@ -86,7 +89,7 @@ class User:
             connection = sql.connect(
                 host = "localhost",
                 user = "root",
-                password  = "Daryll08Sylvio08",
+                password  = env.get('SQL_MOT_DE_PASSE'),
                 db="sylver_service",
                 auth_plugin='mysql_native_password')
             cursor = connection.cursor()
@@ -132,7 +135,7 @@ class User:
             connection = sql.connect(
                     host = "localhost",
                     user = "root",
-                    password  = "Daryll08Sylvio08",
+                    password  = env.get('SQL_MOT_DE_PASSE'),
                     db="sylver_service",
                     auth_plugin='mysql_native_password')
             cursor = connection.cursor()
@@ -156,7 +159,7 @@ class User:
             connection = sql.connect(
                 host = "localhost",
                 user = "root",
-                password  = "Daryll08Sylvio08",
+                password  = env.get('SQL_MOT_DE_PASSE'),
                 db="sylver_service",
                 auth_plugin='mysql_native_password')
             cursor = connection.cursor()
@@ -180,7 +183,7 @@ class User:
             connection = sql.connect(
                 host = "localhost",
                 user = "root",
-                password  = "Daryll08Sylvio08",
+                password  = env.get('SQL_MOT_DE_PASSE'),
                 db="sylver_service",
                 auth_plugin='mysql_native_password')
             cursor = connection.cursor()
@@ -223,7 +226,7 @@ class User:
             connection = sql.connect(
                     host = "localhost",
                     user = "root",
-                    password  = "Daryll08Sylvio08",
+                    password  = env.get('SQL_MOT_DE_PASSE'),
                     db="sylver_service",
                     auth_plugin='mysql_native_password'
                     )
@@ -260,7 +263,7 @@ class Gerer_requete(User):
             connection = sql.connect(
                 host = "localhost",
                 user = "root",
-                password  = "Daryll08Sylvio08",
+                password  = env.get('SQL_MOT_DE_PASSE'),
                 db="sylver_service",
                 auth_plugin='mysql_native_password')
             cursor = connection.cursor()
@@ -289,7 +292,7 @@ class Gerer_requete(User):
             connection = sql.connect(
                 host = "localhost",
                 user = "root",
-                password  = "Daryll08Sylvio08",
+                password  = env.get('SQL_MOT_DE_PASSE'),
                 db="sylver_service",
                 auth_plugin='mysql_native_password')
             cursor = connection.cursor()
@@ -344,28 +347,4 @@ class Gerer_requete(User):
     
                 
 if __name__ == "__main__":
-    connection = sql.connect(
-                host = "localhost",
-                user = "root",
-                password  = "Daryll08Sylvio08",
-                db="sylver_service",
-                auth_plugin='mysql_native_password')
-    cursor = connection.cursor()
-    request = "SELECT pseudo,nom,prenom FROM utilisateur;"
-    cursor.execute(request)
-    recup = cursor.fetchall()
-    auteur = []
-    for i in recup:
-        auteur.append(f"{i[0]}, {i[1]} {i[2]}")
-    print(auteur)
-    count = []
-    for index,i in enumerate(auteur):
-        request = f"SELECT COUNT(*) FROM tuto WHERE auteur = '{i}'"
-        cursor.execute(request)
-        r = cursor.fetchone()
-        print(r[0])
-        print(auteur[index].split(',')[0])
-        request = f"UPDATE utilisateur SET tuto_transmis = tuto_transmis + {r[0]} WHERE pseudo = '{auteur[index].split(',')[0]}'"
-        cursor.execute(request)
-        count.append(r)
-    print(count)
+   pass
