@@ -1,6 +1,6 @@
 import pygame,os,datetime,sys,threading,keyboard,time,pyperclip
 from Sylver_class_import import Gerer_requete,User,noFileException, userNonCharger
-from Z_Prototype_resize_image import AnnuleCropPhoto, resizeImage
+from Resize_image import AnnuleCropPhoto, resizeImage
 
 """
 os.environ['SDL_VIDEO_CENTERED'] = '1'
