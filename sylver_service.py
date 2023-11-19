@@ -155,6 +155,7 @@ def type_tuto():
     while continuer:
         screen.fill((100,100,100))
         fond_nav.fill((0,0,0))
+        title("Ecrivez ici votre tutoriel")
         mouse = pygame.mouse.get_pos()
         mouse_click = pygame.mouse.get_pressed()[0]
         for event in pygame.event.get():
@@ -245,8 +246,7 @@ def type_tuto():
         screen.blit(surf_titre,(rect_titre[0],rect_titre[1]))
         screen.blit(surf_valider,(w_origine - s_width - 30, h_origine - s_height - 20))
         screen.blit(surf_ecrit,(10,175))
-        screen.blit(fond_nav,(0,0))
-        title("Ecrivez ici votre tutoriel")
+        screen.blit(fond_nav,(0,0))        
         pygame.display.flip()
         
 def page_info(id_ = 0,text = None,nom_projet = None,auteur = None,date = None, id_tuto = None):
