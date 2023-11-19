@@ -590,7 +590,7 @@ def menu():
                         indice_type = 0
             if rect_aide.collidepoint(mouse):
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                    Gerer_requete.demarrer_fichier(doc = "SYLVER.docx",with_path=True,ext = None)
+                    Gerer_requete.demarrer_fichier(doc = "./Ressource/SYLVER.docx",with_path=True,ext = None)
             
             if event.type == pygame.QUIT:
                 continuer = False
@@ -1496,12 +1496,12 @@ connect = False
 comic_sans_ms = pygame.font.SysFont("Comic Sans Ms", 20)
 csm = "Comic Sans Ms"
 arial = "Arial"
-chivo_titre = r"dossier_police\chivo\Chivo-Black.otf"
-dream_orphans = r"dossier_police\dream_orphans\Dream Orphans.otf"
-apple_titre = r"dossier_police\apple_garamond\AppleGaramond-Light.ttf"
+chivo_titre = r"font\chivo\Chivo-Black.otf"
+dream_orphans = r"font\dream_orphans\Dream Orphans.otf"
+apple_titre = r"font\apple_garamond\AppleGaramond-Light.ttf"
 input_apple = pygame.font.Font(apple_titre,40)
-beackman = r"dossier_police\Beckman.otf"
-TNN = r"dossier_police\TNN.ttf"
+beackman = r"font\Beckman.otf"
+TNN = r"font\TNN.ttf"
 blanc = (255,255,255)
 noir = (0,0,0)
 proposition = ["MENU","ANNONCE","COMPTE"]
