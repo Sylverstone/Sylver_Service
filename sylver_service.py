@@ -99,9 +99,13 @@ def decoupe_text(coupage,line,text_info) :
         all_text.append(text_info[start:limite].strip())
     return all_text
         
+        
+
 def type_tuto():
-    for event in pygame.event.get():
-        pass
+    
+        
+        
+    print(pygame.event.clear())
     global fond_nav
     global continuer
     barre_input = pygame.Surface((2,20))
@@ -114,8 +118,9 @@ def type_tuto():
     surf_valider.fill((0,0,0,0))
     s_width = surf_valider.get_width()
     s_height = surf_valider.get_height()
-    rect_valider = pygame.Rect(0,0,s_width,s_height)
-    pygame.draw.rect(surf_valider,(0,0,0),rect_valider,1)
+    rect_valider = surf_valider.get_rect(x=w_origine - s_width - 30,
+                                         y = h_origine - s_height - 20)
+    pygame.draw.rect(surf_valider,(0,0,0),(0,0,*rect_valider[2:4]),1)
     draw_text(text = "valider", contener = surf_valider,x= s_width/2 - font40.size("valider")[0]/2, font = font_paragraphe, importer=True, size = 40)    
     surf_ecrit = pygame.Surface((w_origine - 20, h_origine - 250 ))
     rect_titre = pygame.Rect(10,120,200,50)
@@ -124,9 +129,10 @@ def type_tuto():
     #peut etre remplacer par des classes jsp
     dict_input = {
         "input_titre" : { "max" : 50,"x" : 10,"y" : rect_titre.h/2 - font20.size("m")[1]/2,"surf" : surf_titre,"input" : ["Titre",],
-                         "zone_ecrit" : 0,"can_do_multiple_lines" : False, "base" : "Titre", "active" : False,"rect" : rect_titre, "time": 0, "take_time" : False},
+                         "zone_ecrit" : 0,"can_do_multiple_lines" : False, "base" : "Titre", "active" : False,"rect" : rect_titre, "time": 0, "take_time" : False,
+                         "coupage" : 0},
         
-        "input_text" : {"max" : 10000,"x" : 10,"y" : 20 ,"surf" : surf_ecrit, "input" : ["Contenu",], "zone_ecrit" : 0,
+        "input_text" : {"coupage" : 0, "max" : 10000,"x" : 10,"y" : 20 ,"surf" : surf_ecrit, "input" : ["Contenu",], "zone_ecrit" : 0,
                         "can_do_multiple_lines" : True, "base" : "Contenu", "active" : False,"rect" : rect_surf_ecrit,"time": 0, "take_time" : False}
     }
     menos = False
@@ -143,9 +149,15 @@ def type_tuto():
             if rect_goback.collidepoint(mouse):
                 if mouse_click:
                     go_back = True
+            if rect_valider.collidepoint(mouse):
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    text_pour_tuto = ' '.join(dict_input["input_text"]["input"])
+                    titre = ''.join(dict_input["input_titre"]["input"])
+                    
             for elt in dict_input.values():
-                if elt["rect"].collidepoint(mouse):
-                    if mouse_click:
+                if elt["rect"].collidepoint(mouse): 
+                    #si je fais avec mouse click le click est tjr detecter
+                    if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                         elt["active"] = not elt["active"]
                         if elt["active"] == False and len(elt["input"]) == 1 and elt["input"][0] == "":
                             elt["input"][0] = elt["base"]
@@ -194,11 +206,10 @@ def type_tuto():
                                     enum = 0
                                 enum += 1
                             if elt["input"][elt["zone_ecrit"]] == "":
-                                elt["input"][elt["zone_ecrit"]] = "-" + save_input[save_enum:]
-                                                           
-                            
+                                elt["input"][elt["zone_ecrit"]] = "-" + save_input[save_enum:]                                                          
                         elif event.key == pygame.K_SPACE:
-                            elt["input"][elt["zone_ecrit"]] += " "
+                            if len(elt["input"][elt["zone_ecrit"]]) < elt["max"]:
+                                elt["input"][elt["zone_ecrit"]] += " "
                         elif event.key == pygame.K_BACKSPACE:
                             if elt["input"][elt["zone_ecrit"]] != "":
                                 elt["input"][elt["zone_ecrit"]] = elt["input"][elt["zone_ecrit"]][:-1]
@@ -225,6 +236,12 @@ def type_tuto():
                                 elt["zone_ecrit"] +=1
                                 print("add")
                                 #ajouter une zone d'ecriture
+                        elif elt["can_do_multiple_lines"] == False:
+                             if len(elt["input"][elt["zone_ecrit"]]) < elt["max"]:
+                                if (font20.size(elt["input"][elt["zone_ecrit"]][elt["coupage"]:])[0] >= elt["surf"].get_width() - 20) or elt["coupage"] > 0:
+                                    elt["coupage"] += 1 if event.key != pygame.K_BACKSPACE else -1
+                                    if elt["coupage"] <= 0:
+                                        elt["coupage"] = 0
                         menos = False                  
     
         surf_titre.fill(blanc)        
@@ -238,14 +255,12 @@ def type_tuto():
                     add = 1
                 else:
                     add = 0
-                draw_text(i,importer=True,contener=elt["surf"], x = elt["x"], y = elt["y"]*(enum+add), font=font_paragraphe)
+                draw_text(i[elt["coupage"]:],importer=True,contener=elt["surf"], x = elt["x"], y = elt["y"]*(enum+add), font=font_paragraphe)
             if elt["active"]:
                 add = 1 if keys == "input_titre" else 0
-                elt["surf"].blit(barre_input, (10 + font20.size(elt["input"][elt["zone_ecrit"]])[0], 2 + elt["y"] * (elt["zone_ecrit"]+add))) #le y le met a la position du texte adapter en fonction de zone_ecrit
-        
-            
+                elt["surf"].blit(barre_input, (10 + font20.size(elt["input"][elt["zone_ecrit"]][elt["coupage"]:])[0], 2 + elt["y"] * (elt["zone_ecrit"]+add))) #le y le met a la position du texte adapter en fonction de zone_ecrit
         screen.blit(surf_titre,(rect_titre[0],rect_titre[1]))
-        screen.blit(surf_valider,(w_origine - s_width - 30, h_origine - s_height - 20))
+        screen.blit(surf_valider,(rect_valider[0],rect_valider[1]))
         screen.blit(surf_ecrit,(10,175))
         screen.blit(fond_nav,(0,0))        
         title("Ecrivez ici votre tutoriel")
@@ -876,11 +891,11 @@ def compte():
     y_effet1,y_effet2 = 0,0
     intensiter_effet = 0
     collide_image = False
-    global user
     color_bordure_image = (0,0,0)
     bordure = 1
     pp_choisi = False
     rect_ellipse = None
+    global user
     while continuer:
         zone = 0 if creer_compte else 1
         mouse = pygame.mouse.get_pos()
@@ -996,6 +1011,7 @@ def compte():
                                             mdp = dict_input[0]["input_mdp"]["input_visible"]
                                             with open(chemin_pp,"rb") as fichier:
                                                 photo_profil = fichier.read()
+                                            
                                             user = User(nom,prenom,age,pseudo,mdp,photo_profil,rect_ellipse)
                                             user.save_user()
                                             connect = True
@@ -1552,6 +1568,15 @@ rect_choose = pygame.Surface((size_box_w,size_box_h))
 w,l = rect_choose.get_size()
 clock = pygame.time.Clock()
 while continuer:
+    try:
+        print(user)
+    except:
+        #ecrire ça quelque part
+        #faire un system de co auto si le boug a un restez co
+        #rajoutez un texte de depart dans l'acceuil en mode, Salut {user}, Rends toi sur Menu pour consulter les tutos ou sur Compte Pour en postez ! (en blanc et assez grand peut être)
+        print("Vous n'êtes actuellement pas connectez")
+    finally:
+        #ici draw_text fr
     mouse = pygame.mouse.get_pos()
     screen.fill((0,25,25))
     fond_nav.fill((0,0,0))
@@ -1601,7 +1626,7 @@ while continuer:
     pygame.draw.rect(screen,(255,255,255),info)
     clock.tick(144)
     fps = clock.get_fps()
-    draw_text(f"fps : {int(fps)}",x=10,y=200,color=(255,255,255))
+    draw_text(f"fps : {int(fps)}",x=10,y=100,color=(255,255,255))
 
     rect_dispo = []
     for index,elt in enumerate(proposition):
