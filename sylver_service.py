@@ -101,10 +101,7 @@ def decoupe_text(coupage,line,text_info) :
         
         
 
-def type_tuto():
-    
-        
-        
+def ecrire_tuto():  
     print(pygame.event.clear())
     global fond_nav
     global continuer
@@ -355,7 +352,7 @@ def page_info(id_ = 0,text = None,nom_projet = None,auteur = None,date = None, i
 cv = threading.Condition()
 
 def menu():
-    type_tuto()
+    ecrire_tuto()
     global display       
     global processing
     #savoir quand la recherche est en cours
@@ -1533,13 +1530,16 @@ color_text = [(255,255,255)]*3
 text_choose = ""
 droite = [True] * 3
 reference = w_origine
-accueil = "BIENVENUE DANS SYLVER_SERVICE"
+accueil_complement = "Bienvenue dans"
+accueil = "SYLVER_SERVICE"
 font_accueil = pygame.font.SysFont("Comic Sans Ms", 40)
 fond_nav = pygame.Surface((w_origine,100))
 info = pygame.Rect(w_origine - 40, 5, 20,20)
-font_chivo = pygame.font.Font(chivo_titre,40)
+font_chivo = pygame.font.Font(chivo_titre,72)
+font_chivo_14 = pygame.font.Font(chivo_titre,14)
 
-def title(text, size = 40, color = blanc, font = font_chivo,importer = True):
+
+def title(text, size = 72, color = blanc, font = font_chivo,importer = True):
     draw_text(text, size = size,color = color, x = (w_origine/2 - font.size(text)[0]/2), y = 5,importer = importer, font = chivo_titre)
 
 
@@ -1577,11 +1577,15 @@ while continuer:
         print("Vous n'êtes actuellement pas connectez")
     finally:
         #ici draw_text fr
+        pass
     mouse = pygame.mouse.get_pos()
     screen.fill((0,25,25))
     fond_nav.fill((0,0,0))
+    print(fond_nav,)
     screen.blit(fond_nav,(0,0))
-    draw_text(accueil, size = 40,color = blanc, x = w_origine/2 - font_chivo.size(accueil)[0]/2, y = 5, font = chivo_titre,importer = True)
+    draw_text(accueil_complement, size = 14, color=blanc, x = w_origine/2 - font_chivo_14.size(accueil_complement)[0]/2,
+              y = 5, importer= True, font=chivo_titre)
+    draw_text(accueil, size = 72,color = blanc, x = w_origine/2 - font_chivo.size(accueil)[0]/2, y = fond_nav.get_height() - font_chivo.size(accueil)[1], font = chivo_titre,importer = True)
     for event in pygame.event.get():
         if event.type == pygame.KEYDOWN:
             pass
