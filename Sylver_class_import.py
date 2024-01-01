@@ -1,4 +1,5 @@
 
+from math import exp
 import tkinter.filedialog
 import tkinter as tk
 from typing import Self
@@ -36,6 +37,10 @@ class userNonCharger(Exception):
         self.what = what
         super().__init__(self.what)
     
+class noConnection(Exception):
+    def __init__(self, what) -> None:
+        self.what = what
+        super().__init__(self.what)
 
         
 class User:
@@ -77,12 +82,14 @@ class User:
             data = cursor.fetchone()[0]
         except sql.Error as err:
             print(err)
-            print("errsql")
         finally:
-            if connection.is_connected():
-                connection.close()
-                
-            return data 
+            try:
+                if connection.is_connected():
+                    connection.close()
+                    
+                return data 
+            except:
+                raise noConnection("connection failed")
                 
     def save_user(self) -> None:
         try:
@@ -102,8 +109,11 @@ class User:
         except sql.Error as err:
             print(err)
         finally:
-            if connection.is_connected():
-                connection.close()   
+            try:
+                if connection.is_connected():
+                    connection.close()
+            except:
+                raise noConnection("connection failed")   
                 
     
                 
@@ -147,14 +157,17 @@ class User:
             print("ERRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR")
             print(err)
         finally:
-            if connection.is_connected():
-                print("mp",self.rect_pp)
-                connection.close()
-            else:
-                print("not connected")
-    
+            try:
+                if connection.is_connected():
+                    print("mp",self.rect_pp)
+                    connection.close()
+                else:
+                    print("not connected")
+            except:
+                raise noConnection("connection failed")
+        
     @staticmethod    
-    def log_user(pseudo,mdp)-> Self | userNonCharger:
+    def log_user(pseudo,mdp):
         try:
             connection = sql.connect(
                 host = "localhost",
@@ -170,11 +183,14 @@ class User:
         except sql.Error as err:
             print(err)
         finally:
-            if connection.is_connected():
-                connection.close()
-                if mdp == data[7]:
-                    return User(data[1],data[2],data[5],data[6],data[7],data[4],data[3],data[8])
-                raise userNonCharger
+            try:
+                if connection.is_connected():
+                    connection.close()
+                    if mdp == data[7]:
+                        return User(data[1],data[2],data[5],data[6],data[7],data[4],data[3],data[8])
+                    raise userNonCharger
+            except:
+                raise noConnection("connection failed")
                   
     @staticmethod
     def verifier_pseudo(pseudo)->bool:
@@ -198,15 +214,18 @@ class User:
         except sql.Error as err:
             print(err)
         finally:
-            if connection.is_connected():
-                connection.close()
-            return disponible
+            try:
+                if connection.is_connected():
+                    connection.close()
+                return disponible
+            except:
+                return noConnection("connection failed")
     
     @staticmethod
-    def get_file(idd = 0)->tuple | noFileException :
+    def get_file(idd = 0):
         if idd == 1:
             #si c'est pour poster un tuto
-            ext_dispo = [("*","*.png"),("*","*.jpg"),("*","*.pdf"),("*","*.docx")]
+            ext_dispo = [("*","*.png"),("*","*.jpg"),("*","*.pdf"),("*","*.docx"),("*","*.odt")]
         else:
             #si c'est pour choisir une pp
             ext_dispo = [("*","*.png"),("*","*.jpg")]
@@ -282,8 +301,11 @@ class Gerer_requete(User):
         except sql.Error as err:
             print(err)
         finally:
-            if connection.is_connected():
-                connection.close()
+            try:
+                if connection.is_connected():
+                    connection.close()
+            except:
+                raise noConnection("connection failed")
                 
     @staticmethod  
     def rechercher_data(nom_tuto = None,nom_auteur = None)->list:
@@ -310,14 +332,13 @@ class Gerer_requete(User):
             print("wow")
         
         finally:
-            if connection.is_connected():
-                connection.close()
-            return data_recup
+            try:
+                if connection.is_connected():
+                    connection.close()
+                return data_recup
+            except:
+                raise noConnection("connection failed")
     
-    @staticmethod
-    def fail_open():
-        tk.messagebox.showerror("Erreur", "WOW ! L'ouverture a flop :(")
-        
     @staticmethod
     def demarrer_fichier(doc,ext,with_path = False)->None:
         if not with_path:
@@ -333,11 +354,21 @@ class Gerer_requete(User):
                 return
         else:
             path = doc
-        os.startfile(path,'open')
+        try:
+            os.startfile(path,'open')
+        except:
+            Gerer_requete.fail_open()
+        
+    @staticmethod
+    def fail_open():
+        tk.messagebox.showerror("Erreur", "WOW ! L'ouverture a flop :(")
         
     @staticmethod
     def error_occured():
         tkinter.messagebox.showerror("Erreur","WOW ! Une erreur a eu lieu")
+        
+    def connection_failed():
+        tkinter.messagebox.showerror("Erreur","WOW ! La connection n'a pas pu être initialisé :(")
         
     @staticmethod
     def est_bytes(doc):

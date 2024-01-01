@@ -1,6 +1,6 @@
 
 import pygame,os,datetime,sys,threading,keyboard,time,pyperclip
-from Sylver_class_import import Gerer_requete,User,noFileException, userNonCharger
+from Sylver_class_import import Gerer_requete,User,noFileException, userNonCharger, noConnection
 from Resize_image import AnnuleCropPhoto, resizeImage
 
 """
@@ -154,8 +154,14 @@ def ecrire_tuto(user):
                     text_pour_tuto = ' '.join(dict_input["input_text"]["input"])
                     titre = ''.join(dict_input["input_titre"]["input"])
                     print(text_pour_tuto,titre)
-                    Gerer_requete(user).save_tuto(None,text_pour_tuto,titre)
-                    go_back = True 
+                    try:
+                        Gerer_requete(user).save_tuto(None,text_pour_tuto,titre)
+                        go_back = True 
+                    except noConnection:
+                        Gerer_requete.connection_failed()
+                        
+                    except:
+                        Gerer_requete.error_occured()
             ################################### Logique de l'input #################################      
             for elt in dict_input.values():
                 if elt["rect"].collidepoint(mouse): 
@@ -781,14 +787,14 @@ def compte():
     rect_input_mdp2 = pygame.Rect(0, rect_input_prenom.y, 200,rect_input_nom.h)
     dict_input = [
                 {
-                "input_nom" : {"can_space" : True,"max" : 50, "input" : 'Nom', "default" : "Nom", "active" : False,"coupage" : 0,"depasse" : False,"rect_w" : rect_input_nom.w},
-                "input_prenom" : {"can_space" : True,"max" : 50, "input" : 'Prenom', "default" : "Prenom", "active" : False,"coupage" : 0,"depasse" : False,"rect_w" : rect_input_nom.w},
-                "input_pseudo" : {"can_space" : False,"max" : 50, "input" : 'Pseudo', "default" : "Pseudo", "active" : False,"coupage" : 0,"depasse" : False,"rect_w" : rect_input_nom.w},
+                "input_nom" : {"can_space" : True,"max" : 20, "input" : 'Nom', "default" : "Nom", "active" : False,"coupage" : 0,"depasse" : False,"rect_w" : rect_input_nom.w},
+                "input_prenom" : {"can_space" : True,"max" : 20, "input" : 'Prenom', "default" : "Prenom", "active" : False,"coupage" : 0,"depasse" : False,"rect_w" : rect_input_nom.w},
+                "input_pseudo" : {"can_space" : False,"max" : 20, "input" : 'Pseudo', "default" : "Pseudo", "active" : False,"coupage" : 0,"depasse" : False,"rect_w" : rect_input_nom.w},
                 "input_age" : {"can_space" :  False,"max" : 3, "input" : 'Age', "default" : "Age", "active" : False,"coupage" : 0,"depasse" : False,"rect_w" : rect_input_age.w},
                 "input_mdp" : {"can_space" : True,"max" : 20, "input_cache" : 'Mot de passe',"input_visible" : "", "default" : "Mot de passe","min" : 8, "active" : False,"coupage" : 0,"depasse" : False,"rect_w" : rect_input_mdp.w}
                 },
                 {
-                "input_pseudo" : {"can_space" : False,"max" : 50, "input" : 'Pseudo', "default" : "Pseudo", "active" : False,"coupage" : 0,"depasse" : False,"rect_w" : rect_input_pseudo2.w},
+                "input_pseudo" : {"can_space" : False,"max" : 20, "input" : 'Pseudo', "default" : "Pseudo", "active" : False,"coupage" : 0,"depasse" : False,"rect_w" : rect_input_pseudo2.w},
                 "input_mdp" : {"can_space" :  True,"max" : 20, "input_cache" : 'Mot de passe',"input_visible" : "", "default" : "Mot de passe","min" : 8, "active" : False,"coupage" : 0,"depasse" : False,"rect_w" : rect_input_mdp2.w}
                 }
                 ]
@@ -1003,8 +1009,10 @@ def compte():
                                     Gerer_requete(user).save_tuto(path,"",nom_tuto)
                             else:
                                 break
-                        except Exception as e:
-                            print(e)    
+                        except noConnection:
+                            Gerer_requete.connection_failed()   
+                        except:
+                            Gerer_requete.error_occured()  
                             
                 elif rect_maketuto.collidepoint(mouse):
                     if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -1702,7 +1710,7 @@ while continuer:
     draw_text(accueil_complement, size = 14, color=blanc, x = w_origine/2 - font_chivo_14.size(accueil_complement)[0]/2,
               y = 5, importer= True, font=chivo_titre)
     draw_text(accueil, size = 72,color = blanc, x = w_origine/2 - font_chivo.size(accueil)[0]/2, y = fond_nav.get_height() - font_chivo.size(accueil)[1], font = chivo_titre,importer = True)
-    for event in pygame.event.get():
+    for event in pygame.event.get():        
         if event.type == pygame.KEYDOWN:
             pass
         if event.type == pygame.QUIT:
@@ -1749,7 +1757,6 @@ while continuer:
     clock.tick(144)
     fps = clock.get_fps()
     draw_text(f"fps : {int(fps)}",x=10,y=100,color=(255,255,255))
-
     rect_dispo = []
     for index,elt in enumerate(proposition):
         rect_choose.fill(color[index])
