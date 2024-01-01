@@ -79,6 +79,7 @@ class resizeImage:
         #fin processus suspect
         screen_ = pygame.Surface((image.get_size()[0], image.get_size()[1]))
         pos = (width/2 - screen_.get_rect().w/2, 200) #position de où l'image va être mise
+        rect_screen = pygame.Rect(*pos,screen_.get_width(),screen_.get_height())
         L = screen_.get_rect()[3] #Largeur
         l = screen_.get_rect()[2] #Longueur
         continuer = True
@@ -128,10 +129,7 @@ class resizeImage:
                 start_y = screen_.get_rect().bottom - size[0]/2
             return start_x,start_y
         
-        text = "Bouger votre souris pour faire deplacer le cercle, appuyer sur 'c' pour valider, ou 'q','Echap' pour quitter" #mettez le texte que vous voulez
-        font = pygame.font.SysFont("Arial",40)
-        draw_text(text = text, contener= screen,
-                  x = width/2 - font.size(text)[0]/2, y = 20, font = "Arial",size=40)   
+        
         while continuer:
             mouse = pygame.mouse.get_pos()
             mouse = (mouse[0] - pos[0],mouse[1] - pos[1])
@@ -145,12 +143,21 @@ class resizeImage:
                             size[0] += 20
                             size[1] += 20
                     elif event.key == pygame.K_DOWN:
-                        if size[0] - 20 > 20: #vous pouvez changer cette taille minimum, meme la retirez
+                        if size[0] - 20 > 60: #vous pouvez changer cette taille minimum, meme la retirez
                             size[0] -= 20
                             size[1] -= 20
-                if event.type == pygame.KEYDOWN and (event.key == pygame.K_q or event.key == pygame.K_ESCAPE):
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 4:
+                    if size[0] + 20 < new_height: 
+                            size[0] += 20
+                            size[1] += 20
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 5:
+                    if size[0] - 20 > 120: #vous pouvez changer cette taille minimum, meme la retirez
+                            size[0] -= 20
+                            size[1] -= 20
+                    
+                if (event.type == pygame.KEYDOWN and (event.key == pygame.K_q or event.key == pygame.K_ESCAPE)) :
                     continuer = False
-                if event.type == pygame.KEYDOWN and event.key == pygame.K_c:
+                if (event.type == pygame.KEYDOWN and event.key == pygame.K_c) or (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1) :
                     new_image = self.rendre_transparent(image,rect)
                     #créé les surfaces qui vont servir a designer une image ronde
                     surf2 = pygame.Surface((size[0], size[1]), pygame.SRCALPHA)
@@ -163,7 +170,7 @@ class resizeImage:
             verif_sortie(rect)
             start_x,start_y = gerer_souris(start_x,start_y)
             
-            pygame.draw.ellipse(screen_,(0,0,0),rect,2)
+            pygame.draw.ellipse(screen_,(255,0,0),rect,2)
             if can_affiche:
                 pygame.draw.ellipse(surf2, (255, 255, 255), (0,0,*size))
                 surf3.blit(surf2, (0, 0))
@@ -171,7 +178,7 @@ class resizeImage:
                 surf3.blit(new_image, (0, 0),rect)
                 continuer = False
             screen.blit(screen_,pos)
-            pygame.display.flip()
+            pygame.display.update(rect_screen)
         if not can_affiche:
             raise AnnuleCropPhoto("Vous avez abandonné le choix de photo de profil :(")
         return surf3,rect,image

@@ -250,7 +250,7 @@ class Gerer_requete(User):
         super().__init__(prenom=user.prenom,nom = user.nom,age = user.age,pseudo = user.pseudo,
                          mdp = user.mdp,photo_profil=user.photo_profil, tuto_transmis= user.tuto_transmis)       
     
-    def save_tuto(self,doc = None, Text = "",nom_tuto= "") -> None:
+    def save_tuto(self,doc = None, Text = "",nom_tuto= "",experiment = False) -> None:
         current_date = datetime.datetime.now()
         current_date = current_date.strftime("%Y-%m-%d")
         date = current_date
@@ -277,7 +277,8 @@ class Gerer_requete(User):
             cursor.execute(request,infos)
             request = f"UPDATE utilisateur SET tuto_transmis = tuto_transmis + 1 WHERE pseudo = '{self.pseudo}'"
             cursor.execute(request)
-            connection.commit()
+            if not experiment:
+                connection.commit()
         except sql.Error as err:
             print(err)
         finally:
@@ -295,6 +296,7 @@ class Gerer_requete(User):
                 password  = env.get('SQL_MOT_DE_PASSE'),
                 db="sylver_service",
                 auth_plugin='mysql_native_password')
+            print(connection)
             cursor = connection.cursor()
             if nom_tuto != None:
                  request = f" SELECT * FROM tuto WHERE nom LIKE '%{nom_tuto}%'"
@@ -306,6 +308,7 @@ class Gerer_requete(User):
         except sql.Error as err:
             print(err)
             print("wow")
+        
         finally:
             if connection.is_connected():
                 connection.close()
