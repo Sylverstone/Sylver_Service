@@ -30,7 +30,7 @@ width = resolution.current_w
 height = resolution.current_h
 screen = pygame.display.set_mode((width, height), pygame.FULLSCREEN | pygame.SCALED | pygame.HWSURFACE | pygame.DOUBLEBUF)
 
-def draw_text(text, font = "Comic Sans Ms", color = (0,0,0), x = 0, y = 0,contener = screen,size = 20,importer = False, ombre = False):
+def draw_text(text, font = "Comic Sans Ms", color = (0,0,0), x = 0, y = 0,contener = screen,size = 20,importer = False, center_multi_line_y = False, ombre = False,center_multi_line = False):
     """
         dessiner un texte a une position donné
         :param 1: text qu'on veut dessiner
@@ -40,18 +40,25 @@ def draw_text(text, font = "Comic Sans Ms", color = (0,0,0), x = 0, y = 0,conten
         :param 5: coordonne y ou le dessiner
         :CU: arg 1 est un str, arg 2 est de type font.FONT ou font.SysFont, arg 3 est un rbg, arg 4 et 5 sont des int
     """
+    all_text = text.split("\n")
     if not importer:
         font_ = pygame.font.SysFont(font, size)
     else:
         font_ = pygame.font.Font(font,size)
-    if ombre:
-        text_ = font_.render(str(text), True, (0,0,0))
-        contener.blit(text_, (x+1,y+1))
-    text_ = font_.render(str(text), True, color)
-    contener.blit(text_, (x,y))        
+    height_of_paragraph = calcul_height(text,all_text,font_)
+    for enum,text in enumerate(all_text):
+        if center_multi_line:
+            x = w_origine/2 - font_.size(text)[0]/2
+        if center_multi_line_y:
+            y = h_origine/2 - height_of_paragraph/2
+        if ombre:
+            text_ = font_.render(str(text), True, (0,0,0))            
+            contener.blit(text_, (x+2,y+(size+2)*enum))
+        text_ = font_.render(str(text), True, color)
+        contener.blit(text_, (x,y+(size + 2)*enum))        
        
 
-def make_line(text : str,font : pygame.font.SysFont,size_max : int):
+def make_line(text : str,font : pygame.font,size_max : int):
     coupage = [0]
     line = 1
     start = 0
@@ -72,6 +79,10 @@ def make_line(text : str,font : pygame.font.SysFont,size_max : int):
         y = font.size(text)[1] + font.size(text)[1] * i
     return coupage,line,y
 
+def calcul_height(text, all_text : list,font : pygame.font):
+    return font.size(text)[1] * len(all_text)
+    
+    
 def draw_line(line,coupage,text,size,contener,font,fontz,importer = True,x=0,y=0):
     back_x = x
     for i in range(line):
@@ -1529,7 +1540,9 @@ def request():
             if rect_goback.collidepoint(mouse) and (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1):
                 go_back = True        
         pygame.draw.rect(screen,(0,0,0),rect_goback)
-        draw_text("futur request",color = (255,255,255), x = 500,y = 500)
+        text = "Alors déjà bien jouer !\nMais y'a rien ici sauf un gris bizarre\nla rue la vrai, t'as vu le systeme de slash n il pète hein"+\
+        "\n de toute façon je sais qu'il peète mdr"
+        draw_text(text,color = (255,255,255), center_multi_line=True,x = 0,y = 0, center_multi_line_y= True,ombre = True)
         if go_back:
             break
         pygame.display.flip()
@@ -1632,13 +1645,13 @@ blanc = (255,255,255)
 noir = (0,0,0)
 proposition = ["MENU","ANNONCE","COMPTE"]
 etat = ["alpha","beta","alpha"]
-size_box_w = 200
-size_box_h = 50
+size_box_w = 250
+size_box_h = 80
 millieu_w = (w_origine/2) - size_box_w/2
 millieu_h = (h_origine/2) - size_box_h/2
-pos = [[millieu_w,millieu_h - 4 * size_box_h],[millieu_w,millieu_h],[millieu_w,millieu_h + 4* size_box_h]]
+pos = [[w_origine/2  - size_box_w - 10,millieu_h + size_box_h +10],[w_origine/2  + 10,millieu_h+size_box_h +10],[millieu_w,millieu_h]]
 rect_dispo = []
-color = [(0,0,0)]*3
+is_on = [False]*3
 color_text = [(255,255,255)]*3
 text_choose = ""
 droite = [True] * 3
@@ -1671,8 +1684,6 @@ def gestion_event():
             if keyboard.is_pressed("Escape"):
                 print(threading.current_thread())
                 continuer = not User.confirm_close()
-                
-                    
         except:
             print("f")
         for event in pygame.event.get():
@@ -1684,19 +1695,17 @@ def gestion_event():
 
 t1 = threading.Thread(target=gestion_event,daemon=True)
 t1.start()
-rect_choose = pygame.Surface((size_box_w,size_box_h))
+rect_choose = pygame.Surface((size_box_w,size_box_h), pygame.SRCALPHA)
 w,l = rect_choose.get_size()
 clock = pygame.time.Clock()
 while continuer:
     screen.fill((0,25,25))
     try:
-        print("connectez")
         text_user_co = f"Salut {user.pseudo} ravis de te voir :)"
         draw_text(text_user_co, x = w_origine/2 - font(chivo_titre,36,True).size(text_user_co)[0]/2,
                   y = fond_nav.get_height() + 20, font = chivo_titre, color = blanc,
                   size = 36, importer = True)
     except Exception as e:
-        print("pas connectez")
         draw_text(text_user_pas_co, x = w_origine/2 - font(chivo_titre,36,True).size(text_user_pas_co)[0]/2,
                   y = fond_nav.get_height() + 20, font = chivo_titre, color = blanc,
                   size = 36, importer = True)
@@ -1705,7 +1714,6 @@ while continuer:
         pass
     mouse = pygame.mouse.get_pos()    
     fond_nav.fill((0,0,0))
-    print(fond_nav,)
     screen.blit(fond_nav,(0,0))
     draw_text(accueil_complement, size = 14, color=blanc, x = w_origine/2 - font_chivo_14.size(accueil_complement)[0]/2,
               y = 5, importer= True, font=chivo_titre)
@@ -1723,8 +1731,8 @@ while continuer:
                 if rect.collidepoint(mouse):
                     text_choose = proposition[index]
                     if etat[index] == "alpha":
-                        color[index] = blanc
-                        color_text[index] = noir
+                        is_on[index] = True
+                        
                     decal = 200
                     pos_souris_relat_souris = (mouse[0] - rect.x, mouse[1] - rect.y)
                     """
@@ -1740,7 +1748,7 @@ while continuer:
                             else:
                                 pos[index][0] -= decal
                     """
-                    if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and etat[index] != "beta":
+                    if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                         if text_choose == "MENU":
                             menu()
                         elif text_choose == "ANNONCE":
@@ -1748,7 +1756,7 @@ while continuer:
                         else:
                             compte()
                 else:
-                    color[index] = (0,0,0)
+                    is_on[index] = False
                     color_text[index] = blanc
     
     date = datetime.datetime.today().strftime('%Hh%M')
@@ -1759,10 +1767,12 @@ while continuer:
     draw_text(f"fps : {int(fps)}",x=10,y=100,color=(255,255,255))
     rect_dispo = []
     for index,elt in enumerate(proposition):
-        rect_choose.fill(color[index])
-        color_bord = (255,0,255) if color[index] == noir else (0,255,255)
-        pygame.draw.rect(rect_choose,color_bord,(0,0,w,l),1)
-        draw_text(proposition[index],contener = rect_choose,color = color_text[index], x = 5)
+        rect_choose.fill((0,0,0,0))
+        color_bord = (255,0,255) if is_on[index] == False else (0,255,255)
+        pygame.draw.rect(rect_choose,(0,0,0),(0,0,w,l),0,20)
+        pygame.draw.rect(rect_choose,color_bord,(0,0,w,l),1,20)
+        draw_text(proposition[index],contener = rect_choose,color = color_text[index], x = rect_choose.get_width()/2 - font(csm,25).size(proposition[index])[0]/2,
+                  y = rect_choose.get_height()/2 - font(csm,25).size(proposition[index])[1]/2,size = 25)
         screen.blit(rect_choose,pos[index])
         rect_dispo.append(pygame.Rect(pos[index][0],pos[index][1],w,l))
     draw_text(text_choose,color = blanc, x = 5)
