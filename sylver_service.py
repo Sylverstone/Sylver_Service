@@ -640,7 +640,9 @@ def menu():
                         indice_type = 0
             if rect_aide.collidepoint(mouse):
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                    Gerer_requete.demarrer_fichier(doc = os.path.join("Ressource","SYLVER.docx"),with_path=True,ext = None)
+                    reponse = User.confirm_open()
+                    if reponse:
+                        Gerer_requete.demarrer_fichier(doc = os.path.join("Ressource","SYLVER.docx"),with_path=True,ext = None)
             
             if event.type == pygame.QUIT:
                 continuer = False
@@ -820,8 +822,8 @@ def compte():
         dict_input[1]["input_mdp"]["input_cache"] = "*"*len(con_mdp)
         
     all_rect = [
-        [rect_input_nom,rect_input_prenom,rect_input_pseudo,rect_input_age,rect_input_mdp],
-        [rect_input_pseudo2,rect_input_mdp2]
+            [rect_input_nom,rect_input_prenom,rect_input_pseudo,rect_input_age,rect_input_mdp],
+            [rect_input_pseudo2,rect_input_mdp2]
         ]
     color_edit = (0,0,200)
     btn_submit = pygame.Rect(0,0,100,50)
@@ -834,9 +836,12 @@ def compte():
     pseudo_ndispo = False
     text_ndispo = "Pseudo déjà existant"
     visible = False
-    rect_visible = pygame.Rect(0,0,40,20)
+    rect_visible = pygame.Rect(0,0,39,rect_input_mdp.h-5)
     rect_visible.x = rect_input_mdp.x + rect_input_mdp.w - rect_visible.w - 10
     rect_visible.y = rect_input_mdp.y + rect_input_mdp.h/2 - rect_visible.h/2
+    icone_mdp = pygame.image.load(os.path.join("image", "image_mdp_visu.png")).convert_alpha()    
+    icone_mdp = pygame.transform.smoothscale(icone_mdp,(rect_visible.w,rect_visible.h))
+    print(icone_mdp.get_height())
     invalid_mdp = False
     text_nmdp = "Minimum 8 caractères"
     text_log = "Vous avez déjà un compte ? connectez vous !"
@@ -925,6 +930,7 @@ def compte():
     pp_choisi = False
     rect_ellipse = None
     global user
+    
     image_retour = pygame.image.load("Image/Icone_retour.png")
     image_retour = pygame.transform.smoothscale(image_retour,(rect_goback.w,rect_goback.h))
     while continuer:
@@ -981,26 +987,6 @@ def compte():
                                            
                     except noFileException:
                         print("wow")
-                    """
-                    path_ext = User.get_file(1)
-                    path = path_ext[0]
-                    if path != 0:
-                        try:
-                            with open(path,"rb") as fichier:
-                                nv_pp = fichier.read()
-                            with open(chemin_pp,"wb") as fichier:
-                                fichier.write(nv_pp)
-                        except:
-                            pass
-                        finally:
-                            if connect:
-                                transform_s = size_grand
-                                user.photo_profil = nv_pp
-                            else:
-                                transform_s = size
-                            image_pp = pygame.image.load(chemin_pp)
-                            image_pp = pygame.transform.smoothscale(image_pp,transform_s)
-                    """
             ###################################################### Système après connection #################################################
             if connect:
                 if btn_disconnect.collidepoint(mouse):
@@ -1035,7 +1021,10 @@ def compte():
                 if rect_visible.collidepoint(mouse):
                     if mouse_click:
                         visible = not visible
-                   
+                        icone_mdp = pygame.image.load("image/image_mdp_visu.png").convert_alpha() if not visible else pygame.image.load("image/image_mdp_cacher.png").convert_alpha()
+                        icone_mdp = pygame.transform.smoothscale(icone_mdp,(rect_visible.w,rect_visible.h))
+                        print(rect_visible.w,rect_visible.h)                        
+                        print(icone_mdp.get_height())
                 elif rect_editer_photo.collidepoint(mouse):
                     color_edit = (0,200,0)
                     if mouse_click:
@@ -1121,20 +1110,6 @@ def compte():
                                                 
                                         except userNonCharger:
                                             pas_correspondance = True
-                                        """
-                                        user = User.log_user(pseudo,mdp)
-                                        if user == False:
-                                            pas_correspondance = True
-                                        else:
-                                            connect = True
-                                            with open(chemin_pp,"wb") as fichier:
-                                                try:
-                                                    fichier.write(user.photo_profil)
-                                                except:
-                                                    fichier.write(pp_base)
-                                            image_pp = pygame.image.load(chemin_pp)
-                                            image_pp = pygame.transform.smoothscale(image_pp,size_grand)
-                                        """
                                     else:
                                         invalid_mdp = True
                         else:
@@ -1362,7 +1337,8 @@ def compte():
                 draw_text(f"{text_log[start:limite]}", x = rect_ctn_host.x + disposition[zone]["ajout_con"] + rect_ctn_host.w/2 - font_40.size(f"{text_log[start:limite]}")[0]/2,
                           y = rect_ctn_host.y + rect_ctn_host.h/2 - size_y/2 + (font_40.size(f"{text_log[start:limite]}")[1]) * i,
                           font = font_paragraphe, importer = True, size = 40,color = (0,0,200))
-            pygame.draw.rect(screen,(0,0,0),rect_visible)
+            #pygame.draw.rect(screen,(0,0,0),rect_visible)
+            screen.blit(icone_mdp, rect_visible)
             pygame.draw.rect(screen,bleu_s,rect_valider,0,40)
             pygame.draw.rect(screen,(00,0,0),rect_valider,1,40)
             draw_text(x = rect_valider.x + rect_valider.w/2 - font_20.size(text_switch_log_con)[0]/2,
@@ -1521,7 +1497,6 @@ def compte():
                       ,y = y_photo2 + size_grand[1] + 100, size = 30,
                       importer = True, font = font_paragraphe)            
         screen.blit(image_retour,rect_goback)
-        print("refreshing")
         
         pygame.display.flip()
         last_screen = screen.copy()

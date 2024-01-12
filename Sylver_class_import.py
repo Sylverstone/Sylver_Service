@@ -1,5 +1,6 @@
 
 from math import exp
+import stat
 import tkinter.filedialog
 import tkinter as tk
 from typing import Self
@@ -60,6 +61,10 @@ class User:
     def confirm_close() -> bool:
         
         ans = tk.messagebox.askyesno(title = "Exit", message = "Tu veux vraiment nous quitter :(")
+        return ans
+    @staticmethod
+    def confirm_open(open = "Word"):
+        ans = tk.messagebox.askyesno(title = "Exit", message = f"Cela ouvre {open}, t'es d'accord ?")
         return ans
     
     @staticmethod
