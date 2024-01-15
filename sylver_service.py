@@ -40,12 +40,14 @@ def draw_text(text, font = "Comic Sans Ms", color = (0,0,0), x = 0, y = 0,conten
         :param 5: coordonne y ou le dessiner
         :CU: arg 1 est un str, arg 2 est de type font.FONT ou font.SysFont, arg 3 est un rbg, arg 4 et 5 sont des int
     """
+    text = str(text) #transformer le texte en str 
     all_text = text.split("\n")
     if not importer:
         font_ = pygame.font.SysFont(font, size)
     else:
         font_ = pygame.font.Font(font,size)
     height_of_paragraph = calcul_height(text,all_text,font_)
+    #boucle pour afficher tout les textes de all_text
     for enum,text in enumerate(all_text):
         if center_multi_line:
             x = w_origine/2 - font_.size(text)[0]/2
@@ -59,6 +61,17 @@ def draw_text(text, font = "Comic Sans Ms", color = (0,0,0), x = 0, y = 0,conten
        
 
 def make_line(text : str,font : pygame.font,size_max : int):
+    """Fonction permettant de faire le coupage d'un texte par rapport a son contenaire,
+    renvoie le nombre de ligne du texte et ses zones de coupages en plus de sa hauteur
+
+    Args:
+        text (str): text que l'on choisi
+        font (pygame.font): la police attribué a ce text
+        size_max (int): la taille maximum a ne pas depasser
+
+    Returns:
+        _type_: _description_
+    """
     coupage = [0]
     line = 1
     start = 0
@@ -80,10 +93,34 @@ def make_line(text : str,font : pygame.font,size_max : int):
     return coupage,line,y
 
 def calcul_height(text, all_text : list,font : pygame.font):
+    """Fonction permettant de calculer la taille de plusieur text
+
+    Args:
+        text (str): Le texte étudié en total
+        all_text (list): chaque ligne du texte
+        font (pygame.font): la police attribué au texte
+
+    Returns:
+        _type_: _description_
+    """
     return font.size(text)[1] * len(all_text)
     
     
-def draw_line(line,coupage,text,size,contener,font,fontz,importer = True,x=0,y=0):
+def draw_line(line :int,coupage : list,text :str,size : int,contener : pygame.Surface,font : str ,fontz : pygame.font,importer : bool = True,x : float=0,y : float=0):
+    """_summary_
+
+    Args:
+        line (int): nombre de line utilisé
+        coupage (list): Liste précisant les coupures du texte
+        text (str): text que l'on ecrit
+        size (int): la taille du texte
+        contener (pygame.Surface): la surface sur laquel on ecrit le texte
+        font (str): le nom de la font
+        fontz (pygame.font): la font du texte
+        importer (bool, optional): Indique si la font est une font importer Defaults to True.
+        x (float, optional): Position x. Defaults to 0.
+        y (float, optional): Position y. Defaults to 0.
+    """
     back_x = x
     for i in range(line):
         start = coupage[i]
@@ -100,7 +137,16 @@ def draw_line(line,coupage,text,size,contener,font,fontz,importer = True,x=0,y=0
                 size = size, importer = importer, font = font)   
 
 
-def decoupe_text(coupage,line,text_info) :
+def decoupe_text(coupage : list ,line : int,text_info : str) :
+    """Decouper un texte selon son coupage en le mettant dans une liste
+
+    Args:
+        coupage (list): liste contenant toute les coupure du texte
+        line (int): nombre de ligne du texte
+        text_info (str): text utilisé
+    Returns:
+        list : Represente toutes les lignes du texte
+    """
     all_text = []
     for i in range(line):
         start = coupage[i]
@@ -113,8 +159,12 @@ def decoupe_text(coupage,line,text_info) :
         
         
 
-def ecrire_tuto(user):  
-    
+def ecrire_tuto(user : User):  
+    """Fonction permettant a l'utilisateur décrire son tuto
+
+    Args:
+        user (User): Class representant les données de l'utilisateur
+    """
     print(pygame.event.clear())
     global fond_nav
     global continuer
@@ -325,30 +375,9 @@ def page_info(id_ = 0,text = None,nom_projet = None,auteur = None,date = None, i
     font_paragraphe = apple_titre
     font_40 = pygame.font.Font(font_paragraphe, 40)
     font_20 = pygame.font.Font(font_paragraphe, 20)
-    """
-    while i < len(text_info):
-        size = font_40.size(text_info[start:i])[0]
-        if size + 5 > size_max:
-            w = -1
-            while text_info[start:i][w] != " ":
-                w -= 1
-            i += w
-            start = i
-            coupage.append(start)
-            line+=1
-        i+=1
-    """
     coupage,line,heigth_text = make_line(text = text_info, font = font_40, size_max= size_max)
     all_text = decoupe_text(coupage,line,text_info)
-    """"
-    for i in range(line):
-        start = coupage[i]
-        try:
-            limite = coupage[i+1]
-        except:
-            limite = len(text_info)
-        all_text.append(text_info[start:limite].strip())
-    """
+ 
     moitier_text = []
     for i in range(len(all_text)):
         moitier_text.append(font_40.size(all_text[i])[0]/2)
@@ -930,7 +959,7 @@ def compte():
     pp_choisi = False
     rect_ellipse = None
     global user
-    
+    surf_image2 = None
     image_retour = pygame.image.load("Image/Icone_retour.png")
     image_retour = pygame.transform.smoothscale(image_retour,(rect_goback.w,rect_goback.h))
     while continuer:
@@ -986,7 +1015,7 @@ def compte():
                             print(err.what)         
                                            
                     except noFileException:
-                        print("wow")
+                        pass
             ###################################################### Système après connection #################################################
             if connect:
                 if btn_disconnect.collidepoint(mouse):
@@ -1034,7 +1063,9 @@ def compte():
                 if btn_submit.collidepoint(mouse):
                     if mouse_click:
                         if look_valid(zone):
+                            print("verif")
                             if User.verifier_pseudo(dict_input[zone]["input_pseudo"]["input"]):
+                                print("reussi")
                                 if zone == 0:
                                     if look_mdp(0):
                                         try:
@@ -1046,48 +1077,30 @@ def compte():
                                             with open(chemin_pp,"rb") as fichier:
                                                 photo_profil = fichier.read()
                                             
-                                            user = User(nom,prenom,age,pseudo,mdp,photo_profil,rect_ellipse)
+                                            user = User(nom,prenom,age,pseudo,mdp,photo_profil,rect_pp = rect_ellipse)
+                                            print(user.nom)
                                             user.save_user()
+                                            print("he")
                                             connect = True
                                             creer_compte = False
                                             with open(chemin_pp,"wb") as fichier:
+                                                
                                                 try:
                                                     fichier.write(user.photo_profil)
                                                 except:
                                                     fichier.write(pp_base)
+                                            
                                             if check_save_con_data:
                                                 write_connection_tools(pseudo,mdp)
-                                            image_pp = pygame.image.load(chemin_pp)
-                                            image_pp = pygame.transform.smoothscale(image_pp,size_grand)
-                                        except:
-                                            pass
-                                    else:
-                                        invalid_mdp = True
-                                else:
-                                    n_pseudo = True
-                            else:   
-                                if zone == 0:                         
-                                    pseudo_ndispo = True
-                                else:
-                                    if look_mdp(1):
-                                        pseudo = dict_input[zone]["input_pseudo"]["input"]
-                                        mdp = dict_input[zone]["input_mdp"]["input_visible"]
-                                        try:
-                                            user = User.log_user(pseudo,mdp)
-                                            connect = True
-                                            with open(chemin_pp,"wb") as fichier:
-                                                try:
-                                                    fichier.write(user.photo_profil)
-                                                except:
-                                                    fichier.write(pp_base)
-                                            if check_save_con_data:
-                                                write_connection_tools(pseudo,mdp)
-                                            if user.photo_profil == None:
+                                            if user.photo_profil == pp_base:
                                                 image_pp = pygame.image.load(chemin_pp)
                                                 image_pp = pygame.transform.smoothscale(image_pp,size_grand)
                                             else:
-                                                print(user.rect_pp)
+                                                print(user)
+                                                print("user rect_pp: ",user.rect_pp)
                                                 rect_pp = user.rect_pp
+                                                if isinstance(rect_pp,pygame.Rect):
+                                                    rect_pp = Gerer_requete.separe_rect(user.rect_pp)
                                                 rect_pp = rect_pp.split(",")
                                                 rect_pp = [int(i) for i in rect_pp]
                                                 rect_pp = pygame.Rect(rect_pp)
@@ -1101,15 +1114,74 @@ def compte():
                                                 img_ = pygame.transform.smoothscale(img_, (new_width,new_height))
                                                 img_trans = resizeImage.rendre_transparent(img_,rect_pp)
                                                 surf2g = pygame.Surface(size_grand, pygame.SRCALPHA)
-                                                global surf_image2
                                                 surf_image2 = pygame.Surface(size_grand, pygame.SRCALPHA)
                                                 pygame.draw.ellipse(surf2g, (255, 255, 255), (0,0,*size_grand))
                                                 surf_image2.blit(surf2g, (0, 0))
                                                 surf_image2.fill((0,0,0,0))
                                                 surf_image2.blit(img_trans, (0, 0),rect_pp)
+                                        except Exception as e:
+                                            print("erreur :",e)
+                                            print(e.what())
+                                    else:
+                                        invalid_mdp = True
+                                else:
+                                    print("no pseudo")
+                                    n_pseudo = True
+                            else:   
+                                print("flop")
+                                if zone == 0:                         
+                                    pseudo_ndispo = True
+                                else:
+                                    print(zone)
+                                    if look_mdp(1):
+                                        pseudo = dict_input[zone]["input_pseudo"]["input"]
+                                        mdp = dict_input[zone]["input_mdp"]["input_visible"]
+                                        try:
+                                            user = User.log_user(pseudo,mdp)
+                                            connect = True
+                                            with open(chemin_pp,"wb") as fichier:
+                                                try:
+                                                    fichier.write(user.photo_profil)
+                                                except:
+                                                    fichier.write(pp_base)
+                                            if check_save_con_data:
+                                                write_connection_tools(pseudo,mdp)
+                                            if user.photo_profil == pp_base:
+                                                image_pp = pygame.image.load(chemin_pp)
+                                                image_pp = pygame.transform.smoothscale(image_pp,size_grand)
+                                            else:
+                                                print(user)
+                                                print("user rect_pp: ",user.rect_pp)
+                                                rect_pp = user.rect_pp
+                                                if isinstance(rect_pp,pygame.Rect):
+                                                    rect_pp = Gerer_requete.separe_rect(user.rect_pp)
+                                                rect_pp = rect_pp.split(",")
+                                                rect_pp = [int(i) for i in rect_pp]
+                                                rect_pp = pygame.Rect(rect_pp)
+                                                img_ = pygame.image.load(chemin_pp).convert_alpha()
+                                                old_width, old_height = img_.get_size()
+                                                # Définir la nouvelle largeur (ou hauteur)
+                                                new_width = 500
+                                                # Calculer la nouvelle hauteur (ou largeur) pour conserver le rapport d'aspect (produit en croix)
+                                                new_height = int(old_height * new_width / old_width)
+                                                # Redimensionner l'image
+                                                img_ = pygame.transform.smoothscale(img_, (new_width,new_height))
+                                                img_trans = resizeImage.rendre_transparent(img_,rect_pp)
+                                                surf2g = pygame.Surface(size_grand, pygame.SRCALPHA)
                                                 
+                                                surf_image2 = pygame.Surface(size_grand, pygame.SRCALPHA)
+                                                pygame.draw.ellipse(surf2g, (255, 255, 255), (0,0,*size_grand))
+                                                surf_image2.blit(surf2g, (0, 0))
+                                                surf_image2.fill((0,0,0,0))
+                                                surf_image2.blit(img_trans, (0, 0),rect_pp)
+                                        
                                         except userNonCharger:
                                             pas_correspondance = True
+                                        except Exception as e:
+                                            print("erreur :",e)
+                                                
+                                       
+                                        
                                     else:
                                         invalid_mdp = True
                         else:
@@ -1603,8 +1675,8 @@ def font(font_name,size,importer = False):
         return pygame.font.SysFont(font_name,size)
     return pygame.font.Font(font_name,size)
 
-fond_ecran = (210, 223, 228)
-bleu_s = (106,178,202)
+fond_ecran =  (210, 223, 228)
+bleu_s =(106,178,202)
 taille_origine = pygame.display.Info()
 print(taille_origine)
 w_origine = taille_origine.current_w

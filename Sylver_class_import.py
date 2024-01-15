@@ -1,6 +1,4 @@
-
-from math import exp
-import stat
+import pygame
 import tkinter.filedialog
 import tkinter as tk
 from typing import Self
@@ -76,10 +74,10 @@ class User:
         data = None
         try:
             connection = sql.connect(
-                host = "localhost",
-                user = "root",
+                host = env.get('HOST'),
+                user = env.get('USER'),
                 password  = env.get('SQL_MOT_DE_PASSE'),
-                db="sylver_service",
+                db=env.get('DB_NAME'),
                 auth_plugin='mysql_native_password')
             cursor = connection.cursor()
             request = f"SELECT COUNT(*) FROM tuto WHERE auteur = '{self.auteur}';"
@@ -96,23 +94,27 @@ class User:
             except:
                 raise noConnection("connection failed")
                 
-    def save_user(self) -> None:
+    def save_user(self):
         try:
             connection = sql.connect(
-                host = "localhost",
-                user = "root",
+                host = env.get('HOST'),
+                user = env.get('USER'),
                 password  = env.get('SQL_MOT_DE_PASSE'),
-                db="sylver_service",
+                db=env.get('DB_NAME'),
                 auth_plugin='mysql_native_password')
             cursor = connection.cursor()
             request = """ INSERT INTO utilisateur (`nom`, `prenom`, `tuto_transmis`,`photo_profil`, `age`,`pseudo`,`mot_de_passe`,`rect_photo_profil`)
                           VALUES (%s,%s,%s,%s,%s,%s,%s,%s);
                         """
-            infos = (self.nom,self.prenom,self.tuto_transmis,self.photo_profil,self.age,self.pseudo,self.mdp,self.rect_pp)
+            if isinstance(self.rect_pp,pygame.Rect):
+                rect_pp = Gerer_requete.separe_rect(self.rect_pp)
+            else:
+                rect_pp = None
+            infos = (self.nom,self.prenom,self.tuto_transmis,self.photo_profil,self.age,self.pseudo,self.mdp,rect_pp)
             cursor.execute(request,infos)            
             connection.commit()
         except sql.Error as err:
-            print(err)
+            print(err,"wesh")
         finally:
             try:
                 if connection.is_connected():
@@ -148,11 +150,11 @@ class User:
         print("h")
         try:
             connection = sql.connect(
-                    host = "localhost",
-                    user = "root",
-                    password  = env.get('SQL_MOT_DE_PASSE'),
-                    db="sylver_service",
-                    auth_plugin='mysql_native_password')
+                host = env.get('HOST'),
+                user = env.get('USER'),
+                password  = env.get('SQL_MOT_DE_PASSE'),
+                db=env.get('DB_NAME'),
+                auth_plugin='mysql_native_password')
             cursor = connection.cursor()
             request = f"UPDATE utilisateur SET `{element}` = %s WHERE pseudo = %s;"
             infos = (Nouvelle_value,self.pseudo)
@@ -175,10 +177,10 @@ class User:
     def log_user(pseudo,mdp):
         try:
             connection = sql.connect(
-                host = "localhost",
-                user = "root",
+                host = env.get('HOST'),
+                user = env.get('USER'),
                 password  = env.get('SQL_MOT_DE_PASSE'),
-                db="sylver_service",
+                db=env.get('DB_NAME'),
                 auth_plugin='mysql_native_password')
             cursor = connection.cursor()
             request =f"SELECT * FROM utilisateur WHERE pseudo = '{pseudo}'"
@@ -202,20 +204,20 @@ class User:
         disponible = True
         try:
             connection = sql.connect(
-                host = "localhost",
-                user = "root",
+                host = env.get('HOST'),
+                user = env.get('USER'),
                 password  = env.get('SQL_MOT_DE_PASSE'),
-                db="sylver_service",
+                db=env.get('DB_NAME'),
                 auth_plugin='mysql_native_password')
             cursor = connection.cursor()
             request = """ SELECT pseudo FROM utilisateur;
                         """
             cursor.execute(request)
             all_pseudo = cursor.fetchall()
-            print(all_pseudo)
-            if (pseudo,) in all_pseudo:
+            all_pseudo = [i.lower() for i in all_pseudo]
+            print("pseudo :",all_pseudo)
+            if (pseudo.lower(),) in all_pseudo:
                 disponible = False
-            connection.commit()
         except sql.Error as err:
             print(err)
         finally:
@@ -248,12 +250,11 @@ class User:
         m = None
         try:
             connection = sql.connect(
-                    host = "localhost",
-                    user = "root",
-                    password  = env.get('SQL_MOT_DE_PASSE'),
-                    db="sylver_service",
-                    auth_plugin='mysql_native_password'
-                    )
+                host = env.get('HOST'),
+                user = env.get('USER'),
+                password  = env.get('SQL_MOT_DE_PASSE'),
+                db=env.get('DB_NAME'),
+                auth_plugin='mysql_native_password')
             cursor = connection.cursor()
             request = "SELECT COUNT(*) FROM utilisateur"
             cursor.execute(request)
@@ -274,6 +275,10 @@ class Gerer_requete(User):
         super().__init__(prenom=user.prenom,nom = user.nom,age = user.age,pseudo = user.pseudo,
                          mdp = user.mdp,photo_profil=user.photo_profil, tuto_transmis= user.tuto_transmis)       
     
+    @staticmethod
+    def separe_rect(rect):
+        return f"{rect[0]},{rect[1]},{rect[2]},{rect[3]}"
+    
     def save_tuto(self,doc = None, Text = "",nom_tuto= "",experiment = False) -> None:
         current_date = datetime.datetime.now()
         current_date = current_date.strftime("%Y-%m-%d")
@@ -285,10 +290,10 @@ class Gerer_requete(User):
         file = Doc(doc).get_extension()
         try:
             connection = sql.connect(
-                host = "localhost",
-                user = "root",
+                host = env.get('HOST'),
+                user = env.get('USER'),
                 password  = env.get('SQL_MOT_DE_PASSE'),
-                db="sylver_service",
+                db=env.get('DB_NAME'),
                 auth_plugin='mysql_native_password')
             cursor = connection.cursor()
             if doc != None:
@@ -318,10 +323,10 @@ class Gerer_requete(User):
             data_recup = [None]
             
             connection = sql.connect(
-                host = "localhost",
-                user = "root",
+                host = env.get('HOST'),
+                user = env.get('USER'),
                 password  = env.get('SQL_MOT_DE_PASSE'),
-                db="sylver_service",
+                db=env.get('DB_NAME'),
                 auth_plugin='mysql_native_password')
             print(connection)
             cursor = connection.cursor()
@@ -386,4 +391,4 @@ class Gerer_requete(User):
     
                 
 if __name__ == "__main__":
-   pass
+    pass
