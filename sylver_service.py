@@ -620,7 +620,7 @@ def menu():
         mouse = pygame.mouse.get_pos()
         screen.fill(fond_ecran)
         if processing:
-            draw_text("Processing...", x = w_origine/2 - font_40.size("Processing...")[0]/2, y = h_origine/2,size=40)        
+            draw_text("Chargement...", x = w_origine/2 - font_40.size("Chargement...")[0]/2, y = h_origine/2,size=40)        
         surface_rechercher.fill((0,0,0))
         pygame.draw.rect(surface_rechercher,(255,255,255),(0,0,w_origine - 400,70),2)
         mouse_click = pygame.mouse.get_pressed()[0]
@@ -746,8 +746,10 @@ def menu():
         
 def relative_at(rect : pygame.Rect,relative : pygame.Rect) -> pygame.Rect:
     return pygame.Rect(rect.x - relative.x,rect.y - relative.y,rect.w,rect.h)
-         
+   
+surf_image2 = None      
 def compte():
+    global surf_image2
     global connect
     def take_file():
         pass
@@ -792,13 +794,18 @@ def compte():
     rect_editer_photo.w = font_20.size(text_edit)[0]
     rect_editer_photo.h = font_20.size(text_edit)[1]
     chemin_pp = os.path.join("img_center","photo_profil_user.png")
+    global pp_base
     with open(os.path.join("img_base","photo_profil_user.png"),"rb") as fichier:
         pp_base = fichier.read()
         
     with open(chemin_pp,"wb") as fichier:
         fichier.write(pp_base)
+    global image_pp
     image_pp = pygame.image.load(chemin_pp)
-    image_pp = pygame.transform.smoothscale(image_pp,size)
+    if not connect:
+        image_pp = pygame.transform.smoothscale(image_pp,size)
+    else:
+        image_pp = pygame.transform.smoothscale(image_pp,size_grand)
     surf2 = pygame.Surface(size, pygame.SRCALPHA)
     surf3 = pygame.Surface(size, pygame.SRCALPHA)
     surf2g = pygame.Surface(size_grand,pygame.SRCALPHA)
@@ -959,11 +966,12 @@ def compte():
     pp_choisi = False
     rect_ellipse = None
     global user
-    surf_image2 = None
+    
     image_retour = pygame.image.load("Image/Icone_retour.png")
     image_retour = pygame.transform.smoothscale(image_retour,(rect_goback.w,rect_goback.h))
+    zone = 0 
     while continuer:
-        zone = 0 if creer_compte else 1
+        
         mouse = pygame.mouse.get_pos()
         mouse_click = pygame.mouse.get_pressed()[0]
         screen.fill(fond_ecran)
@@ -1022,6 +1030,8 @@ def compte():
                     if mouse_click:
                         connect = False
                         del user
+                        image_pp = pygame.transform.smoothscale(image_pp,size)
+                        element_page_user = False
                        
                                           
                 elif rect_postimg.collidepoint(mouse):
@@ -1129,8 +1139,10 @@ def compte():
                                     n_pseudo = True
                             else:   
                                 print("flop")
+                                print(zone)
                                 if zone == 0:                         
                                     pseudo_ndispo = True
+                                
                                 else:
                                     print(zone)
                                     if look_mdp(1):
@@ -1768,6 +1780,22 @@ while continuer:
     mouse = pygame.mouse.get_pos()    
     fond_nav.fill((0,0,0))
     screen.blit(fond_nav,(0,0))
+    #pp user
+    if connect:
+        size_pp_user = (75,75)
+        x_pp,y_pp = w_origine/2 - font_chivo.size(accueil)[0]/2 - size_pp_user[0] - 10,fond_nav.get_height() - size_pp_user[1] - 10
+        if user.photo_profil == pp_base:
+            
+            surf1 = pygame.Surface(size_pp_user,pygame.SRCALPHA)
+            surf2 = pygame.Surface(size_pp_user,pygame.SRCALPHA)
+            pygame.draw.ellipse(surf1, (255, 255, 255), (0,0,*size_pp_user))
+            surf2.blit(surf1,(0,0))
+            photo_profil_user = pygame.transform.smoothscale(image_pp,size_pp_user)
+            surf2.blit(photo_profil_user, (0, 0), special_flags=pygame.BLEND_RGBA_MIN)
+            screen.blit(surf2,(x_pp,y_pp))
+        else:
+            image_pp_user = pygame.transform.smoothscale(surf_image2,size_pp_user)
+            screen.blit(image_pp_user,(x_pp,y_pp))
     draw_text(accueil_complement, size = 14, color=blanc, x = w_origine/2 - font_chivo_14.size(accueil_complement)[0]/2,
               y = 5, importer= True, font=chivo_titre)
     draw_text(accueil, size = 72,color = blanc, x = w_origine/2 - font_chivo.size(accueil)[0]/2, y = fond_nav.get_height() - font_chivo.size(accueil)[1], font = chivo_titre,importer = True)

@@ -57,12 +57,12 @@ class User:
     
     @staticmethod
     def confirm_close() -> bool:
-        
         ans = tk.messagebox.askyesno(title = "Exit", message = "Tu veux vraiment nous quitter :(")
         return ans
+    
     @staticmethod
     def confirm_open(open = "Word"):
-        ans = tk.messagebox.askyesno(title = "Exit", message = f"Cela ouvre {open}, t'es d'accord ?")
+        ans = tk.messagebox.askyesno(title = "Exit", message = f"Es-tu pour l'ouverture de {open} ?")
         return ans
     
     @staticmethod
@@ -202,6 +202,7 @@ class User:
     @staticmethod
     def verifier_pseudo(pseudo)->bool:
         disponible = True
+        print("in")
         try:
             connection = sql.connect(
                 host = env.get('HOST'),
@@ -210,16 +211,20 @@ class User:
                 db=env.get('DB_NAME'),
                 auth_plugin='mysql_native_password')
             cursor = connection.cursor()
-            request = """ SELECT pseudo FROM utilisateur;
+            request = """ SELECT pseudo FROM utilisateur
                         """
             cursor.execute(request)
             all_pseudo = cursor.fetchall()
-            all_pseudo = [i.lower() for i in all_pseudo]
+            print(all_pseudo)
+            print(pseudo)
             print("pseudo :",all_pseudo)
-            if (pseudo.lower(),) in all_pseudo:
-                disponible = False
+            for pseudo_ in all_pseudo:
+                if pseudo_[0] == pseudo:
+                    disponible = False
         except sql.Error as err:
             print(err)
+        except Exception as e:
+            print(e)
         finally:
             try:
                 if connection.is_connected():
@@ -245,27 +250,7 @@ class User:
         else:
             raise noFileException("joue meme pas avec mes nerfs toi")        
     
-    @staticmethod
-    def get_r_id():
-        m = None
-        try:
-            connection = sql.connect(
-                host = env.get('HOST'),
-                user = env.get('USER'),
-                password  = env.get('SQL_MOT_DE_PASSE'),
-                db=env.get('DB_NAME'),
-                auth_plugin='mysql_native_password')
-            cursor = connection.cursor()
-            request = "SELECT COUNT(*) FROM utilisateur"
-            cursor.execute(request)
-            m = cursor.fetchone()[0]
-            m += 1
-        except sql.Error as err:
-            print(err)
-        finally:
-            if connection.is_connected():
-                connection.close()
-        return m    
+
         
 #methode pour fichier word, pdt. juste les lires les transfo en bytes et les stocker. reflechir a une maniere de supprimer les tutos depuis sql
 class Gerer_requete(User):   

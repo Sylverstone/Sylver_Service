@@ -13,7 +13,7 @@ build_options = {
         ("../img_base","img_base"),
         ("../img_center","img_center"),
         ("../font","font"),
-        ("../Ressource","Ressoure"),
+        ("../Ressource","Ressource"),
         ("../Resize_image.py","Resize_image.py"),
         ("../.env", ".env"),
     ],
@@ -22,7 +22,7 @@ build_options = {
 # Set up the setup function
 setup(
     name="sylver_service",
-    version='v0.1.1',
+    version='v0.1.2',
     options={"build_exe": build_options},
     author = "by Sylvio Pelage-Maxime",
     executables=executables,
