@@ -101,13 +101,13 @@ def calcul_height(text, all_text : list,font : pygame.font):
         font (pygame.font): la police attribué au texte
 
     Returns:
-        _type_: _description_
+        float: hauteur du texte
     """
     return font.size(text)[1] * len(all_text)
     
     
 def draw_line(line :int,coupage : list,text :str,size : int,contener : pygame.Surface,font : str ,fontz : pygame.font,importer : bool = True,x : float=0,y : float=0):
-    """_summary_
+    """Fonction permmettant d'afficher un texte contenant plusieurs ligne grace a son coupage de texte
 
     Args:
         line (int): nombre de line utilisé
@@ -200,13 +200,14 @@ def ecrire_tuto(user : User):
     image_retour = pygame.image.load("Image/Icone_retour.png")
     image_retour = pygame.transform.smoothscale(image_retour,(rect_goback.w,rect_goback.h))
     go_back = False
+    #boucle principale
     while continuer:
         screen.fill((100,100,100))
         fond_nav.fill((0,0,0))   
      
         mouse = pygame.mouse.get_pos()
         mouse_click = pygame.mouse.get_pressed()[0]
-        
+        #boucle evenementielle
         for event in pygame.event.get():
             if rect_goback.collidepoint(mouse):
                 if mouse_click:
@@ -341,7 +342,17 @@ def ecrire_tuto(user : User):
             break
         pygame.display.flip()
         
-def page_info(id_ = 0,text = None,nom_projet = None,auteur = None,date = None, id_tuto = None):
+def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.datetime = None, id_tuto : int = None):
+    """Fonction permettant d'afficher un texte au sujet de Sylver_Service, cette fonction sert aussi a afficher un tuto
+
+    Args:
+        id_ (int): Id permettant d'identifier dans quel but est utiliser la fonctio . Defaults to 0.
+        text (str, optional): texte du tuto a afficher dans la fonction. Defaults to "".
+        nom_projet (str, optional): Le nom du tuto a afficher. Defaults to "".
+        auteur (str, optional): Le nom de l'auteur du tuto. Defaults to "".
+        date (datetime.datetime, optional): La date de transmission du tuto. Defaults to None.
+        id_tuto (int, optional): Id du tuto selectionner. Defaults to None.
+    """
     global continuer
     global fond_nav
     rect_goback = pygame.Rect(5,5,50,50)
@@ -411,6 +422,7 @@ def page_info(id_ = 0,text = None,nom_projet = None,auteur = None,date = None, i
         
 
 def menu():
+    """Fonction affichant le menu recherche de l'application"""
     #ecrire_tuto(None)
     global display       
     global processing
@@ -434,6 +446,11 @@ def menu():
     flop_de_recherche = False
     
     def display_result(num):
+        """Fonction permettant d'afficher le résultat d'une recherche précise
+
+        Args:
+            num (int): nombre de résultat obtenu
+        """
         global access,zone,all_case_data,dict_rect_fleche,add_fleche,can_add,have_supprime
         #pygame.event.clear()        
         text = f"{num} résultat.s pour cette recherche !" if not flop_de_recherche else "OH :() une erreur est survenue"
@@ -521,6 +538,11 @@ def menu():
             can_add = False         
     
     def start_tuto(data):
+        """Fonction permettant de lancer le tuto
+
+        Args:
+            data (dict): donnée au sujet du tuto
+        """
         text = data["contenu"]
         auteur = data["auteur"]
         date = data["date"]
@@ -541,11 +563,10 @@ def menu():
             Gerer_requete.demarrer_fichier(doc = doc, ext = file)
             
     def research(data):
-        """        global detail,can_add
-        can_add = True
-        detail = Gerer_requete.rechercher_data(nom_auteur = data["nom_auteur"], nom_tuto = data["nom_projet"])
-        num_resultat = len(detail)
-        return num_resultat
+        """Fonction effectuant la recherche
+
+        Args:
+            data (dict): donnée au sujet du tuto selectionner
         """
         global processing
         processing = True
@@ -613,7 +634,8 @@ def menu():
     text_rechercher = "-- Recherche par --"
     rect_aide = pygame.Rect(w_origine - 70, 15, 50,50)
     image_aide = pygame.image.load("image/icone_interrogation.png")
-    image_aide = pygame.transform.smoothscale(image_aide,(rect_aide.w,rect_aide.h))    
+    image_aide = pygame.transform.smoothscale(image_aide,(rect_aide.w,rect_aide.h))
+    #boucle principale
     while continuer:
         clock.tick(120)
         dict_recherche = {"nom_projet" : None,"nom_auteur" : None}
@@ -624,6 +646,7 @@ def menu():
         surface_rechercher.fill((0,0,0))
         pygame.draw.rect(surface_rechercher,(255,255,255),(0,0,w_origine - 400,70),2)
         mouse_click = pygame.mouse.get_pressed()[0]
+        #boucle evenementielle
         for event in pygame.event.get():
             if active:
                 if event.type == pygame.KEYDOWN:
@@ -634,14 +657,10 @@ def menu():
                     elif event.key == pygame.K_RETURN:
                         recherche_type = liste_rech[indice_type+2]
                         dict_recherche[recherche_type] = input_host
+                        #thread qui fait la recherche en paralelle
                         th = threading.Thread(target = research,args=(dict_recherche,),daemon= True)
                         if not th.is_alive():
                             th.start()                        
-                        """
-                        num_resultat = research(dict_recherche)
-                        access = True
-                        display = True
-                        """
                     elif event.key == pygame.K_ESCAPE:
                         pass
                     elif event.key == pygame.K_TAB:
@@ -702,7 +721,8 @@ def menu():
                 take_time = True
             time = int(pygame.time.get_ticks() - time_start)/1000
             surface_rechercher.blit(barre_input, (5 + input_research.size(input_host)[0],2 + input_research.size(input_host)[1]/2))
-            if int(time) % 2 == 0:
+            #permet de faire clignoter la petite barre
+            if int(time) % 2 == 0 and int(time) != 0:
                 surface_rechercher.fill((0,0,0), (5 + input_research.size(input_host)[0],2 + input_research.size(input_host)[1]/2,2,25))
         else:
             time = 0
@@ -745,16 +765,33 @@ def menu():
         
         
 def relative_at(rect : pygame.Rect,relative : pygame.Rect) -> pygame.Rect:
+    """Fonction permettant d'avoir le rect relatif d'un element a un autre
+
+    Args:
+        rect (pygame.Rect): Rect de l'element ciblé
+        relative (pygame.Rect): Rect du referentiel
+
+    Returns:
+        pygame.Rect: Rect relatif de rect a relative
+    """
     return pygame.Rect(rect.x - relative.x,rect.y - relative.y,rect.w,rect.h)
    
 surf_image2 = None      
 def compte():
+    """Fonction affichant la partie compte de l'application"""
     global surf_image2
     global connect
-    def take_file():
-        pass
 
-    def look_valid(zone):
+
+    def look_valid(zone) -> bool:
+        """Fonction qui Verifie si les input remplit le son correctement
+
+        Args:
+            zone (int): Precise la zone dans laquel se trouve l'utilisateur
+
+        Returns:
+            bool: Valider des input ou non
+        """
         for key,value in dict_input[zone].items():
             if key != "input_mdp":
                 if len(value["input"]) <= 0 or value["input"] == value["default"]:
@@ -765,13 +802,32 @@ def compte():
         return True
     
     def look_mdp(zone):
+        """Verifie si le mot de passe est suffisament grand
+
+        Args:
+            zone (int): Precise la zone dans laquel se trouve l'utilisateur
+
+        Returns:
+            bool:  Precision  de si le mdp est suffisament grand
+        """
         return len(dict_input[zone]["input_mdp"]["input_visible"]) >= dict_input[zone]["input_mdp"]["min"]
         
     def write_connection_tools(pseudo,mdp):
+        """Fonction ecrivant les données de connection dans un fichier pour "sauvegarder" l'utilisateur
+
+        Args:
+            pseudo (str): Pseudo de l'utilisateur
+            mdp (str): mot de passe de l'utilisateur
+        """
         with open("./Ressource/compte_connecter.txt","w") as fichier:
             fichier.write(f"{pseudo}\n{mdp}")
     
     def look_for_connection_tools():
+        """Fonction qui verifie si des données d'utilisateur sont déjà enregistrez
+
+        Returns:
+            bool: Precision de si il y a un utilisateur connecter ou non
+        """
         with open("./Ressource/compte_connecter.txt", "r") as fichier:
             return len(fichier.read().splitlines()) != 0
         
@@ -795,17 +851,20 @@ def compte():
     rect_editer_photo.h = font_20.size(text_edit)[1]
     chemin_pp = os.path.join("img_center","photo_profil_user.png")
     global pp_base
+    #pp_base est le bit de la photo_de_profil basique de l'app
     with open(os.path.join("img_base","photo_profil_user.png"),"rb") as fichier:
         pp_base = fichier.read()
         
     with open(chemin_pp,"wb") as fichier:
         fichier.write(pp_base)
     global image_pp
+    #image_pp est la photo_de_profil basique de l'app
     image_pp = pygame.image.load(chemin_pp)
     if not connect:
         image_pp = pygame.transform.smoothscale(image_pp,size)
     else:
         image_pp = pygame.transform.smoothscale(image_pp,size_grand)
+    #ces ensembles de surface permette de faire une photo de profil en rond
     surf2 = pygame.Surface(size, pygame.SRCALPHA)
     surf3 = pygame.Surface(size, pygame.SRCALPHA)
     surf2g = pygame.Surface(size_grand,pygame.SRCALPHA)
@@ -834,6 +893,7 @@ def compte():
     rect_input_mdp = pygame.Rect(rect_host.x + rect_host.w - 205, rect_input_pseudo.y +70, 200,rect_input_nom.h)
     rect_input_pseudo2 = pygame.Rect(0, rect_input_nom.y,rect_input_nom.w, rect_input_nom.h)
     rect_input_mdp2 = pygame.Rect(0, rect_input_prenom.y, 200,rect_input_nom.h)
+    #dictionnaire qui gère toute les inputs
     dict_input = [
                 {
                 "input_nom" : {"can_space" : True,"max" : 20, "input" : 'Nom', "default" : "Nom", "active" : False,"coupage" : 0,"depasse" : False,"rect_w" : rect_input_nom.w},
@@ -857,6 +917,7 @@ def compte():
         dict_input[1]["input_mdp"]["input_visible"] = con_mdp
         dict_input[1]["input_mdp"]["input_cache"] = "*"*len(con_mdp)
         
+    #tout les rects dispo dans les inputs
     all_rect = [
             [rect_input_nom,rect_input_prenom,rect_input_pseudo,rect_input_age,rect_input_mdp],
             [rect_input_pseudo2,rect_input_mdp2]
@@ -1783,7 +1844,7 @@ while continuer:
     #pp user
     if connect:
         size_pp_user = (75,75)
-        x_pp,y_pp = w_origine/2 - font_chivo.size(accueil)[0]/2 - size_pp_user[0] - 10,fond_nav.get_height() - size_pp_user[1] - 10
+        x_pp,y_pp = 20,fond_nav.get_height() - size_pp_user[1] - 10
         if user.photo_profil == pp_base:
             
             surf1 = pygame.Surface(size_pp_user,pygame.SRCALPHA)
@@ -1843,7 +1904,7 @@ while continuer:
                   y = rect_choose.get_height()/2 - font(csm,25).size(proposition[index])[1]/2,size = 25)
         screen.blit(rect_choose,pos[index])
         rect_dispo.append(pygame.Rect(pos[index][0],pos[index][1],w,l))
-    draw_text(text_choose,color = blanc, x = 5)
+    draw_text(text_choose,color = blanc, x = 5, y = h_origine - 25)
     pygame.display.flip()
 pygame.quit()
 sys.exit()
