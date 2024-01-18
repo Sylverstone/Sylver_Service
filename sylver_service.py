@@ -3,22 +3,7 @@ import pygame,os,datetime,sys,threading,keyboard,time,pyperclip
 from Sylver_class_import import Gerer_requete,User,noFileException, userNonCharger, noConnection
 from Resize_image import AnnuleCropPhoto, resizeImage
 
-"""
-os.environ['SDL_VIDEO_CENTERED'] = '1'
-pygame.init()
-pygame.mixer.init()
-pygame.display.init()
-pygame.font.init()
-pygame.key.set_repeat(200,50)
-
-# Obtenir la résolution de l'écran
-info = pygame.display.Info()
-width, height = info.current_w, info.current_h
-
-# Créer la fenêtre Pygame en plein écran et à la résolution native de l'écran
-screen = pygame.display.set_mode((width, height), pygame.FULLSCREEN | pygame.HWSURFACE | pygame.DOUBLEBUF)
-print(screen.get_rect())
-"""
+#reglage de l'ecran
 os.environ ['SDL_VIDEO_CENTERED'] = '1'
 pygame.init()
 pygame.mixer.init()
@@ -451,6 +436,8 @@ def menu():
         Args:
             num (int): nombre de résultat obtenu
         """
+        global continue_charging
+        continue_charging = False
         global access,zone,all_case_data,dict_rect_fleche,add_fleche,can_add,have_supprime
         #pygame.event.clear()        
         text = f"{num} résultat.s pour cette recherche !" if not flop_de_recherche else "OH :() une erreur est survenue"
@@ -528,8 +515,7 @@ def menu():
                 if len(use_list) > 3:
                     screen.blit(surface,(liste_indicex[index],liste_indicey[index]))
                 else:
-                    screen.blit(surface,(w_origine/2 - long_case/2, liste_indicey[index]))
-                
+                    screen.blit(surface,(w_origine/2 - long_case/2, liste_indicey[index]))                
                 pygame.draw.rect(screen,(255,255,255),rect_case,2)
                 case_data = {"nom_projet" : nom_projet, "contenu" : text, "auteur" : auteur, "date" : date,"rect" : rect_case,"doc" : doc,"id" : id_,"extension" : file}
                 if can_add:
@@ -568,6 +554,9 @@ def menu():
         Args:
             data (dict): donnée au sujet du tuto selectionner
         """
+        global continue_charging 
+        continue_charging = True
+             
         global processing
         processing = True
         global have_supprime
@@ -576,17 +565,22 @@ def menu():
         can_add = True
         access = False
         try:
+            thread_anim = threading.Thread(target = make_chargement,args = (last_screen,"Chargement",200,),daemon= True)
+            thread_anim.start()
             detail = Gerer_requete.rechercher_data(nom_auteur = data["nom_auteur"], nom_tuto = data["nom_projet"])
+            thread_anim.join(timeout=0.1)
             processing = False
+            continue_charging = None
+           
             num_resultat = len(detail)
             access = True
             display = True
         except:
             flop_de_recherche = True
-            print("flop")
             processing = False
             access = False
             display = True
+        
         
   
             
@@ -640,9 +634,8 @@ def menu():
         clock.tick(120)
         dict_recherche = {"nom_projet" : None,"nom_auteur" : None}
         mouse = pygame.mouse.get_pos()
-        screen.fill(fond_ecran)
-        if processing:
-            draw_text("Chargement...", x = w_origine/2 - font_40.size("Chargement...")[0]/2, y = h_origine/2,size=40)        
+        screen.fill(fond_ecran)               
+             
         surface_rechercher.fill((0,0,0))
         pygame.draw.rect(surface_rechercher,(255,255,255),(0,0,w_origine - 400,70),2)
         mouse_click = pygame.mouse.get_pressed()[0]
@@ -657,10 +650,9 @@ def menu():
                     elif event.key == pygame.K_RETURN:
                         recherche_type = liste_rech[indice_type+2]
                         dict_recherche[recherche_type] = input_host
-                        #thread qui fait la recherche en paralelle
-                        th = threading.Thread(target = research,args=(dict_recherche,),daemon= True)
-                        if not th.is_alive():
-                            th.start()                        
+                        th = threading.Thread(target=research, args=(dict_recherche,), daemon= True)
+                        th.start()
+                        th.join()
                     elif event.key == pygame.K_ESCAPE:
                         pass
                     elif event.key == pygame.K_TAB:
@@ -760,6 +752,7 @@ def menu():
                   size = 30)
         if go_back:
             break
+        last_screen = screen.copy()
         pygame.display.update(rect_surf_rechercher)
         pygame.display.flip()
         
@@ -775,14 +768,65 @@ def relative_at(rect : pygame.Rect,relative : pygame.Rect) -> pygame.Rect:
         pygame.Rect: Rect relatif de rect a relative
     """
     return pygame.Rect(rect.x - relative.x,rect.y - relative.y,rect.w,rect.h)
-   
-surf_image2 = None      
+
+global make_chargement
+
+def make_chargement(last_screen,text = "Chargement",delay = 200,animation = 2):
+        """Fonction qui fait un chargement animer
+
+        Args:
+            text (str, optional): text a animer. Defaults to "Chargement...".
+        """
+        global continue_charging
+        
+        try:
+            if animation == 1:
+                print(continue_charging)
+                screen.blit(last_screen,(0,0))
+                pygame.display.flip()
+                nb_point = 0
+                
+                while continue_charging:
+                    nb_point += 1     
+                    point = "."*((nb_point %4))                                                
+                    rect_a_update = pygame.Rect(w_origine/2 - font(csm,20).size(text)[0]/2,h_origine - 40,200,
+                                                50)
+                    screen.fill(fond_ecran,rect_a_update)
+                    
+                    draw_text(text + point,x = w_origine/2 - font(csm,20).size(text)[0]/2, y = h_origine - 40)
+                    pygame.display.update(rect_a_update)        
+                    pygame.time.delay(delay)     
+            elif animation == 2:
+                text += "..." if not "..." in text else ""
+                ensemble_text = [letter for letter in text]
+                print(ensemble_text)
+                screen.blit(last_screen,(0,0))
+                nb_caractere = len(ensemble_text)
+                texte = ""
+                caractere = 0
+                while continue_charging:
+                    
+                    if caractere % nb_caractere == 0:
+                        texte = ""
+                    texte += ensemble_text[caractere % nb_caractere]
+                    rect_a_update = pygame.Rect(w_origine/2 - font(csm,20).size(text)[0]/2,h_origine - 40,200,
+                                                50)
+                    screen.fill(fond_ecran,rect_a_update)
+                    caractere += 1
+                    draw_text(texte,x = w_origine/2 - font(csm,20).size(texte)[0]/2, y = h_origine - 40)
+                    pygame.display.update(rect_a_update)        
+                    pygame.time.delay(delay)             
+        except Exception as e:
+            print("erreur : ",e)
+            
+            
+surf_image2 = None 
+continue_charging = None     
 def compte():
     """Fonction affichant la partie compte de l'application"""
     global surf_image2
     global connect
-
-
+    global continue_charging
     def look_valid(zone) -> bool:
         """Fonction qui Verifie si les input remplit le son correctement
 
@@ -883,6 +927,7 @@ def compte():
     rect_editer_photo.y = y_photo + 130
     Surface_host = pygame.Surface((rect_host.w,rect_host.h),pygame.SRCALPHA)
     #rect des inputs
+    
     rect_input_nom = pygame.Rect(rect_host.x + 10, rect_editer_photo.y + 30,rect_host.w/2 +50,30)
     rect_input_age = pygame.Rect(rect_input_nom.x + rect_input_nom.w + 50 - 20,
                                     rect_input_nom.y,
@@ -1123,8 +1168,6 @@ def compte():
                         visible = not visible
                         icone_mdp = pygame.image.load("image/image_mdp_visu.png").convert_alpha() if not visible else pygame.image.load("image/image_mdp_cacher.png").convert_alpha()
                         icone_mdp = pygame.transform.smoothscale(icone_mdp,(rect_visible.w,rect_visible.h))
-                        print(rect_visible.w,rect_visible.h)                        
-                        print(icone_mdp.get_height())
                 elif rect_editer_photo.collidepoint(mouse):
                     color_edit = (0,200,0)
                     if mouse_click:
@@ -1132,11 +1175,13 @@ def compte():
                 else:
                     color_edit = (0,0,200)
                 if btn_submit.collidepoint(mouse):
+                    
                     if mouse_click:
+                        continue_charging = True
+                        th = threading.Thread(target = make_chargement,args = (last_screen,"Chargement",200,),daemon= True)
+                        th.start()    
                         if look_valid(zone):
-                            print("verif")
                             if User.verifier_pseudo(dict_input[zone]["input_pseudo"]["input"]):
-                                print("reussi")
                                 if zone == 0:
                                     if look_mdp(0):
                                         try:
@@ -1146,29 +1191,23 @@ def compte():
                                             pseudo = dict_input[0]["input_pseudo"]["input"]
                                             mdp = dict_input[0]["input_mdp"]["input_visible"]
                                             with open(chemin_pp,"rb") as fichier:
-                                                photo_profil = fichier.read()
-                                            
-                                            user = User(nom,prenom,age,pseudo,mdp,photo_profil,rect_pp = rect_ellipse)
-                                            print(user.nom)
-                                            user.save_user()
-                                            print("he")
+                                                photo_profil = fichier.read()                                            
+                                            user = User(nom,prenom,age,pseudo,mdp,photo_profil,rect_pp = rect_ellipse)                                         
+                                                                        
+                                            user.save_user() 
                                             connect = True
                                             creer_compte = False
-                                            with open(chemin_pp,"wb") as fichier:
-                                                
+                                            with open(chemin_pp,"wb") as fichier:                                                
                                                 try:
                                                     fichier.write(user.photo_profil)
                                                 except:
-                                                    fichier.write(pp_base)
-                                            
+                                                    fichier.write(pp_base)                                            
                                             if check_save_con_data:
                                                 write_connection_tools(pseudo,mdp)
                                             if user.photo_profil == pp_base:
                                                 image_pp = pygame.image.load(chemin_pp)
                                                 image_pp = pygame.transform.smoothscale(image_pp,size_grand)
                                             else:
-                                                print(user)
-                                                print("user rect_pp: ",user.rect_pp)
                                                 rect_pp = user.rect_pp
                                                 if isinstance(rect_pp,pygame.Rect):
                                                     rect_pp = Gerer_requete.separe_rect(user.rect_pp)
@@ -1199,17 +1238,20 @@ def compte():
                                     print("no pseudo")
                                     n_pseudo = True
                             else:   
-                                print("flop")
-                                print(zone)
                                 if zone == 0:                         
                                     pseudo_ndispo = True
                                 
                                 else:
-                                    print(zone)
                                     if look_mdp(1):
+                                           
+                                        print("here")
                                         pseudo = dict_input[zone]["input_pseudo"]["input"]
                                         mdp = dict_input[zone]["input_mdp"]["input_visible"]
                                         try:
+                                            
+                                            
+                                            
+                                                 
                                             user = User.log_user(pseudo,mdp)
                                             connect = True
                                             with open(chemin_pp,"wb") as fichier:
@@ -1259,6 +1301,7 @@ def compte():
                                         invalid_mdp = True
                         else:
                             invalid_champ = True
+                        continue_charging = False
                 ################################################################ Système de l'input #################################################################     
                 if not connect:       
                     i = 0         
