@@ -1,8 +1,7 @@
-from concurrent.futures import thread
+from http.client import TOO_MANY_REQUESTS
 import pygame
 import tkinter.filedialog
 import tkinter as tk
-from typing import Self
 import mysql.connector as sql
 import dotenv,os,datetime,sys,threading
 
@@ -52,6 +51,7 @@ def draw_text(text, font = "Comic Sans Ms", color = (0,0,0), x = 0, y = 0,conten
         :param 5: coordonne y ou le dessiner
         :CU: arg 1 est un str, arg 2 est de type font.FONT ou font.SysFont, arg 3 est un rbg, arg 4 et 5 sont des int
     """
+    w_origine = contener.get_rect()[2]
     text = str(text) #transformer le texte en str 
     all_text = text.split("\n")
     if not importer:
@@ -60,6 +60,8 @@ def draw_text(text, font = "Comic Sans Ms", color = (0,0,0), x = 0, y = 0,conten
         font_ = pygame.font.Font(font,size)
     #boucle pour afficher tout les textes de all_text
     for enum,text in enumerate(all_text):
+        if center_multi_line:
+            x = w_origine/2 - font_.size(text)[0]/2
         if ombre:
             text_ = font_.render(str(text), True, (0,0,0))            
             contener.blit(text_, (x+2,y+(size+2)*enum))
@@ -67,35 +69,53 @@ def draw_text(text, font = "Comic Sans Ms", color = (0,0,0), x = 0, y = 0,conten
         contener.blit(text_, (x,y+(size + 2)*enum))     
         
 class Animation:
-    def __init__(self,screen,text_chargement = "Chargement",id_ = 1):
+
+    def __init__(self,screen : pygame.Surface,text_chargement : str = "Chargement",id_ : int = 1):
+        """Class permettant de generer une animation de chargement
+
+        Args:
+            screen (pygame.Surface): Surface sur laquelle l'animation est dessiner
+            text_chargement (str, optional): Texte du chargement Defaults to "Chargement".
+            id_ (int, optional): id representant si l'animation est situé dans un endroit bloquant ou non. Defaults to 1.
+        """
         self.screen = screen
         self.texte = text_chargement
         self.running = True
         self.font = pygame.font.SysFont("Comic Sans Ms",20)
         self.id_ = id_
+        self.nb_point = 0
         
     def start_anime(self,last_screen,fond_ecran):
-        th = threading.Thread(target=self.animate, args=(self.screen,last_screen,fond_ecran),daemon=True)
+        self.running = 1
+        self.id_ = 0
+        th = threading.Thread(target=self.animate, args=(fond_ecran,last_screen),daemon=True)
         th.start()
         
-    def animate(self,screen : pygame.Surface,last_screen,fond_ecran):
-
-        screen.blit(last_screen,(0,0))
-        pygame.display.flip()
-        nb_point = 0
+    def animate(self,fond_ecran,last_screen = None,ajout_decriture = None):
+        screen = self.screen
         if self.id_ == 1:
+            self.nb_point += 0.05
+            point = "."*((int(self.nb_point) %4))                                                
+            rect_a_update = pygame.Rect(screen.get_rect()[2]/2 - self.font.size(self.texte)[0]/2,screen.get_rect()[3] - 40,200,
+                                        50)
+            screen.fill(fond_ecran,rect_a_update)            
+            draw_text(self.texte + point +"\n"+ajout_decriture,center_multi_line=True, y = screen.get_rect()[3] - 100,contener=screen)
+        else:
+            pygame.display.update()
+            screen.blit(last_screen,(0,0))
             while self.running:
-                nb_point += 1     
-                point = "."*((nb_point %4))                                                
+                self.nb_point += 1
+                point = "."*((int(self.nb_point) %4))                                                
                 rect_a_update = pygame.Rect(screen.get_rect()[2]/2 - self.font.size(self.texte)[0]/2,screen.get_rect()[3] - 40,200,
                                             50)
                 screen.fill(fond_ecran,rect_a_update)            
-                draw_text(self.texte + point,x = screen.get_rect()[2]/2 - self.font.size(self.texte)[0]/2, y = screen.get_rect()[3] - 40,contener=screen)
-                pygame.display.update(rect_a_update)        
+                draw_text(self.texte + point,center_multi_line= True, y = screen.get_rect()[3] - 100,contener=screen)
+                pygame.display.update(rect_a_update)
                 pygame.time.delay(250)
             
     def stop_anime(self):
         self.running = False
+        self.id_ = 1
         
 class User:
     

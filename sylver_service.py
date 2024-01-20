@@ -15,6 +15,7 @@ width = resolution.current_w
 height = resolution.current_h
 screen = pygame.display.set_mode((width, height), pygame.FULLSCREEN | pygame.SCALED | pygame.HWSURFACE | pygame.DOUBLEBUF)
 
+animation_chargement = Animation(screen)
 def draw_text(text, font = "Comic Sans Ms", color = (0,0,0), x = 0, y = 0,contener = screen,size = 20,importer = False, center_multi_line_y = False, ombre = False,center_multi_line = False):
     """
         dessiner un texte a une position donné
@@ -25,6 +26,7 @@ def draw_text(text, font = "Comic Sans Ms", color = (0,0,0), x = 0, y = 0,conten
         :param 5: coordonne y ou le dessiner
         :CU: arg 1 est un str, arg 2 est de type font.FONT ou font.SysFont, arg 3 est un rbg, arg 4 et 5 sont des int
     """
+    
     text = str(text) #transformer le texte en str 
     all_text = text.split("\n")
     if not importer:
@@ -40,7 +42,7 @@ def draw_text(text, font = "Comic Sans Ms", color = (0,0,0), x = 0, y = 0,conten
             y = h_origine/2 - height_of_paragraph/2
         if ombre:
             text_ = font_.render(str(text), True, (0,0,0))            
-            contener.blit(text_, (x+2,y+(size+2)*enum))
+            contener.blit(text_, (x+1,y+(size+2)*enum))
         text_ = font_.render(str(text), True, color)
         contener.blit(text_, (x,y+(size + 2)*enum))        
        
@@ -199,7 +201,9 @@ def ecrire_tuto(user : User):
             ### Validation de l'input => mettre le tuto en bdd ###
             if rect_valider.collidepoint(mouse):
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    #.strip() utilisé pour supprimer les espaces au debut et a la fin
                     text_pour_tuto = ' '.join(dict_input["input_text"]["input"])
+                    text_pour_tuto = text_pour_tuto.strip()
                     titre = ''.join(dict_input["input_titre"]["input"])
                     titre = titre.strip()
                     print(text_pour_tuto,titre)
@@ -209,7 +213,7 @@ def ecrire_tuto(user : User):
                     except noConnection:
                         Gerer_requete.connection_failed()
                         
-                    except:
+                    except Exception:
                         Gerer_requete.error_occured()
             ################################### Logique de l'input #################################      
             for elt in dict_input.values():
@@ -277,7 +281,7 @@ def ecrire_tuto(user : User):
                                         #supprimer la ligne
                                         del(elt["input"][elt["zone_ecrit"]])
                                         elt["zone_ecrit"] -= 1 
-                                        menos = True                                    
+                                        menos = True #indique que une ligne a été sup                                   
                         elif event.key == pygame.K_RETURN and elt["can_do_multiple_lines"]:
                             elt["input"].append("")
                             #ajouter une zone d'ecriture
@@ -377,8 +381,8 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
     moitier_text = []
     for i in range(len(all_text)):
         moitier_text.append(font_40.size(all_text[i])[0]/2)
+    print(id_tuto)
     while continuer:
-        print(id_tuto)
         mouse = pygame.mouse.get_pos()
         mouse_click = pygame.mouse.get_pressed()[0]
         screen.fill((100,100,100))
@@ -388,7 +392,7 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
             if event.type == pygame.QUIT:
                 continuer = False
                 break
-            if rect_goback.collidepoint(mouse) and mouse_click:
+            if rect_goback.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 go_back = True
         for i in range(line):
             draw_text(all_text[i], color = (0,0,0), x = width/2 - moitier_text[i], y = height/2 - heigth_text/2 + 40*i, size = 40, contener = surface_ecriture, font = font_paragraphe, importer = True)
@@ -437,16 +441,18 @@ def menu():
             num (int): nombre de résultat obtenu
         """
     
-        global access,zone,all_case_data,dict_rect_fleche,add_fleche,can_add,have_supprime
+        global access,zone,all_case_data,dict_rect_fleche,add_fleche,can_add,have_supprime,recherche_deja_effectuer
         #pygame.event.clear()        
         text = f"{num} résultat.s pour cette recherche !" if not flop_de_recherche else "OH :() une erreur est survenue"
         text = "Faites une recherche :)" if have_supprime else text
+        screen.fill(fond_ecran,(w_origine/2 - font.size(text)[0]/2,230,300,100))
         draw_text(text,color = (255,255,255),
                   x = w_origine/2 - font.size(text)[0]/2,y = 230,
                   font = chivo_titre,size = 30
                   ,ombre = True)
         
         if access:
+            recherche_deja_effectuer = False
             max_par_page = 12
             global page
             page = []
@@ -503,8 +509,12 @@ def menu():
                 surface = pygame.Surface((rect_case.w,rect_case.h))
                 surface.fill((0,0,0))
                 color_auteur = (255,0,0) if Gerer_requete.est_bytes(doc) else blanc
+                if len(auteur) >= 20:
+                    ecrit_auteur = auteur[:5] + ".."
+                else:
+                    ecrit_auteur = auteur
                 draw_text(color = color_auteur,contener = surface,
-                          text = f"{nom_projet} par {auteur}", x = 10,
+                          text = f"{nom_projet} par {ecrit_auteur}", x = 10,
                           y = 0, font = font_paragraphe,
                           size = 30, importer = True)
                 draw_text(color = blanc,contener = surface,
@@ -528,8 +538,6 @@ def menu():
         Args:
             data (dict): donnée au sujet du tuto
         """
-        anim = Animation(screen)
-        anim.start_anime(last_screen,fond_ecran)
         text = data["contenu"]
         auteur = data["auteur"]
         date = data["date"]
@@ -542,7 +550,7 @@ def menu():
             page_info(2,text,nom_projet,auteur,date,id_)
         else:
             Gerer_requete.demarrer_fichier(doc = doc, ext = file)
-        anim.stop_anime()
+        
             
     def research(data):
         """Fonction effectuant la recherche
@@ -550,6 +558,9 @@ def menu():
         Args:
             data (dict): donnée au sujet du tuto selectionner
         """
+        global recherche_deja_effectuer
+        global all_case_data
+        all_case_data = []
         global processing
         processing = True
         global have_supprime
@@ -557,12 +568,8 @@ def menu():
         global detail,can_add,access,display,num_resultat,flop_de_recherche
         can_add = True
         access = False
-        try:
-            anim = Animation(screen)
-            anim.start_anime(last_screen,fond_ecran)    
+        try:               
             detail = Gerer_requete.rechercher_data(nom_auteur = data["nom_auteur"], nom_tuto = data["nom_projet"])
-            print("fini")
-            anim.stop_anime()
             processing = False
             num_resultat = len(detail)
             access = True
@@ -573,9 +580,7 @@ def menu():
             access = False
             display = True
         
-        
-  
-            
+       
     global continuer
     global finish
     global have_supprime
@@ -622,17 +627,30 @@ def menu():
     image_aide = pygame.image.load("image/icone_interrogation.png")
     image_aide = pygame.transform.smoothscale(image_aide,(rect_aide.w,rect_aide.h))
     #boucle principale
+    
+    recherche_deja_effectuer = False
     while continuer:
         clock.tick(120)
         dict_recherche = {"nom_projet" : None,"nom_auteur" : None}
         mouse = pygame.mouse.get_pos()
-        screen.fill(fond_ecran)               
-             
+        screen.fill(fond_ecran)            
         surface_rechercher.fill((0,0,0))
         pygame.draw.rect(surface_rechercher,(255,255,255),(0,0,w_origine - 400,70),2)
         mouse_click = pygame.mouse.get_pressed()[0]
         #boucle evenementielle
+        if processing:
+            actu = time.time()
+            print(actu-debut)
+            if actu - debut >= 2:
+                ajout_text = "Cela prend plus de temps que prévu :("
+            else:
+                ajout_text = ""
+            animation_chargement.animate(fond_ecran,ajout_decriture=ajout_text)
         for event in pygame.event.get():
+            try:
+                print(event.key == pygame.K_RETURN)
+            except:
+                pass
             if active:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_SPACE:
@@ -640,21 +658,26 @@ def menu():
                     elif event.key == pygame.K_BACKSPACE:
                         input_host = input_host[:-1]
                     elif event.key == pygame.K_RETURN:
+                        pygame.event.clear()
                         recherche_type = liste_rech[indice_type+2]
                         dict_recherche[recherche_type] = input_host
-                        research(dict_recherche)
+                        thread_recherche = threading.Thread(target=research, args=(dict_recherche,), daemon=True)                       
+                        if not thread_recherche.is_alive():
+                            debut = time.time()
+                            thread_recherche.start()
+                                            
                     elif event.key == pygame.K_ESCAPE:
                         pass
                     elif event.key == pygame.K_TAB:
                         pass                       
-                    else:
-                            
-                        if len(input_host) < max_letter:
+                    else:                            
+                        if (len(input_host) < max_letter) and (event.unicode.isprintable() and event.unicode != ""):
                             input_host += event.unicode
             for index,data_recup in enumerate(all_case_data):
-                if all_case_data[index]["rect"].collidepoint(mouse):
+                if data_recup["rect"].collidepoint(mouse):
                     text_on = data_recup["id"]
                     if event.type == pygame.MOUSEBUTTONDOWN and event.button ==1:
+                        print("data_recup : ", str(data_recup["doc"])[:4])
                         start_tuto(data_recup)
                         
             for index,values in enumerate(dict_rect_fleche):
@@ -701,13 +724,13 @@ def menu():
             if not take_time:
                 time_start = pygame.time.get_ticks()
                 take_time = True
-            time = int(pygame.time.get_ticks() - time_start)/1000
+            time_ = int(pygame.time.get_ticks() - time_start)/1000
             surface_rechercher.blit(barre_input, (5 + input_research.size(input_host)[0],2 + input_research.size(input_host)[1]/2))
             #permet de faire clignoter la petite barre
-            if int(time) % 2 == 0 and int(time) != 0:
+            if int(time_) % 2 == 0 and int(time_) != 0:
                 surface_rechercher.fill((0,0,0), (5 + input_research.size(input_host)[0],2 + input_research.size(input_host)[1]/2,2,25))
         else:
-            time = 0
+            time_ = 0
             take_time = False
          
         screen.blit(surface_rechercher,(100,150))    
@@ -937,7 +960,7 @@ def compte():
                 },
                 {
                 "input_pseudo" : {"can_space" : False,"max" : 20, "input" : 'Pseudo', "default" : "Pseudo", "active" : False,"coupage" : 0,"depasse" : False,"rect_w" : rect_input_pseudo2.w},
-                "input_mdp" : {"can_space" :  True,"max" : 20, "input_cache" : 'Mot de passe',"input_visible" : "", "default" : "Mot de passe","min" : 8, "active" : False,"coupage" : 0,"depasse" : False,"rect_w" : rect_input_mdp2.w}
+                "input_mdp" : {"can_space" :  True,"max" : 13, "input_cache" : 'Mot de passe',"input_visible" : "", "default" : "Mot de passe","min" : 8, "active" : False,"coupage" : 0,"depasse" : False,"rect_w" : rect_input_mdp2.w}
                 }
                 ]
     
@@ -1077,10 +1100,10 @@ def compte():
             elif rect_goback.collidepoint(mouse) and (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1):
                 go_back = True
             if rect_save_user_data.collidepoint(mouse):
-                if mouse_click:
+                if (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1):
                     check_save_con_data = not check_save_con_data
             if (rect_editer_photo.collidepoint(mouse) or collide_image) and (zone == 0 or connect):
-                if mouse_click:
+                if (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1):
                     try:
                         path_ext = User.get_file(1)
                         path = path_ext[0]
@@ -1121,7 +1144,7 @@ def compte():
             ###################################################### Système après connection #################################################
             if connect:
                 if btn_disconnect.collidepoint(mouse):
-                    if mouse_click:
+                    if (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1):
                         connect = False
                         del user
                         image_pp = pygame.transform.smoothscale(image_pp,size)
@@ -1129,7 +1152,7 @@ def compte():
                        
                                           
                 elif rect_postimg.collidepoint(mouse):
-                    if mouse_click:
+                    if (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1):
                         try:          
                             screen.blit(last_screen,(0,0))
                             pygame.display.update()                  
@@ -1158,15 +1181,15 @@ def compte():
                         icone_mdp = pygame.transform.smoothscale(icone_mdp,(rect_visible.w,rect_visible.h))
                 elif rect_editer_photo.collidepoint(mouse):
                     color_edit = (0,200,0)
-                    if mouse_click:
+                    if (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1):
                         color_edit = (200,0,0)
                 else:
                     color_edit = (0,0,200)
                 if btn_submit.collidepoint(mouse):
                     
-                    if mouse_click:
-                        anim_chargement = Animation(screen)   
-                        anim_chargement.start_anime(last_screen,fond_ecran)
+                    if (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1):
+                        print("chargement")
+                        animation_chargement.start_anime(last_screen,fond_ecran)
                         if look_valid(zone):
                             if User.verifier_pseudo(dict_input[zone]["input_pseudo"]["input"]):
                                 if zone == 0:
@@ -1213,9 +1236,7 @@ def compte():
                                                 # Redimensionner l'image
                                                 img_ = pygame.transform.smoothscale(img_, (new_width,new_height))
                                                 surf_image2 = resizeImage.rendre_transparent(img_,rect_pp,0)
-                                                surf_image2 = pygame.transform.smoothscale(surf_image2, size_grand)
-                                                
-                                                
+                                                surf_image2 = pygame.transform.smoothscale(surf_image2, size_grand)                                                
                                         except Exception as e:
                                             print("erreur :",e)
                                             print(e.what())
@@ -1230,8 +1251,7 @@ def compte():
                                     pseudo_ndispo = True
                                 
                                 else:
-                                    if look_mdp(1):
-                                           
+                                    if look_mdp(1):                                           
                                         print("here")
                                         pseudo = dict_input[zone]["input_pseudo"]["input"]
                                         mdp = dict_input[zone]["input_mdp"]["input_visible"]
@@ -1278,7 +1298,7 @@ def compte():
                         else:
                             print("invalide")
                             invalid_champ = True
-                        anim_chargement.stop_anime()
+                        animation_chargement.stop_anime()
                 ################################################################ Système de l'input #################################################################     
                 if not connect:       
                     i = 0         
@@ -1348,7 +1368,10 @@ def compte():
                                                         value["coupage"] += 1                                        
                                     else:
                                         if len(value["input_visible"]) < value["max"]:
-                                            if event.unicode != "":
+                                            print("\\")
+                                            print("event unicode :", event.unicode, "\\" in event.unicode)
+                                            if event.unicode.isprintable() and event.unicode != "":
+                                                print(event.unicode == "", event.unicode == " ", event.unicode == None,event)
                                                 value["input_visible"] += event.unicode
                                                 value["input_cache"] += "*"
                                                 if value["depasse"]:
