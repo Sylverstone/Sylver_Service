@@ -1,9 +1,10 @@
+from concurrent.futures import thread
 import pygame
 import tkinter.filedialog
 import tkinter as tk
 from typing import Self
 import mysql.connector as sql
-import dotenv,os,datetime
+import dotenv,os,datetime,sys,threading
 
 
 
@@ -41,6 +42,60 @@ class noConnection(Exception):
         self.what = what
         super().__init__(self.what)
 
+def draw_text(text, font = "Comic Sans Ms", color = (0,0,0), x = 0, y = 0,contener = None,size = 20,importer = False, center_multi_line_y = False, ombre = False,center_multi_line = False):
+    """
+        dessiner un texte a une position donné
+        :param 1: text qu'on veut dessiner
+        :param 2: font qu'utilise le texte
+        :param 3: couleur du texte
+        :param 4: coordonne x ou le dessiner
+        :param 5: coordonne y ou le dessiner
+        :CU: arg 1 est un str, arg 2 est de type font.FONT ou font.SysFont, arg 3 est un rbg, arg 4 et 5 sont des int
+    """
+    text = str(text) #transformer le texte en str 
+    all_text = text.split("\n")
+    if not importer:
+        font_ = pygame.font.SysFont(font, size)
+    else:
+        font_ = pygame.font.Font(font,size)
+    #boucle pour afficher tout les textes de all_text
+    for enum,text in enumerate(all_text):
+        if ombre:
+            text_ = font_.render(str(text), True, (0,0,0))            
+            contener.blit(text_, (x+2,y+(size+2)*enum))
+        text_ = font_.render(str(text), True, color)
+        contener.blit(text_, (x,y+(size + 2)*enum))     
+        
+class Animation:
+    def __init__(self,screen,text_chargement = "Chargement",id_ = 1):
+        self.screen = screen
+        self.texte = text_chargement
+        self.running = True
+        self.font = pygame.font.SysFont("Comic Sans Ms",20)
+        self.id_ = id_
+        
+    def start_anime(self,last_screen,fond_ecran):
+        th = threading.Thread(target=self.animate, args=(self.screen,last_screen,fond_ecran),daemon=True)
+        th.start()
+        
+    def animate(self,screen : pygame.Surface,last_screen,fond_ecran):
+
+        screen.blit(last_screen,(0,0))
+        pygame.display.flip()
+        nb_point = 0
+        if self.id_ == 1:
+            while self.running:
+                nb_point += 1     
+                point = "."*((nb_point %4))                                                
+                rect_a_update = pygame.Rect(screen.get_rect()[2]/2 - self.font.size(self.texte)[0]/2,screen.get_rect()[3] - 40,200,
+                                            50)
+                screen.fill(fond_ecran,rect_a_update)            
+                draw_text(self.texte + point,x = screen.get_rect()[2]/2 - self.font.size(self.texte)[0]/2, y = screen.get_rect()[3] - 40,contener=screen)
+                pygame.display.update(rect_a_update)        
+                pygame.time.delay(250)
+            
+    def stop_anime(self):
+        self.running = False
         
 class User:
     
@@ -337,33 +392,43 @@ class Gerer_requete(User):
     @staticmethod
     def demarrer_fichier(doc,ext,with_path = False)->None:
         if not with_path:
-            path = os.path.join('img_center',f"document.{ext}")
+            print(ext)
+            print("demarrer_fichier")
+            path = os.path.join('img_center',f"document{ext}")
             if os.path.exists(path):
-                os.remove(path)
+                try:
+                    os.remove(path)
+                except:
+                    pass
             try:
                 with open(path,"wb") as File:
                     File.write(doc)
-            except OSError:
-                # Utilisé pour cacher la fenêtre Tkinter
+            except OSError as e:
+                print("erreur : ",e)
                 Gerer_requete.fail_open()
-                return
+                return None
         else:
             path = doc
         try:
             os.startfile(path,'open')
-        except:
+            print("ouvert")
+        except Exception as e:
+            print(e)
             Gerer_requete.fail_open()
         
     @staticmethod
     def fail_open():
-        tk.messagebox.showerror("Erreur", "WOW ! L'ouverture a flop :(")
+        tk.messagebox.showerror("Erreur", "WOW ! L'ouverture a flop :( \n On vous conseille de verifier si le fichier n'est pas déjà ouvert !")
+        pygame.event.clear()
         
     @staticmethod
     def error_occured():
         tkinter.messagebox.showerror("Erreur","WOW ! Une erreur a eu lieu")
+        pygame.event.clear()
         
     def connection_failed():
         tkinter.messagebox.showerror("Erreur","WOW ! La connection n'a pas pu être initialisé :(")
+        pygame.event.clear()
         
     @staticmethod
     def est_bytes(doc):

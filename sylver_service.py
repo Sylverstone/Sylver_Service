@@ -1,6 +1,6 @@
 
 import pygame,os,datetime,sys,threading,keyboard,time,pyperclip
-from Sylver_class_import import Gerer_requete,User,noFileException, userNonCharger, noConnection
+from Sylver_class_import import Gerer_requete,User,noFileException, userNonCharger, noConnection,Animation
 from Resize_image import AnnuleCropPhoto, resizeImage
 
 #reglage de l'ecran
@@ -188,8 +188,7 @@ def ecrire_tuto(user : User):
     #boucle principale
     while continuer:
         screen.fill((100,100,100))
-        fond_nav.fill((0,0,0))   
-     
+        fond_nav.fill((0,0,0))  
         mouse = pygame.mouse.get_pos()
         mouse_click = pygame.mouse.get_pressed()[0]
         #boucle evenementielle
@@ -202,6 +201,7 @@ def ecrire_tuto(user : User):
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     text_pour_tuto = ' '.join(dict_input["input_text"]["input"])
                     titre = ''.join(dict_input["input_titre"]["input"])
+                    titre = titre.strip()
                     print(text_pour_tuto,titre)
                     try:
                         Gerer_requete(user).save_tuto(None,text_pour_tuto,titre)
@@ -436,8 +436,7 @@ def menu():
         Args:
             num (int): nombre de résultat obtenu
         """
-        global continue_charging
-        continue_charging = False
+    
         global access,zone,all_case_data,dict_rect_fleche,add_fleche,can_add,have_supprime
         #pygame.event.clear()        
         text = f"{num} résultat.s pour cette recherche !" if not flop_de_recherche else "OH :() une erreur est survenue"
@@ -529,6 +528,8 @@ def menu():
         Args:
             data (dict): donnée au sujet du tuto
         """
+        anim = Animation(screen)
+        anim.start_anime(last_screen,fond_ecran)
         text = data["contenu"]
         auteur = data["auteur"]
         date = data["date"]
@@ -537,16 +538,11 @@ def menu():
         nom_projet = data["nom_projet"]
         doc = data["doc"]
         file = data["extension"]
-        try:
-            print(doc[:2])
-            print(bool(doc))
-            print(text)
-        except:
-            pass
         if not Gerer_requete.est_bytes(doc):
             page_info(2,text,nom_projet,auteur,date,id_)
         else:
             Gerer_requete.demarrer_fichier(doc = doc, ext = file)
+        anim.stop_anime()
             
     def research(data):
         """Fonction effectuant la recherche
@@ -554,9 +550,6 @@ def menu():
         Args:
             data (dict): donnée au sujet du tuto selectionner
         """
-        global continue_charging 
-        continue_charging = True
-             
         global processing
         processing = True
         global have_supprime
@@ -565,13 +558,12 @@ def menu():
         can_add = True
         access = False
         try:
-            thread_anim = threading.Thread(target = make_chargement,args = (last_screen,"Chargement",200,),daemon= True)
-            thread_anim.start()
+            anim = Animation(screen)
+            anim.start_anime(last_screen,fond_ecran)    
             detail = Gerer_requete.rechercher_data(nom_auteur = data["nom_auteur"], nom_tuto = data["nom_projet"])
-            thread_anim.join(timeout=0.1)
+            print("fini")
+            anim.stop_anime()
             processing = False
-            continue_charging = None
-           
             num_resultat = len(detail)
             access = True
             display = True
@@ -650,9 +642,7 @@ def menu():
                     elif event.key == pygame.K_RETURN:
                         recherche_type = liste_rech[indice_type+2]
                         dict_recherche[recherche_type] = input_host
-                        th = threading.Thread(target=research, args=(dict_recherche,), daemon= True)
-                        th.start()
-                        th.join()
+                        research(dict_recherche)
                     elif event.key == pygame.K_ESCAPE:
                         pass
                     elif event.key == pygame.K_TAB:
@@ -687,7 +677,7 @@ def menu():
             if event.type == pygame.QUIT:
                 continuer = False
                 break
-            if rect_goback.collidepoint(mouse) and mouse_click:
+            if rect_goback.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 go_back = True
             if rect_rechearch.collidepoint(mouse) and not rect_btn.collidepoint(mouse):
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -697,7 +687,7 @@ def menu():
                     if active and input_host == phrase_base:
                         input_host = ""            
             if rect_btn.collidepoint(mouse):
-                if mouse_click and bool(input_host):
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and bool(input_host):
                     access = False
                     display = True
                     have_supprime = True
@@ -781,11 +771,9 @@ def make_chargement(last_screen,text = "Chargement",delay = 200,animation = 2):
         
         try:
             if animation == 1:
-                print(continue_charging)
                 screen.blit(last_screen,(0,0))
                 pygame.display.flip()
                 nb_point = 0
-                
                 while continue_charging:
                     nb_point += 1     
                     point = "."*((nb_point %4))                                                
@@ -1107,7 +1095,7 @@ def compte():
                             if not connect:
                                 surf_image = pygame.transform.smoothscale(surf_image,size)
                             else:
-                                surf_image = pygame.transform.smoothscale(surf_image,size_grand)
+                                surf_image2 = pygame.transform.smoothscale(surf_image2,size_grand)
                             try:                                
                                 with open(path,"rb") as fichier:
                                     nv_pp = fichier.read()
@@ -1177,13 +1165,14 @@ def compte():
                 if btn_submit.collidepoint(mouse):
                     
                     if mouse_click:
-                        continue_charging = True
-                        th = threading.Thread(target = make_chargement,args = (last_screen,"Chargement",200,),daemon= True)
-                        th.start()    
+                        anim_chargement = Animation(screen)   
+                        anim_chargement.start_anime(last_screen,fond_ecran)
                         if look_valid(zone):
                             if User.verifier_pseudo(dict_input[zone]["input_pseudo"]["input"]):
                                 if zone == 0:
                                     if look_mdp(0):
+                                        print("zone creer compte")
+                                        
                                         try:
                                             nom = dict_input[0]["input_nom"]["input"]
                                             prenom = dict_input[0]["input_prenom"]["input"]
@@ -1198,9 +1187,9 @@ def compte():
                                             connect = True
                                             creer_compte = False
                                             with open(chemin_pp,"wb") as fichier:                                                
-                                                try:
+                                                if user.photo_profil != pp_base:
                                                     fichier.write(user.photo_profil)
-                                                except:
+                                                else:
                                                     fichier.write(pp_base)                                            
                                             if check_save_con_data:
                                                 write_connection_tools(pseudo,mdp)
@@ -1208,6 +1197,7 @@ def compte():
                                                 image_pp = pygame.image.load(chemin_pp)
                                                 image_pp = pygame.transform.smoothscale(image_pp,size_grand)
                                             else:
+                                                #processus de reconstruction de la pdp car sinon si on aggrandi juste la surface surf_image elle est flou
                                                 rect_pp = user.rect_pp
                                                 if isinstance(rect_pp,pygame.Rect):
                                                     rect_pp = Gerer_requete.separe_rect(user.rect_pp)
@@ -1222,17 +1212,15 @@ def compte():
                                                 new_height = int(old_height * new_width / old_width)
                                                 # Redimensionner l'image
                                                 img_ = pygame.transform.smoothscale(img_, (new_width,new_height))
-                                                img_trans = resizeImage.rendre_transparent(img_,rect_pp)
-                                                surf2g = pygame.Surface(size_grand, pygame.SRCALPHA)
-                                                surf_image2 = pygame.Surface(size_grand, pygame.SRCALPHA)
-                                                pygame.draw.ellipse(surf2g, (255, 255, 255), (0,0,*size_grand))
-                                                surf_image2.blit(surf2g, (0, 0))
-                                                surf_image2.fill((0,0,0,0))
-                                                surf_image2.blit(img_trans, (0, 0),rect_pp)
+                                                surf_image2 = resizeImage.rendre_transparent(img_,rect_pp,0)
+                                                surf_image2 = pygame.transform.smoothscale(surf_image2, size_grand)
+                                                
+                                                
                                         except Exception as e:
                                             print("erreur :",e)
                                             print(e.what())
                                     else:
+                                        print("invalide")
                                         invalid_mdp = True
                                 else:
                                     print("no pseudo")
@@ -1247,17 +1235,14 @@ def compte():
                                         print("here")
                                         pseudo = dict_input[zone]["input_pseudo"]["input"]
                                         mdp = dict_input[zone]["input_mdp"]["input_visible"]
-                                        try:
-                                            
-                                            
-                                            
-                                                 
+                                        try:                                        
                                             user = User.log_user(pseudo,mdp)
                                             connect = True
+                                            creer_compte = False
                                             with open(chemin_pp,"wb") as fichier:
-                                                try:
+                                                if user.photo_profil != pp_base:
                                                     fichier.write(user.photo_profil)
-                                                except:
+                                                else:
                                                     fichier.write(pp_base)
                                             if check_save_con_data:
                                                 write_connection_tools(pseudo,mdp)
@@ -1265,8 +1250,7 @@ def compte():
                                                 image_pp = pygame.image.load(chemin_pp)
                                                 image_pp = pygame.transform.smoothscale(image_pp,size_grand)
                                             else:
-                                                print(user)
-                                                print("user rect_pp: ",user.rect_pp)
+                                                 #processus de reconstruction de la pdp car sinon si on aggrandi juste la surface surf_image elle est flou
                                                 rect_pp = user.rect_pp
                                                 if isinstance(rect_pp,pygame.Rect):
                                                     rect_pp = Gerer_requete.separe_rect(user.rect_pp)
@@ -1281,27 +1265,20 @@ def compte():
                                                 new_height = int(old_height * new_width / old_width)
                                                 # Redimensionner l'image
                                                 img_ = pygame.transform.smoothscale(img_, (new_width,new_height))
-                                                img_trans = resizeImage.rendre_transparent(img_,rect_pp)
-                                                surf2g = pygame.Surface(size_grand, pygame.SRCALPHA)
-                                                
-                                                surf_image2 = pygame.Surface(size_grand, pygame.SRCALPHA)
-                                                pygame.draw.ellipse(surf2g, (255, 255, 255), (0,0,*size_grand))
-                                                surf_image2.blit(surf2g, (0, 0))
-                                                surf_image2.fill((0,0,0,0))
-                                                surf_image2.blit(img_trans, (0, 0),rect_pp)
-                                        
+                                                surf_image2 = resizeImage.rendre_transparent(img_,rect_pp,0)
+                                                surf_image2 = pygame.transform.smoothscale(surf_image2, size_grand)                                                
                                         except userNonCharger:
+                                            print("wesh")
                                             pas_correspondance = True
                                         except Exception as e:
-                                            print("erreur :",e)
-                                                
-                                       
-                                        
+                                            print("erreur :",e)                                               
                                     else:
+                                        print("invalide")
                                         invalid_mdp = True
                         else:
+                            print("invalide")
                             invalid_champ = True
-                        continue_charging = False
+                        anim_chargement.stop_anime()
                 ################################################################ Système de l'input #################################################################     
                 if not connect:       
                     i = 0         
@@ -1322,7 +1299,6 @@ def compte():
                                                 else:
                                                     value["input_visible"] = value["default"] if value["input_visible"] == "" else value["input_visible"]
                                                     value["input_cache"] = value["default"] if value["input_cache"] == "" else value["input_cache"]
-                                                    
                                 else:
                                     value["active"] = not value["active"]
                                     value["input_visible"] = "" if value["input_visible"] == value["default"] else value["input_visible"]
@@ -1335,8 +1311,7 @@ def compte():
                                         for key2,value in dict_input[zone].items():
                                             if key2 != key:
                                                 value["active"] = False
-                                                value["input"] = value["default"] if value["input"] == "" else value["input"]
-                        
+                                                value["input"] = value["default"] if value["input"] == "" else value["input"]                     
                         if value["active"]:
                             if event.type == pygame.KEYDOWN:                            
                                 if event.key == pygame.K_BACKSPACE:
@@ -1378,7 +1353,6 @@ def compte():
                                                 value["input_cache"] += "*"
                                                 if value["depasse"]:
                                                     value["coupage"] += 1
-                            
                         i += 1
         #interface user quand il n'est pas connecter
         if (creer_compte or not creer_compte) and not connect:
