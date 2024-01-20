@@ -35,12 +35,12 @@ class resizeImage:
         self.chemin = chemin
         
     @staticmethod
-    def rendre_transparent(image : pygame.Surface,rect):
+    def rendre_transparent(image : pygame.Surface,rect, id = 1):
         """renvoie une image avec les pixels transparents pour les pixels de l'ellipse
 
             args :
-            image (pygame.Surface): l'image a modifier
-            rect (pygame.Rect): rectangle de l'ellipse
+                image (pygame.Surface): l'image a modifier
+                rect (pygame.Rect): rectangle de l'ellipse
         """
         start_x = rect[0] + rect[2]/2
         start_y = rect[1] + rect[3]/2
@@ -49,7 +49,18 @@ class resizeImage:
             for x in range(image.get_width()):
                 if (x - start_x)**2 + (y - start_y)**2 > (size[0]/2)**2:  # Si le pixel est en dehors de l'ellipse (equation de cercle)
                     image.set_at((x,y),(0,0,0,0))
-        return image
+        if id == 1:
+            return image
+        else:
+            
+            surf2 = pygame.Surface((size[0], size[1]), pygame.SRCALPHA)
+            surf3 = pygame.Surface((size[0], size[1]), pygame.SRCALPHA)
+            pygame.draw.ellipse(surf2, (255, 255, 255), (0,0,*size))
+            surf3.blit(surf2, (0, 0))
+            surf3.fill((0,0,0,0))
+            surf3.blit(image, (0, 0),rect)
+            return surf3
+        
                       
     def try_to_resize(self,screen : pygame.Surface) -> Tuple[pygame.Surface,pygame.Rect,pygame.Surface]:
         """créé une mini surface où l'utilisteur pourras selectionner la partie d'une image qu'il souhaite
@@ -133,6 +144,7 @@ class resizeImage:
         while continuer:
             mouse = pygame.mouse.get_pos()
             mouse = (mouse[0] - pos[0],mouse[1] - pos[1])
+            screen_.fill((0,0,0))
             screen_.blit(image,(0,0))
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -143,7 +155,7 @@ class resizeImage:
                             size[0] += 20
                             size[1] += 20
                     elif event.key == pygame.K_DOWN:
-                        if size[0] - 20 > 60: #vous pouvez changer cette taille minimum, meme la retirez
+                        if size[0] - 20 > 80: #vous pouvez changer cette taille minimum, meme la retirez (deconseillé)
                             size[0] -= 20
                             size[1] -= 20
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 4:
