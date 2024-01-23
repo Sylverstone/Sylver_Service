@@ -1,4 +1,5 @@
-.vscode/
+
 build/
 .env
 *.zip
+Exe_build/

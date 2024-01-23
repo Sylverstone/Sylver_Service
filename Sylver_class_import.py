@@ -1,9 +1,10 @@
-from http.client import TOO_MANY_REQUESTS
+import time
 import pygame
 import tkinter.filedialog
 import tkinter as tk
 import mysql.connector as sql
 import dotenv,os,datetime,sys,threading
+import pygetwindow as pw
 
 
 
@@ -101,17 +102,24 @@ class Animation:
             screen.fill(fond_ecran,rect_a_update)            
             draw_text(self.texte + point +"\n"+ajout_decriture,center_multi_line=True, y = screen.get_rect()[3] - 100,contener=screen)
         else:
+            print("chargement started")
             pygame.display.update()
             screen.blit(last_screen,(0,0))
+            debut = time.time()
             while self.running:
                 self.nb_point += 1
                 point = "."*((int(self.nb_point) %4))                                                
-                rect_a_update = pygame.Rect(screen.get_rect()[2]/2 - self.font.size(self.texte)[0]/2,screen.get_rect()[3] - 40,200,
-                                            50)
-                screen.fill(fond_ecran,rect_a_update)            
-                draw_text(self.texte + point,center_multi_line= True, y = screen.get_rect()[3] - 100,contener=screen)
+                rect_a_update = pygame.Rect(screen.get_rect()[2]/2 - self.font.size(self.texte)[0]/2 - 200,screen.get_rect()[3] - 100,600,300)
+                screen.fill(fond_ecran,rect_a_update) 
+                actu = time.time() - debut
+                if actu >= 2:
+                    ajout_texte = "Cela prend plus de temps que prévu :("
+                else:
+                    ajout_texte = ""           
+                draw_text(self.texte + point + "\n" + ajout_texte,center_multi_line= True, y = screen.get_rect()[3] - 100,contener=screen)
                 pygame.display.update(rect_a_update)
                 pygame.time.delay(250)
+            print("chargement ended")
             
     def stop_anime(self):
         self.running = False
@@ -137,7 +145,7 @@ class User:
     
     @staticmethod
     def confirm_open(open = "Word"):
-        ans = tk.messagebox.askyesno(title = "Exit", message = f"Es-tu pour l'ouverture de {open} ?")
+        ans = tk.messagebox.askyesno(title = "Word", message = f"Es-tu pour l'ouverture de {open} ?")
         return ans
     
     @staticmethod
@@ -306,7 +314,8 @@ class User:
                     connection.close()
                 return disponible
             except:
-                return noConnection("connection failed")
+                print("no con")
+                raise noConnection("connection failed")
     
     @staticmethod
     def get_file(idd = 0):
@@ -410,11 +419,23 @@ class Gerer_requete(User):
                 raise noConnection("connection failed")
     
     @staticmethod
-    def demarrer_fichier(doc,ext,with_path = False)->None:
+    def demarrer_fichier(doc : bytes | str,ext,with_path = False,nom_tuto = "",auteur = "")->None:
+        """Fonction permettant de démarrer un fichier
+
+        Args:
+            doc (bytes|str): Reprensete soit les bytes du document soit le chemin d'accès 
+            ext (str): Reprensente l'extension du document
+            with_path (bool, optional): Indique si doc est un str ou non. Defaults to False.
+            nom_tuto (str, optional): Nom du projet ouvert. Defaults to "".
+            auteur (str, optional): Nom de l'auteur du projet. Defaults to "".
+        """
         if not with_path:
             print(ext)
             print("demarrer_fichier")
-            path = os.path.join('img_center',f"document{ext}")
+            #créé le fichier si il n'existe pas
+            if not os.path.exists('img_center'):
+                os.makedirs('img_center')
+            path = os.path.join('img_center',f"{nom_tuto} par {auteur}{ext}")
             if os.path.exists(path):
                 try:
                     os.remove(path)
@@ -425,8 +446,8 @@ class Gerer_requete(User):
                     File.write(doc)
             except OSError as e:
                 print("erreur : ",e)
-                Gerer_requete.fail_open()
-                return None
+                Gerer_requete.fail_open(f"{nom_tuto} par {auteur}{ext}")
+                return 
         else:
             path = doc
         try:
@@ -437,16 +458,23 @@ class Gerer_requete(User):
             Gerer_requete.fail_open()
         
     @staticmethod
-    def fail_open():
-        tk.messagebox.showerror("Erreur", "WOW ! L'ouverture a flop :( \n On vous conseille de verifier si le fichier n'est pas déjà ouvert !")
+    def fail_open(nom_fichier = ""):
+        """Fonction permettant d'afficher une erreur d'ouverture
+
+        Args:
+            nom_fichier (str, optional): Nom du fichier dont l'ouverture a echouer. Defaults to "".
+        """
+        tk.messagebox.showerror("Erreur",f"WOW ! L'ouverture a flop :( \n Il se peut que le fichier ({nom_fichier}) \nsoit déjà ouvert !")
         pygame.event.clear()
         
     @staticmethod
     def error_occured():
+        """Fonction permettant d'afficher un message d'erreur"""
         tkinter.messagebox.showerror("Erreur","WOW ! Une erreur a eu lieu")
         pygame.event.clear()
         
     def connection_failed():
+        """Fonction permettant d'afficher une erreur de connection"""
         tkinter.messagebox.showerror("Erreur","WOW ! La connection n'a pas pu être initialisé :(")
         pygame.event.clear()
         
