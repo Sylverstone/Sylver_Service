@@ -19,6 +19,7 @@ screen = pygame.display.set_mode((width, height), pygame.FULLSCREEN | pygame.SCA
 animation_chargement = Animation(screen)
 animation_mise_en_ligne = Animation(screen, text_chargement="Mise en ligne")
 animation_connection = Animation(screen, text_chargement = "Connection")
+
 def draw_text(text, font = "Comic Sans Ms", color = (0,0,0), x = 0, y = 0,contener = screen,size = 20,importer = False, center_multi_line_y = False, ombre = False,center_multi_line = False):
     """
         dessiner un texte a une position donné
@@ -36,13 +37,13 @@ def draw_text(text, font = "Comic Sans Ms", color = (0,0,0), x = 0, y = 0,conten
         font_ = pygame.font.SysFont(font, size)
     else:
         font_ = pygame.font.Font(font,size)
-    height_of_paragraph = calcul_height(text,all_text,font_)
     #boucle pour afficher tout les textes de all_text
+    
     for enum,text in enumerate(all_text):
         if center_multi_line:
-            x = w_origine/2 - font_.size(text)[0]/2
+            x = contener.get_rect()[2]/2 - font_.size(text)[0]/2
         if center_multi_line_y:
-            y = h_origine/2 - height_of_paragraph/2
+            y = contener.get_rect()[3]/2 - font_.size(text)[1] * len(all_text)/2
         if ombre:
             text_ = font_.render(str(text), True, (0,0,0))            
             contener.blit(text_, (x+1,y+(size+2)*enum))
@@ -170,8 +171,7 @@ def ecrire_tuto(user : User):
     s_height = surf_valider.get_height()
     rect_valider = surf_valider.get_rect(x=w_origine - s_width - 30,
                                          y = h_origine - s_height - 20)
-    pygame.draw.rect(surf_valider,(0,0,0),(0,0,*rect_valider[2:4]),1)
-    draw_text(text = "valider", contener = surf_valider,x= s_width/2 - font40.size("valider")[0]/2, font = font_paragraphe, importer=True, size = 40)    
+    
     surf_ecrit = pygame.Surface((w_origine - 20, h_origine - 250 ))
     rect_titre = pygame.Rect(10,120,200,50)
     rect_surf_ecrit = pygame.Rect(10,175,surf_ecrit.get_width(),surf_ecrit.get_height())
@@ -211,12 +211,14 @@ def ecrire_tuto(user : User):
                     titre = titre.strip()
                     print(text_pour_tuto,titre)
                     try:
+                        animation_mise_en_ligne.start_anime(last_screen,(100,100,100))
                         Gerer_requete(user).save_tuto(None,text_pour_tuto,titre)
+                        animation_mise_en_ligne.stop_anime()
                         go_back = True 
                     except noConnection:
                         Gerer_requete.connection_failed()
                         
-                    except Exception:
+                    except Exception as e:
                         Gerer_requete.error_occured()
             ################################### Logique de l'input #################################      
             for elt in dict_input.values():
@@ -286,6 +288,7 @@ def ecrire_tuto(user : User):
                                         elt["zone_ecrit"] -= 1 
                                         menos = True #indique que une ligne a été sup                                   
                         elif event.key == pygame.K_RETURN and elt["can_do_multiple_lines"]:
+                            elt["input"][elt["zone_ecrit"]] += "\n"
                             elt["input"].append("")
                             #ajouter une zone d'ecriture
                             elt["zone_ecrit"]+=1
@@ -308,9 +311,13 @@ def ecrire_tuto(user : User):
                                     if elt["coupage"] <= 0:
                                         elt["coupage"] = 0
                         menos = False                  
-    
+        surf_valider.fill((0,0,0,0))
         surf_titre.fill(blanc)        
         surf_ecrit.fill((255,255,255))
+        color_valider = (0,255,0) if  rect_valider.collidepoint(mouse) else (0,0,0)
+        pygame.draw.rect(surf_valider,color_valider,(0,0,*rect_valider[2:4]),1)
+        draw_text(text = "Valider", contener = surf_valider,x= s_width/2 - font40.size("valider")[0]/2, font = font_paragraphe, importer=True, size = 40)    
+       
         pygame.draw.rect(surf_titre,(0,0,0), (0,0,rect_titre[2],rect_titre[3]),1)
         pygame.draw.rect(surf_ecrit,(0,0,0),(0,0,rect_surf_ecrit[2],rect_surf_ecrit[3]),1)
         for keys,elt in dict_input.items():
@@ -332,6 +339,7 @@ def ecrire_tuto(user : User):
         title(f"Ecrivez ici votre tutoriel {user.pseudo}")
         if go_back:
             break
+        last_screen = screen.copy()
         pygame.display.flip()
         
 def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.datetime = None, id_tuto : int = None):
@@ -397,9 +405,15 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
                 break
             if rect_goback.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 go_back = True
-        for i in range(line):
-            draw_text(all_text[i], color = (0,0,0), x = width/2 - moitier_text[i], y = height/2 - heigth_text/2 + 40*i, size = 40, contener = surface_ecriture, font = font_paragraphe, importer = True)
-        
+        if not "\n" in text_info:
+            for i in range(line):
+                print("printed")
+                draw_text(all_text[i], color = (0,0,0), x = 10, y =20 + 40*i, size = 40, contener = surface_ecriture, font = font_paragraphe, importer = True)
+        else:
+            draw_text(text_info, color = (0,0,0),x = 10,y = 40,
+                       size = 40, contener = surface_ecriture, font = font_paragraphe, importer = True)
+
+        #pygame.draw.rect(surface_ecriture, (255,0,0),(0,height/2,width,2))
         fond_nav.fill((0,0,0))
         screen.blit(fond_nav,(0,0))
         screen.blit(image_retour,rect_goback)
@@ -421,8 +435,8 @@ def menu():
     #savoir quand la recherche est en cours
     processing = False             
     display = False
-    global zone
-    zone = 0
+    global zone_page
+    zone_page = 0
     long_case = w_origine/2 - 10
     haut_case = 60
     liste_indicey = [300+haut_case*i for i in range(6)] *2
@@ -444,7 +458,7 @@ def menu():
             num (int): nombre de résultat obtenu
         """
     
-        global access,zone,all_case_data,dict_rect_fleche,add_fleche,can_add,have_supprime,recherche_deja_effectuer
+        global access,zone_page,all_case_data,dict_rect_fleche,add_fleche,can_add,have_supprime,recherche_deja_effectuer
         #pygame.event.clear()        
         text = f"{num} résultat.s pour cette recherche !" if not flop_de_recherche else "OH :() une erreur est survenue"
         text = "Faites une recherche :)" if have_supprime else text
@@ -470,11 +484,12 @@ def menu():
                     count = 0
             if len(page) == 0:
                 page.append(sous_list)
-            decount_page = f"{zone+1}/{len(page)}"
+            decount_page = f"{zone_page+1}/{len(page)}"
             longueur_decompte = font_40.size(decount_page)[0]
             x1 = w_origine/2 + longueur_decompte + 10
             x2 = w_origine/2 - longueur_decompte - 20            
-            use_list = page[zone]
+            use_list = page[zone_page]
+            print("zone_ecrit : ",zone_page)
             rect_1 = pygame.Rect(x1,y_all,surface_fleche.get_width(),surface_fleche.get_height())
             rect_2 = pygame.Rect(x2,y_all,surface_fleche.get_width(),surface_fleche.get_height())
             dict_rect_fleche = [rect_1,rect_2]
@@ -529,7 +544,8 @@ def menu():
                 else:
                     screen.blit(surface,(w_origine/2 - long_case/2, liste_indicey[index]))                
                 pygame.draw.rect(screen,(255,255,255),rect_case,2)
-                case_data = {"nom_projet" : nom_projet, "contenu" : text, "auteur" : auteur, "date" : date,"rect" : rect_case,"doc" : doc,"id" : id_,"extension" : file}
+                print(len(all_case_data))
+                case_data = {"zone" : zone_page,"nom_projet" : nom_projet, "contenu" : text, "auteur" : auteur, "date" : date,"rect" : rect_case,"doc" : doc,"id" : id_,"extension" : file}
                 if can_add:
                     pygame.display.flip()
                     all_case_data.append(case_data)
@@ -680,7 +696,8 @@ def menu():
                         if (len(input_host) < max_letter) and (event.unicode.isprintable() and event.unicode != ""):
                             input_host += event.unicode
             for index,data_recup in enumerate(all_case_data):
-                if data_recup["rect"].collidepoint(mouse):
+                print(data_recup["zone"], zone_page)
+                if data_recup["rect"].collidepoint(mouse) and data_recup["zone"] == zone_page:
                     text_on = data_recup["id"]
                     if event.type == pygame.MOUSEBUTTONDOWN and event.button ==1:
                         print("data_recup : ", str(data_recup["doc"])[:4])
@@ -689,8 +706,12 @@ def menu():
             for index,values in enumerate(dict_rect_fleche):
                 if values.collidepoint(mouse):
                     if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                        if zone + add_fleche[index] > 0 and zone + add_fleche[index] < len(page):
-                            zone += add_fleche[index]
+                        if zone_page + add_fleche[index] >= 0 and zone_page + add_fleche[index] < len(page):
+                            zone_page += add_fleche[index]
+                            can_add = True
+                            all_case_data = []
+                            print("zone :", zone_page)
+                            print(add_fleche[index])
             if rect_type_recherche.collidepoint(mouse):
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     if indice_type < len(dict_recherche) - 1:

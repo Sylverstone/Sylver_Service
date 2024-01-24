@@ -4,7 +4,6 @@ import tkinter.filedialog
 import tkinter as tk
 import mysql.connector as sql
 import dotenv,os,datetime,sys,threading
-import pygetwindow as pw
 
 
 
@@ -92,15 +91,22 @@ class Animation:
         th = threading.Thread(target=self.animate, args=(fond_ecran,last_screen),daemon=True)
         th.start()
         
-    def animate(self,fond_ecran,last_screen = None,ajout_decriture = None):
+    def animate(self,fond_ecran : list,last_screen : pygame.Surface= None,ajout_decriture :str = None):
+        """Fonction permettant d'animer l'animation
+
+        Args:
+            fond_ecran (list): couleur du fond de l'ecran
+            last_screen (pygame.Surface, optional): Dernier ecran a afficher. Defaults to None.
+            ajout_decriture (str, optional): Ajout de texte . Defaults to None.
+        """
         screen = self.screen
         if self.id_ == 1:
             self.nb_point += 0.05
-            point = "."*((int(self.nb_point) %4))                                                
-            rect_a_update = pygame.Rect(screen.get_rect()[2]/2 - self.font.size(self.texte)[0]/2,screen.get_rect()[3] - 40,200,
-                                        50)
+            point = "."*((int(self.nb_point) %4))    
+            rect_a_update = pygame.Rect(screen.get_rect()[2]/2 - self.font.size(self.texte)[0]/2,screen.get_rect()[3] - 80,200,
+                                        50)                                            
             screen.fill(fond_ecran,rect_a_update)            
-            draw_text(self.texte + point +"\n"+ajout_decriture,center_multi_line=True, y = screen.get_rect()[3] - 100,contener=screen)
+            draw_text(self.texte + point +"\n"+ajout_decriture,center_multi_line=True, y = screen.get_rect()[3] - 80,contener=screen)
         else:
             print("chargement started")
             pygame.display.update()
@@ -109,14 +115,14 @@ class Animation:
             while self.running:
                 self.nb_point += 1
                 point = "."*((int(self.nb_point) %4))                                                
-                rect_a_update = pygame.Rect(screen.get_rect()[2]/2 - self.font.size(self.texte)[0]/2 - 200,screen.get_rect()[3] - 100,600,300)
+                rect_a_update = pygame.Rect(screen.get_rect()[2]/2 - self.font.size(self.texte)[0]/2 - 200,screen.get_rect()[3] - 60,600,300)
                 screen.fill(fond_ecran,rect_a_update) 
                 actu = time.time() - debut
                 if actu >= 2:
                     ajout_texte = "Cela prend plus de temps que prévu :("
                 else:
                     ajout_texte = ""           
-                draw_text(self.texte + point + "\n" + ajout_texte,center_multi_line= True, y = screen.get_rect()[3] - 100,contener=screen)
+                draw_text(self.texte + point + "\n" + ajout_texte,center_multi_line= True, y = screen.get_rect()[3] - 60,contener=screen)
                 pygame.display.update(rect_a_update)
                 pygame.time.delay(250)
             print("chargement ended")
