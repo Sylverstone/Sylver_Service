@@ -12,11 +12,24 @@ env = dotenv.dotenv_values()
 
 
 class Doc:
-    
-    def __init__(self,chemin):
+    """Class representant un fichier
+
+        Args:
+            chemin (str): chemin du fichier
+    """
+    def __init__(self,chemin,bytes_doc = None,nom_tuto = None,auteur = None,ext = None):
+        self.nom_tuto = nom_tuto
+        self.auteur = auteur
+        self.ext = ext
+        self.bytes = bytes_doc
         self.chemin = chemin
     
     def get_extension(self):
+        """Fonction isolant l'extension du fichier
+
+        Returns:
+            str: extension du fichier
+        """
         if self.chemin == None:
             return None
         path = self.chemin
@@ -25,19 +38,62 @@ class Doc:
             cursor -= 1
         ext = path[cursor-1:]
         return ext
+    
+    def start(self):
+        if os.path.exists(self.chemin):
+            try:
+                os.remove(self.chemin)
+            except:
+                pass
+        try:
+            with open(self.chemin,"wb") as File:
+                File.write(self.bytes)
+        except OSError as e:
+            print("erreur : ",e)
+            Gerer_requete.fail_open(f"{self.nom_tuto} par {self.auteur}{self.ext}")
+            return
+        else:
+            self.start_now()
+            
+    
+    def start_now(self):
+        try:
+            os.startfile(self.chemin,"open")
+        except Exception as e:
+            print("erreur : ",e)
+            Gerer_requete.fail_open()
+            
+            
 
 class noFileException(Exception):
+    """Class reprensentant aucun fichier choisi
+
+        Args:
+            what (str): Message d'erreur
+    """   
     def __init__(self, what : str) -> None:
+             
         self.what = what
         super().__init__(self.what)
         
 class userNonCharger(Exception):
-    def __init__(self, what) -> None:
+    """Classe representant un utilisateur non chargé
+
+        Args:
+            what (str): Message d'erreur
+    """
+    def __init__(self, what) -> None:        
         self.what = what
         super().__init__(self.what)
     
 class noConnection(Exception):
+    """Class representant une erreur de connection
+
+        Args:
+            what (str): Message d'erreur
+    """
     def __init__(self, what) -> None:
+        
         self.what = what
         super().__init__(self.what)
 
@@ -69,15 +125,15 @@ def draw_text(text, font = "Comic Sans Ms", color = (0,0,0), x = 0, y = 0,conten
         contener.blit(text_, (x,y+(size + 2)*enum))     
         
 class Animation:
-
-    def __init__(self,screen : pygame.Surface,text_chargement : str = "Chargement",id_ : int = 1):
-        """Class permettant de generer une animation de chargement
+    """Class permettant de generer une animation de chargement
 
         Args:
             screen (pygame.Surface): Surface sur laquelle l'animation est dessiner
             text_chargement (str, optional): Texte du chargement Defaults to "Chargement".
             id_ (int, optional): id representant si l'animation est situé dans un endroit bloquant ou non. Defaults to 1.
-        """
+    """
+    def __init__(self,screen : pygame.Surface,text_chargement : str = "Chargement",id_ : int = 1):
+        
         self.screen = screen
         self.texte = text_chargement
         self.running = True
@@ -86,6 +142,12 @@ class Animation:
         self.nb_point = 0
         
     def start_anime(self,last_screen,fond_ecran):
+        """Fonction démarrant une animation dans une situation bloquante
+            (situation bloquant : le chargement se fait en parallèle du code)
+        Args:
+            last_screen (pygame.Surface): Dernier écran a afficher
+            fond_ecran (list): Fond de l'ecran
+        """
         self.running = 1
         self.id_ = 0
         th = threading.Thread(target=self.animate, args=(fond_ecran,last_screen),daemon=True)
@@ -128,12 +190,25 @@ class Animation:
             print("chargement ended")
             
     def stop_anime(self):
+        """Fonction permettant d'arreter une animation qui a été démarrer dans une situation bloquante"""
         self.running = False
         self.id_ = 1
         
 class User:
-    
+    """Class Representant le compte de l'utilisateur
+
+        Args:
+            nom (str): Nom de l'utilisateur
+            prenom (str): Prenom de l'utilisateur
+            age (int): Age de l'utilisateur
+            pseudo (str): Pseudo de l'utilisateur
+            mdp (str): Mot de passe du compte de l'utilisateur
+            photo_profil (bytes, optional): Photo de profil de l'utilisateur. Defaults to None.
+            tuto_transmis (int, optional): Nombre de tuto que l'utilisateur a transmis. Defaults to 0.
+            rect_pp (pygame.Rect, optional): Rect de la photo de profil de l'utilisateur. Defaults to None.
+    """
     def __init__(self,nom,prenom,age,pseudo,mdp,photo_profil = None,tuto_transmis = 0,rect_pp = None):
+                
         self.nom = nom
         self.prenom = prenom
         self.age = age
@@ -146,20 +221,48 @@ class User:
     
     @staticmethod
     def confirm_close() -> bool:
+        """Fonction confirmant une fermeture
+
+        Returns:
+            bool: Renvoie la réponse de l'utilisateur
+        """        
         ans = tk.messagebox.askyesno(title = "Exit", message = "Tu veux vraiment nous quitter :(")
         return ans
     
     @staticmethod
     def confirm_open(open = "Word"):
+        """Fonction permettant de confirmer une ouverture
+
+        Args:
+            open (str, optional): Nom du logiciel ouvert. Defaults to "Word".
+
+        Returns:
+            boolean: Renvoie la reponse de l'utilisateur (True or False)
+        """
         ans = tk.messagebox.askyesno(title = "Word", message = f"Es-tu pour l'ouverture de {open} ?")
         return ans
     
     @staticmethod
     def get_only_pseudo(text : str) -> str:
+        """Fonction permettant de prendre que le pseudo de l'auteur
+
+        Args:
+            text (str): nom complet auteur (pseudo,prenom nom)
+
+        Returns:
+            str: Uniquement le pseudo de l'utilisateur, separe au virgule et renvoie l'element 0
+        """
         return text.split(",")[0]
     
-    def get_tuto(self) -> int:
-        
+    def get_tuto(self) -> list:
+        """Fonction selectionnant tout les tuto de l'utilisateur
+
+        Raises:
+            noConnection: Renvoie noConnection quand aucune connection n'a pu être initalisé
+
+        Returns:
+            list: Tout les tuto de l'utilisateur
+        """
         data = None
         try:
             connection = sql.connect(
@@ -184,6 +287,11 @@ class User:
                 raise noConnection("connection failed")
                 
     def save_user(self):
+        """Fonction permettant de sauvegarder un compte d'utilisateur
+
+        Raises:
+            noConnection: Renvoie noConnection quand aucune connection n'a pu être initialisation
+        """        
         try:
             connection = sql.connect(
                 host = env.get('HOST'),
@@ -214,6 +322,20 @@ class User:
     
                 
     def change_element(self,nom = False, pseudo = False, prenom = False, photo_pp = False, tuto_transmi = False,rect_pp = False,Nouvelle_value = 0)-> None:
+        """Fonction permettant de mettre a jour les éléments du compte de l'utilisation
+
+        Args:
+            nom (bool, optional): Représente si c'est le nom a changer. Defaults to False.
+            pseudo (bool, optional): Représente si c'est le pseudo a changer. Defaults to False.
+            prenom (bool, optional): Représente si c'est le prenom a changer. Defaults to False.
+            photo_pp (bool, optional): Représente si c'est la photo profil a changer. Defaults to False.
+            tuto_transmi (bool, optional): Représente si c'est le nombre de tuto transmis a changer. Defaults to False.
+            rect_pp (bool, optional): Représente si c'est le rect de la photo de profil a changer. Defaults to False.
+            Nouvelle_value (int, optional): Nouvelle valeur a mettre. Defaults to 0.
+
+        Raises:
+            noConnection: Renvoie noConnection quand aucune connection n'a pu être initialisé
+        """
         pseudo_user = self.pseudo
         print("h")
         if nom:
@@ -264,6 +386,19 @@ class User:
         
     @staticmethod    
     def log_user(pseudo,mdp):
+        """Fonction permettant de charger le compte de l'utilisateur
+
+        Args:
+            pseudo (str): pseudo du compte voulu
+            mdp (str): mot de passe du compte voulu
+
+        Raises:
+            userNonCharger: Renvoie userNonCharger quand le mot de passe n'est pas bon
+            noConnection: Renvoie noConnection quand aucune connection n'a pu être initialisé
+
+        Returns:
+            User: Renvoie la classe User du compte
+        """
         try:
             connection = sql.connect(
                 host = env.get('HOST'),
@@ -290,6 +425,17 @@ class User:
                   
     @staticmethod
     def verifier_pseudo(pseudo)->bool:
+        """Fonction permettant de verifier que le pseudo saisi est disponible
+
+        Args:
+            pseudo (str): pseudo a verifier
+
+        Raises:
+            noConnection: Renvoie noConnection quand aucune connection n'a pu être initialisé
+
+        Returns:
+            bool: Renvoie True si le tuto est disponible, False sinon
+        """        
         disponible = True
         print("in")
         try:
@@ -325,6 +471,18 @@ class User:
     
     @staticmethod
     def get_file(idd = 0):
+        """Fonction permettant de choisir le un fichier pour différent type d'utilisation
+
+        Args:
+            idd (int, optional): Id reprensentant le type d'utilisation, 0 : utilisation pour pdp, 1 : utilisation pour tuto. Defaults to 0.
+
+        Raises:
+            noFileException: Retournes noFileException quand le processus de choix est annulé
+
+        Returns:
+            path(str): Path du fichier choisi
+            extention(str) : extention du fichier choisi
+        """
         if idd == 1:
             #si c'est pour poster un tuto
             ext_dispo = [("*","*.png"),("*","*.jpg"),("*","*.pdf"),("*","*.docx"),("*","*.odt")]
@@ -352,9 +510,27 @@ class Gerer_requete(User):
     
     @staticmethod
     def separe_rect(rect):
+        """Fonction permettant de mettre les rects en chaine de caractère pour la base de données
+
+        Args:
+            rect (pygame.Rect): Rect a mettre en string
+
+        Returns:
+            str: Rect transformer en str separer par des ,
+        """
         return f"{rect[0]},{rect[1]},{rect[2]},{rect[3]}"
     
-    def save_tuto(self,doc = None, Text = "",nom_tuto= "",experiment = False) -> None:
+    def save_tuto(self,doc : str = None, Text :str = "",nom_tuto : str = "",experiment = False) -> None:
+        """Fonction permettant de sauvegarder un tuto a mettre en ligne
+
+        Args:
+            doc (str, optional): Path du fichier a mettre en ligne. Defaults to None.
+            Text (str, optional): Text du tuto a mettre en ligne. Defaults to "".
+            nom_tuto (str, optional): Nom du tuto. Defaults to "".
+
+        Raises:
+            noConnection: Renvoie noConnection quand la conenction n'a pu être établie
+        """        
         current_date = datetime.datetime.now()
         current_date = current_date.strftime("%Y-%m-%d")
         date = current_date
@@ -393,10 +569,22 @@ class Gerer_requete(User):
                 raise noConnection("connection failed")
                 
     @staticmethod  
-    def rechercher_data(nom_tuto = None,nom_auteur = None)->list:
+    def rechercher_data(nom_tuto : str = None,nom_auteur : str = None)->list:
+        """Fonction permettant de rechercher des tuto dans la base de données grâce a différente
+           données relatives
+
+        Args:
+            nom_tuto (str, optional): Nom du tuto rechercher. Defaults to None.
+            nom_auteur (str, optional): Nom de l'auteur des tutos rechercher. Defaults to None.
+
+        Raises:
+            noConnection: Renvoie noConnection quand la connection n'a pu être établie
+
+        Returns:
+            list: Liste comportant tout les tuto retourner
+        """
         try:
-            data_recup = [None]
-            
+            data_recup = [None]            
             connection = sql.connect(
                 host = env.get('HOST'),
                 user = env.get('USER'),
@@ -414,7 +602,7 @@ class Gerer_requete(User):
             connection.commit()
         except sql.Error as err:
             print(err)
-            print("wow")
+            print("erreur")
         
         finally:
             try:
@@ -436,32 +624,16 @@ class Gerer_requete(User):
             auteur (str, optional): Nom de l'auteur du projet. Defaults to "".
         """
         if not with_path:
-            print(ext)
-            print("demarrer_fichier")
             #créé le fichier si il n'existe pas
             if not os.path.exists('img_center'):
                 os.makedirs('img_center')
             path = os.path.join('img_center',f"{nom_tuto} par {auteur}{ext}")
-            if os.path.exists(path):
-                try:
-                    os.remove(path)
-                except:
-                    pass
-            try:
-                with open(path,"wb") as File:
-                    File.write(doc)
-            except OSError as e:
-                print("erreur : ",e)
-                Gerer_requete.fail_open(f"{nom_tuto} par {auteur}{ext}")
-                return 
+            document = Doc(path,doc,nom_tuto,auteur,ext)
+            document.start()
         else:
             path = doc
-        try:
-            os.startfile(path,'open')
-            print("ouvert")
-        except Exception as e:
-            print(e)
-            Gerer_requete.fail_open()
+            document = Doc(path)
+            document.start_now()
         
     @staticmethod
     def fail_open(nom_fichier = ""):
@@ -486,13 +658,15 @@ class Gerer_requete(User):
         
     @staticmethod
     def est_bytes(doc):
+        """Fonction determinant si l'element est un fichier ou non
+
+        Args:
+            doc (bytes | any): element verifier
+
+        Returns:
+            boolean: Return True si l'element est un fichier, sinon non
+        """
         return isinstance(doc,bytes) and doc != b"0"
-    
-    
-        
-    
-    
-    
-                
+          
 if __name__ == "__main__":
     pass

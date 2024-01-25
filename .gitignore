@@ -3,3 +3,4 @@ build/
 .env
 *.zip
 Exe_build/
+.exe/
