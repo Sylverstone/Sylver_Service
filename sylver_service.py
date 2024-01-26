@@ -1,6 +1,6 @@
 
 import pygame,os,datetime,sys,threading,keyboard,time,pyperclip
-from Sylver_class_import import Gerer_requete,User,noFileException, userNonCharger, noConnection,Animation
+from Sylver_class_import import Color,Gerer_requete,User,noFileException, userNonCharger, noConnection,Animation
 from Resize_image import AnnuleCropPhoto, resizeImage
 
 #reglage de l'ecran
@@ -20,6 +20,7 @@ animation_chargement = Animation(screen)
 animation_mise_en_ligne = Animation(screen, text_chargement="Mise en ligne")
 animation_connection = Animation(screen, text_chargement = "Connection")
 animation_ouverture = Animation(screen, text_chargement = "Ouverture")
+palette_couleur = Color()
 def draw_text(text, font = "Comic Sans Ms", color = (0,0,0), x = 0, y = 0,contener = screen,size = 20,importer = False, center_multi_line_y = False, ombre = False,center_multi_line = False):
     """
         dessiner un texte a une position donné
@@ -431,10 +432,11 @@ def menu():
     display = False
     global zone_page
     zone_page = 0
-    long_case = w_origine/2 - 10
+    long_case = w_origine/2 - 20
     haut_case = 60
-    liste_indicey = [300+haut_case*i for i in range(6)] *2
-    liste_indicex = [w_origine/2 - long_case] * 6 + [w_origine/2] * 6
+    
+    liste_indicey = [300+(haut_case+10)*i  for i in range(6)] *2 #on fait *2 car il est prévu 2 ranger
+    liste_indicex = [w_origine/2 - long_case -5] * 6 + [w_origine/2 + 5] * 6 #on fait *6 car c'est 6 par ranger
     surface_fleche = pygame.Surface((20,50))
     global page
     page = []
@@ -517,8 +519,9 @@ def menu():
                     rect_case = pygame.Rect(w_origine/2 - long_case/2, liste_indicey[index],
                                             long_case,
                                             haut_case)
-                surface = pygame.Surface((rect_case.w,rect_case.h))
-                surface.fill((0,0,0))
+                surface = pygame.Surface((rect_case.w,rect_case.h),pygame.SRCALPHA)
+                surface.fill((0,0,0,0))
+                pygame.draw.rect(surface,palette_couleur.couleur_fond_case_tuto,(0,0,surface.get_width(),surface.get_height()),0,20)
                 color_auteur = (255,0,0) if Gerer_requete.est_bytes(doc) else blanc
                 if len(auteur) >= 20:
                     ecrit_auteur = auteur[:5] + ".."
@@ -532,11 +535,11 @@ def menu():
                           text = text_date, x = rect_case.w - font_30.size(text_date)[0] - 20,
                           y = 5, importer = True,
                           size = 30, font = font_paragraphe)
-                if len(use_list) > 3:
+                if len(use_list) > 6:
                     screen.blit(surface,(liste_indicex[index],liste_indicey[index]))
                 else:
                     screen.blit(surface,(w_origine/2 - long_case/2, liste_indicey[index]))                
-                pygame.draw.rect(screen,(255,255,255),rect_case,2)
+                pygame.draw.rect(screen,(255,255,255),rect_case,3,20)
                 case_data = {"zone" : zone_page,"nom_projet" : nom_projet, "contenu" : text, "auteur" : auteur, "date" : date,"rect" : rect_case,"doc" : doc,"id" : id_,"extension" : file}
                 if can_add:
                     pygame.display.flip()
@@ -612,14 +615,14 @@ def menu():
     font_30 = pygame.font.Font(font_paragraphe,30)
     font_20 = pygame.font.Font(font_paragraphe,20)
     longueur_recherche = w_origine - 400
-    surface_rechercher = pygame.Surface((longueur_recherche, 70))
+    surface_rechercher = pygame.Surface((longueur_recherche, 70), pygame.SRCALPHA)
     rect_btn = pygame.Rect(0,0,50,20)
     rect_rechearch = pygame.Rect(100,150,longueur_recherche,70)
     rect_btn.x = 100 + (longueur_recherche) - 100
     rect_btn.y = 150 + 70/2 - 20/2
     input_research = input_apple
     barre_input = pygame.Surface((2,25))
-    barre_input.fill(blanc)
+    barre_input.fill((0,0,0))
     phrase_base ="Appuyer pour Rechercher"
     input_host = phrase_base
     active = False
@@ -637,9 +640,9 @@ def menu():
     recherche_type = "nom_auteur"
     liste_rech = ["Auteur","Nom","nom_auteur","nom_projet"]
     rect_type_recherche = pygame.Rect(100 + longueur_recherche + 100, 155, 100,60)
-    surface_type_recherche = pygame.Surface((100,60))
+    surface_type_recherche = pygame.Surface((100,60), pygame.SRCALPHA)
     indice_type = 0
-    text_rechercher = "-- Recherche par --"
+    text_rechercher = "Recherche par"
     rect_aide = pygame.Rect(w_origine - 70, 15, 50,50)
     image_aide = pygame.image.load("image/icone_interrogation.png")
     image_aide = pygame.transform.smoothscale(image_aide,(rect_aide.w,rect_aide.h))
@@ -649,8 +652,8 @@ def menu():
         dict_recherche = {"nom_projet" : None,"nom_auteur" : None}
         mouse = pygame.mouse.get_pos()
         screen.fill(fond_ecran)            
-        surface_rechercher.fill((0,0,0))
-        pygame.draw.rect(surface_rechercher,(255,255,255),(0,0,w_origine - 400,70),2)
+        surface_rechercher.fill((0,0,0,0))
+        surface_type_recherche.fill((0,0,0,0))
         #boucle evenementielle
         if processing:
             actu = time.time()
@@ -729,34 +732,40 @@ def menu():
                     access = False
                     display = True
                     have_supprime = True
-        couleur = (255,0,0) if not rect_btn.collidepoint(mouse) else (255,255,255)
-        blit_input = input_research.render(input_host,True,(255,255,255))
-        center_y = rect_rechearch.h/2 - input_research.size(input_host)[1]/2
-        surface_rechercher.blit(blit_input,(5,center_y))
-        #crée un rect semblable a la surface et a la bonne pos
         rect_surf_rechercher = pygame.Rect(100,150,surface_rechercher.get_width(),surface_rechercher.get_height())
+ 
+        pygame.draw.rect(surface_rechercher,(255,255,255),(0,0,rect_surf_rechercher[2],rect_surf_rechercher[3]),0,20)
+
+        couleur = (255,0,0) if not rect_btn.collidepoint(mouse) else (255,255,255)
+        blit_input = input_research.render(input_host,True,(0,0,0))
+        center_y = rect_rechearch.h/2 - input_research.size(input_host)[1]/2
+        #il est mieux d'utiliser draw_text car ça va plus vite, mais j'ai fait comme ça
+        #en tout cas c'est similaire a draw_text
+        surface_rechercher.blit(blit_input,(10,center_y))
+        
+        #crée un rect semblable a la surface et a la bonne pos
+        contour_surface_rechercher = pygame.Rect(100,150,surface_rechercher.get_width(),surface_rechercher.get_height())
         if active:
             if not take_time:
                 time_start = pygame.time.get_ticks()
                 take_time = True
             time_ = int(pygame.time.get_ticks() - time_start)/1000
-            surface_rechercher.blit(barre_input, (5 + input_research.size(input_host)[0],2 + input_research.size(input_host)[1]/2))
+            surface_rechercher.blit(barre_input, (10 + input_research.size(input_host)[0],2 + input_research.size(input_host)[1]/2))
             #permet de faire clignoter la petite barre
-            if int(time_) % 2 == 0 and int(time_) != 0:
-                surface_rechercher.fill((0,0,0), (5 + input_research.size(input_host)[0],2 + input_research.size(input_host)[1]/2,2,25))
+            """if int(time_) % 2 == 0 and int(time_) != 0:
+                surface_rechercher.fill((0,0,0), (5 + input_research.size(input_host)[0],2 + input_research.size(input_host)[1]/2,2,25))"""
         else:
             time_ = 0
             take_time = False
          
         screen.blit(surface_rechercher,(100,150))    
-           
+        pygame.draw.rect(screen,palette_couleur.couleur_contour_case,contour_surface_rechercher,5,20)
         pygame.draw.rect(screen,couleur,rect_btn)
-        fond_nav.fill((0,0,0))
+        fond_nav.fill(palette_couleur.fond_bar_de_navigation)
         screen.blit(fond_nav,(0,0))
         title("Bienvenue Dans l'espace recherche!")       
-        pygame.draw.rect(screen,bleu_s,rect_type_recherche)
-        surface_type_recherche.fill(bleu_s)
-        pygame.draw.rect(surface_type_recherche,(255,255,255),(0,0,rect_type_recherche.w,rect_type_recherche.h),2)
+        pygame.draw.rect(surface_type_recherche,palette_couleur.fond_case_login,(0,0,rect_type_recherche[2],rect_type_recherche[3]),0,20)
+        pygame.draw.rect(surface_type_recherche,(255,255,255),(0,0,rect_type_recherche.w,rect_type_recherche.h),2,20)
         draw_text(contener = surface_type_recherche,
                   text = liste_rech[indice_type],
                   x = rect_type_recherche.w/2 - font_30.size(liste_rech[indice_type])[0]/2,
@@ -766,9 +775,9 @@ def menu():
         draw_text(text = text_rechercher,
                   x = rect_type_recherche.x
                   + rect_type_recherche.w/2 - font_30.size(text_rechercher)[0]/2,
-                  y = rect_type_recherche.y - 50,
-                  color = bleu_s, importer = True, font = font_paragraphe,size = 30,
-                  ombre = True)
+                  y = rect_type_recherche.y - 40,
+                  color = blanc, importer = True, font = font_paragraphe,size = 30,
+                  )
         screen.blit(surface_type_recherche,rect_type_recherche)
         screen.blit(image_aide,rect_aide)
         if display:
@@ -1799,7 +1808,7 @@ def font(font_name,size,importer = False):
         return pygame.font.SysFont(font_name,size)
     return pygame.font.Font(font_name,size)
 
-fond_ecran =  (210, 223, 228)
+fond_ecran =  palette_couleur.fond_principal
 bleu_s =(106,178,202)
 taille_origine = pygame.display.Info()
 w_origine = taille_origine.current_w
@@ -1817,20 +1826,26 @@ beackman = r"font\Beckman.otf"
 TNN = r"font\TNN.ttf"
 blanc = (255,255,255)
 noir = (0,0,0)
-proposition = ["COMPTE","ANNONCE","MENU"]
-etat = ["alpha","beta","alpha"]
-size_box_w = 250
+proposition = ["MENU","COMPTE","ANNONCE"]
+etat = ["alpha","alpha","beta"]
+size_box_grand_w = 270
+size_box_grand_h = 100
+size_box_w = 200
 size_box_h = 80
 millieu_w = (w_origine/2) - size_box_w/2
 millieu_h = (h_origine/2) - size_box_h/2
-pos = [[w_origine/2  - size_box_w - 10,millieu_h + size_box_h +10],[w_origine/2  + 10,millieu_h+size_box_h +10],[millieu_w,millieu_h]]
+pos = [[w_origine/2 - size_box_grand_w/2, h_origine/2 - size_box_grand_h/2 - size_box_h - 20],
+       [w_origine/2 - size_box_w/2, h_origine/2 - size_box_h/2],
+       [w_origine/2 - size_box_w/2, h_origine/2 - size_box_h/2 + size_box_h +20]]
+for liste in pos:
+    liste[1] += 100
 rect_dispo = []
 is_on = [False]*3
 color_text = [(255,255,255)]*3
 text_choose = ""
 droite = [True] * 3
 reference = w_origine
-accueil_complement = "Bienvenue dans"
+accueil_complement = "Bienvenue sur"
 accueil = "SYLVER_SERVICE"
 font_accueil = pygame.font.SysFont("Comic Sans Ms", 40)
 fond_nav = pygame.Surface((w_origine,100))
@@ -1853,7 +1868,7 @@ def title(text, size = size_for_title, color = blanc,importer = True):
         importer (bool, optional): Indique si la police est importer ou non. Defaults to True.
     """
     font_ = font(chivo_titre,size,True)
-    draw_text(text, size = size,color = color, x = (w_origine/2 - font_.size(text)[0]/2), y = 5,importer = importer, font = chivo_titre)
+    draw_text(text, size = size,color = palette_couleur.couleur_titre, x = (w_origine/2 - font_.size(text)[0]/2), y = 5,importer = importer, font = chivo_titre)
 
 
 clock = pygame.time.Clock()
@@ -1880,10 +1895,14 @@ def gestion_event():
 t1 = threading.Thread(target=gestion_event,daemon=True)
 t1.start()
 rect_choose = pygame.Surface((size_box_w,size_box_h), pygame.SRCALPHA)
-w,l = rect_choose.get_size()
+rect_grand_choose = pygame.Surface((size_box_grand_w,size_box_grand_h), pygame.SRCALPHA)
+rect_dispo = [pygame.Rect(pos[0][0],pos[0][1],size_box_grand_w,size_box_grand_h),
+              pygame.Rect(pos[1][0],pos[1][1],size_box_w,size_box_h),
+              pygame.Rect(pos[2][0],pos[2][1],size_box_w,size_box_h)
+              ]
 clock = pygame.time.Clock()
 while continuer:
-    screen.fill((0,25,25))
+    screen.fill(fond_ecran)
     try:
         text_user_co = f"Salut {user.pseudo} ravis de te voir :)"
         draw_text(text_user_co, x = w_origine/2 - font(chivo_titre,36,True).size(text_user_co)[0]/2,
@@ -1897,14 +1916,13 @@ while continuer:
         #ici draw_text fr
         pass
     mouse = pygame.mouse.get_pos()    
-    fond_nav.fill((0,0,0))
+    fond_nav.fill(palette_couleur.fond_bar_de_navigation)
     screen.blit(fond_nav,(0,0))
     #pp user
     if connect:
         size_pp_user = (75,75)
         x_pp,y_pp = 20,fond_nav.get_height() - size_pp_user[1] - 10
-        if user.photo_profil == pp_base:
-            
+        if user.photo_profil == pp_base:            
             surf1 = pygame.Surface(size_pp_user,pygame.SRCALPHA)
             surf2 = pygame.Surface(size_pp_user,pygame.SRCALPHA)
             pygame.draw.ellipse(surf1, (255, 255, 255), (0,0,*size_pp_user))
@@ -1917,7 +1935,7 @@ while continuer:
             screen.blit(image_pp_user,(x_pp,y_pp))
     draw_text(accueil_complement, size = 14, color=blanc, x = w_origine/2 - font_chivo_14.size(accueil_complement)[0]/2,
               y = 5, importer= True, font=chivo_titre)
-    draw_text(accueil, size = 72,color = blanc, x = w_origine/2 - font_chivo.size(accueil)[0]/2, y = fond_nav.get_height() - font_chivo.size(accueil)[1], font = chivo_titre,importer = True)
+    draw_text(accueil, size = 72,color = palette_couleur.couleur_titre, x = w_origine/2 - font_chivo.size(accueil)[0]/2, y = fond_nav.get_height() - font_chivo.size(accueil)[1], font = chivo_titre,importer = True)
     for event in pygame.event.get():        
         if event.type == pygame.KEYDOWN:
             pass
@@ -1942,6 +1960,7 @@ while continuer:
                         else:
                             compte()
                 else:
+                    print(index)
                     is_on[index] = False
                     color_text[index] = blanc    
     date = datetime.datetime.today().strftime('%Hh%M')
@@ -1950,16 +1969,20 @@ while continuer:
     clock.tick(144)
     fps = clock.get_fps()
     draw_text(f"fps : {int(fps)}",x=10,y=100,color=(255,255,255))
-    rect_dispo = []
+    
     for index,elt in enumerate(proposition):
-        rect_choose.fill((0,0,0,0))
-        color_bord = (255,0,255) if is_on[index] == False else (0,255,255)
-        pygame.draw.rect(rect_choose,(0,0,0),(0,0,w,l),0,20)
-        pygame.draw.rect(rect_choose,color_bord,(0,0,w,l),1,20)
-        draw_text(proposition[index],contener = rect_choose,color = color_text[index], x = rect_choose.get_width()/2 - font(csm,25).size(proposition[index])[0]/2,
-                  y = rect_choose.get_height()/2 - font(csm,25).size(proposition[index])[1]/2,size = 25)
-        screen.blit(rect_choose,pos[index])
-        rect_dispo.append(pygame.Rect(pos[index][0],pos[index][1],w,l))
+        if index != 0:
+            rect = rect_choose
+        else:
+            rect = rect_grand_choose
+        rect.fill((0,0,0,0))
+        w,l = rect.get_size()
+        color_bord = palette_couleur.couleur_contour_case if is_on[index] == False else palette_couleur.fond_bar_de_navigation
+        pygame.draw.rect(rect,palette_couleur.fond_case,(0,0,w,l),0,20)
+        pygame.draw.rect(rect,color_bord,(0,0,w,l),1,20)
+        draw_text(proposition[index],contener = rect,color = color_text[index], x = rect.get_width()/2 - font(csm,25).size(proposition[index])[0]/2,
+                  y = rect.get_height()/2 - font(csm,25).size(proposition[index])[1]/2,size = 25)
+        screen.blit(rect,pos[index])
     draw_text(text_choose,color = blanc, x = 5, y = h_origine - 25)
     pygame.display.flip()
 pygame.quit()
