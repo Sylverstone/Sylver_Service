@@ -27,6 +27,9 @@ class Color:
         self.couleur_texte_editer_pp = (116,108,255)
         self.arriere_fond_login = (30,30,30)
         self.couleur_fond_case_tuto = (116,109,255)
+        self.fond_un_login = (142,142,142)
+        self.fond_deux_login = (30,30,30)
+        self.fond_contenaire_page_tuto = (142,142,142)
         
 class Doc:
     """Class representant un fichier

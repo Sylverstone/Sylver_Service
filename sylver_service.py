@@ -21,6 +21,7 @@ animation_mise_en_ligne = Animation(screen, text_chargement="Mise en ligne")
 animation_connection = Animation(screen, text_chargement = "Connection")
 animation_ouverture = Animation(screen, text_chargement = "Ouverture")
 palette_couleur = Color()
+
 def draw_text(text, font = "Comic Sans Ms", color = (0,0,0), x = 0, y = 0,contener = screen,size = 20,importer = False, center_multi_line_y = False, ombre = False,center_multi_line = False):
     """
         dessiner un texte a une position donné
@@ -165,24 +166,24 @@ def ecrire_tuto(user : User):
     font20 = pygame.font.Font(font_paragraphe, 20)
     font40 = pygame.font.Font(font_paragraphe, 40)
     surf_valider = pygame.Surface((200,50), pygame.SRCALPHA)
-    surf_titre = pygame.Surface((200,50))
+    surf_titre = pygame.Surface((200,50),pygame.SRCALPHA)
     surf_valider.fill((0,0,0,0))
     s_width = surf_valider.get_width()
     s_height = surf_valider.get_height()
     rect_valider = surf_valider.get_rect(x=w_origine - s_width - 30,
                                          y = h_origine - s_height - 20)
     
-    surf_ecrit = pygame.Surface((w_origine - 20, h_origine - 250 ))
-    rect_titre = pygame.Rect(10,120,200,50)
-    rect_surf_ecrit = pygame.Rect(10,175,surf_ecrit.get_width(),surf_ecrit.get_height())
+    surf_ecrit = pygame.Surface((w_origine - 40, h_origine - 300 ), pygame.SRCALPHA)
+    rect_titre = pygame.Rect(20,120,200,50)
+    rect_surf_ecrit = pygame.Rect(20,200,surf_ecrit.get_width(),surf_ecrit.get_height())
 
-    #peut etre remplacer par des classes jsp
+    #peut etre remplacer par dess classes jsp
     dict_input = {
         "input_titre" : { "max" : 50,"x" : 10,"y" : rect_titre.h/2 - font20.size("m")[1]/2,"surf" : surf_titre,"input" : ["Titre",],
                          "zone_ecrit" : 0,"can_do_multiple_lines" : False, "base" : "Titre", "active" : False,"rect" : rect_titre, "time": 0, "take_time" : False,
                          "coupage" : 0},
         
-        "input_text" : {"coupage" : 0, "max" : 10000,"x" : 10,"y" : 20 ,"surf" : surf_ecrit, "input" : ["Contenu",], "zone_ecrit" : 0,
+        "input_text" : {"coupage" : 0, "max" : 5000,"x" : 20,"y" : 30 ,"surf" : surf_ecrit, "input" : ["Contenu",], "zone_ecrit" : 0,
                         "can_do_multiple_lines" : True, "base" : "Contenu", "active" : False,"rect" : rect_surf_ecrit,"time": 0, "take_time" : False}
     }
     menos = False
@@ -309,14 +310,18 @@ def ecrire_tuto(user : User):
                                         elt["coupage"] = 0
                         menos = False                  
         surf_valider.fill((0,0,0,0))
-        surf_titre.fill(blanc)        
-        surf_ecrit.fill((255,255,255))
+        surf_titre.fill((0,0,0,0))
+        pygame.draw.rect(surf_titre,blanc,(0,0,*surf_titre.get_size()),0,20)
+        pygame.draw.rect(screen,palette_couleur.fond_contenaire_page_tuto,(rect_titre[0] -10,
+                                           rect_titre[1] -10
+                                           ,surf_titre.get_width() + 20, surf_titre.get_height() +20),0,20)      
+        surf_ecrit.fill((255,255,255,0))
+        pygame.draw.rect(surf_ecrit,blanc,(0,0,surf_ecrit.get_width(),surf_ecrit.get_height()),0,20)
+        pygame.draw.rect(screen,palette_couleur.fond_contenaire_page_tuto,(rect_surf_ecrit[0]-10,rect_surf_ecrit[1]-10,surf_ecrit.get_width() + 20,surf_ecrit.get_height() +20),0,20)
         color_valider = (0,255,0) if  rect_valider.collidepoint(mouse) else (0,0,0)
         pygame.draw.rect(surf_valider,color_valider,(0,0,*rect_valider[2:4]),1)
         draw_text(text = "Valider", contener = surf_valider,x= s_width/2 - font40.size("valider")[0]/2, font = font_paragraphe, importer=True, size = 40)    
        
-        pygame.draw.rect(surf_titre,(0,0,0), (0,0,rect_titre[2],rect_titre[3]),1)
-        pygame.draw.rect(surf_ecrit,(0,0,0),(0,0,rect_surf_ecrit[2],rect_surf_ecrit[3]),1)
         for keys,elt in dict_input.items():
             for enum,i in enumerate(elt["input"]):
                 #ecrire tout les lignes dans all_input
@@ -327,10 +332,10 @@ def ecrire_tuto(user : User):
                 draw_text(i[elt["coupage"]:],importer=True,contener=elt["surf"], x = elt["x"], y = elt["y"]*(enum+add), font=font_paragraphe)
             if elt["active"]:
                 add = 1 if keys == "input_titre" else 0
-                elt["surf"].blit(barre_input, (10 + font20.size(elt["input"][elt["zone_ecrit"]][elt["coupage"]:])[0], 2 + elt["y"] * (elt["zone_ecrit"]+add))) #le y le met a la position du texte adapter en fonction de zone_ecrit
+                elt["surf"].blit(barre_input, (elt["x"] + font20.size(elt["input"][elt["zone_ecrit"]][elt["coupage"]:])[0], 2 + elt["y"] * (elt["zone_ecrit"]+add))) #le y le met a la position du texte adapter en fonction de zone_ecrit
         screen.blit(surf_titre,(rect_titre[0],rect_titre[1]))
         screen.blit(surf_valider,(rect_valider[0],rect_valider[1]))
-        screen.blit(surf_ecrit,(10,175))
+        screen.blit(surf_ecrit,(rect_surf_ecrit[0],rect_surf_ecrit[1]))
         screen.blit(fond_nav,(0,0))
         screen.blit(image_retour,rect_goback) 
         title(f"Ecrivez ici votre tutoriel {user.pseudo}")
@@ -356,9 +361,9 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
     image_retour = pygame.image.load("Image/Icone_retour.png")
     image_retour = pygame.transform.smoothscale(image_retour,(rect_goback.w,rect_goback.h))
     go_back = False
-    width = w_origine - 20
+    width = w_origine - 50
     height = h_origine - 200
-    surface_ecriture = pygame.Surface((width, height))
+    surface_ecriture = pygame.Surface((width, height), pygame.SRCALPHA)
     text_title = "A quoi sert Sylver_Service ?"
     if id_ > 1:
         date = date.strftime("%d/%m/%Y")
@@ -393,8 +398,9 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
         mouse = pygame.mouse.get_pos()
         mouse_click = pygame.mouse.get_pressed()[0]
         screen.fill((100,100,100))
-        surface_ecriture.fill((255,255,255))
-        pygame.draw.rect(surface_ecriture,(0,0,0),(0,0,width,height),2)
+        surface_ecriture.fill((255,255,255,0))
+        pygame.draw.rect(screen,palette_couleur.fond_contenaire_page_tuto,(10,120,width + 30, height + 60),0,20)
+        pygame.draw.rect(surface_ecriture,blanc,(0,0,width,height),0,20)
         for event in pygame.event.get():            
             if event.type == pygame.QUIT:
                 continuer = False
@@ -417,7 +423,7 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
             draw_text(date, x = w_origine - font_20.size(str(date))[0] - 10,y = 10, font = font_paragraphe, color = (255,255,255),importer = True)
         if go_back:
             break
-        screen.blit(surface_ecriture, (10,150))
+        screen.blit(surface_ecriture, (25,150))
         pygame.display.flip()
         
         
@@ -929,7 +935,7 @@ def compte():
     rect_editer_photo.h = font_20.size(text_edit)[1]
     chemin_pp = os.path.join("img_center","photo_profil_user.png")
     global pp_base
-    #pp_base est le bit de la photo_de_profil basique de l'app
+    #pp_base est le bit de la pw_origine/2 - rect_host.w/2hoto_de_profil basique de l'app
     with open(os.path.join("img_base","photo_profil_user.png"),"rb") as fichier:
         pp_base = fichier.read()
         
@@ -948,11 +954,11 @@ def compte():
     surf2g = pygame.Surface(size_grand,pygame.SRCALPHA)
     surf3g = pygame.Surface(size_grand,pygame.SRCALPHA)
     rect_host = pygame.Rect(0,0,w_origine/3,h_origine - 400)
-    rect_ctn_host = pygame.Rect(0,0,rect_host.w/2,rect_host.h)
+    rect_ctn_host = pygame.Rect(0,0,rect_host.w + 300,rect_host.h + 40)
     rect_host.y = h_origine/2 - rect_host.h/2
-    rect_host.x = w_origine/2 - (rect_host.w + rect_ctn_host.w -20)/2
-    rect_ctn_host.x = w_origine/2 - (rect_host.w + rect_ctn_host.w -20)/2 + rect_host.w - 20
-    rect_ctn_host.y = rect_host.y
+    rect_host.x = w_origine/2 - rect_host.w/2
+    rect_ctn_host.x = rect_host.x - 20
+    rect_ctn_host.y = rect_host.y - 20
     Surface_edit_photo = pygame.Surface((rect_editer_photo.w,rect_editer_photo.h),pygame.SRCALPHA)
     y_photo = rect_host.y + 10
     y_photo2 = 50
@@ -1021,8 +1027,9 @@ def compte():
     text_nmdp = "Minimum 8 caractères"
     text_log = "Vous avez déjà un compte ? connectez vous !"
     text_con = "Vous n'avez pas encore de compte ? creez en un !"
-    coupage, line, size_y = make_line(text=text_log,font = font_40, size_max = rect_ctn_host.w - 20)
+    coupage, line, size_y = make_line(text=text_log,font = font_40, size_max = 300)
     coupage2, line2, size_y2 = make_line(text=text_con,font = font_40, size_max = rect_ctn_host.w - 20)
+    #reprensente les rects pour changer de mode de connection, erreur de nom
     rect_valider = pygame.Rect(0,0,120,50)
     rect_valider.x = rect_ctn_host.x + 10 + rect_ctn_host.w/2 - rect_valider.w/2
     rect_valider.y = rect_ctn_host.y + rect_ctn_host.h/2 - rect_valider.h/2 + size_y/2 + 30
@@ -1034,55 +1041,59 @@ def compte():
     rect_save_user_data = pygame.Rect(0,0,20,20)
     text_n_correspond = 'Mot de passe incorrect'
     text_n_pseudo = "Pseudo inexistants"
+    
+    marge_cote_droit_contenaire_fond = (rect_ctn_host.x + rect_ctn_host.w) - (rect_host.x + rect_host.w)
     disposition = [
         {
-            "rect_valider_x" : 10 + rect_ctn_host.w/2 - rect_valider.w/2,
+            "rect_valider_x" : rect_host.w +20 + marge_cote_droit_contenaire_fond/2 - rect_valider.w/2,
             "rect_valider_y" : rect_ctn_host.y + rect_ctn_host.h/2 - rect_valider.h/2 + size_y/2 + 30,
             "btn_submit_x" : rect_host.w/2 - btn_submit.w/2,
-            "btn_submit_y" : rect_host.y + rect_host.h - btn_submit.h - 30,
-            "rect_host_x" : w_origine/2 - (rect_host.w + rect_ctn_host.w -20)/2,
-            "rect_ctn_host_x" : w_origine/2 - (rect_host.w + rect_ctn_host.w -20)/2 + rect_host.w - 20,
+            "btn_submit_y" :  rect_host.y + rect_host.h - btn_submit.h - 20,
+            "rect_host_x" : w_origine/2 - rect_host.w/2,
+            "rect_ctn_host_x" : rect_host.x - 20,
             "rect_editer_photo_x" : rect_host.w/2 - rect_editer_photo.w/2,
             "rect_editer_photo_y" : y_photo + 130,
             "top_right" : 20,
             "top_left" : 0,
             "bottom_right" : 20,
             "bottom_left" : 0,
-            "switch" : text_switch_log,
             "outil_line" : (coupage,line,size_y),
             "text_log" : text_log,
             "ajout_con" : 10,
             "rect_visible_x" : rect_input_mdp.w - rect_visible.w - 10,
             "rect_visible_y" : rect_input_mdp.h/2 - rect_visible.h/2,
-            "coupage" : coupage,
-            "line": line,
-            "size_y" : size_y,
-            "text_bienvenu" : text_creer_compte
+            "text_bienvenu" : text_creer_compte,
+            "question_compte" : "Vous avez déjà un compte ?",
+            "reponse_compte" : "Connectez vous !",
+            "x_question_rep_compte" : rect_host.x + rect_host.w + marge_cote_droit_contenaire_fond/2,
+            "y_question_compte" : rect_host.y + 120,
+            "text_switch_log_con" :text_switch_log
             },
         {
-            "rect_valider_x" :  -10 + rect_ctn_host.w/2 - rect_valider.w/2,
+            "rect_valider_x" : marge_cote_droit_contenaire_fond/2 - rect_valider.w/2,
             "rect_valider_y" : rect_ctn_host.y + rect_ctn_host.h/2 - rect_valider.h/2 + size_y/2 + 59,
             "btn_submit_x"  : rect_host.w/2 - btn_submit.w/2,
             "btn_submit_y" : rect_host.y + rect_host.h - btn_submit.h - 20,
-            "rect_ctn_host_x" : w_origine/2 - (rect_host.w + rect_ctn_host.w+20)/2 +20,
-            "rect_host_x" : w_origine/2 - (rect_host.w + rect_ctn_host.w +20)/2 + rect_ctn_host.w,
+            "rect_ctn_host_x" : rect_host.x - marge_cote_droit_contenaire_fond,
+            "rect_host_x" : w_origine/2 - rect_host.w/2,
             "rect_editer_photo_x" : rect_host.w/2 - rect_editer_photo.w/2,
             "rect_editer_photo_y" : y_photo + 130,
             "top_right" : 0,
             "top_left" : 20,
             "bottom_right" : 0,
             "bottom_left" : 20,
-            "switch" : text_switch_con,
             "outil_line" : (coupage2,line2,size_y2),
             "text_log" : text_con,
             "ajout_con" : -10,
             "rect_visible_x" : rect_input_mdp.w - rect_visible.w - 10,
             "rect_visible_y" : rect_input_mdp.h/2 - rect_visible.h/2,
-            "coupage" : coupage2,
-            "line": line2,
-            "size_y" : size_y2,
-            "text_bienvenu" : text_con_compte
-        }
+            "text_bienvenu" : text_con_compte,
+            "question_compte" : "Vous n'avez pas encore de compte?",
+            "reponse_compte" : "Creez en un !",
+            "x_question_rep_compte" : rect_host.x - marge_cote_droit_contenaire_fond/2,
+            "y_question_compte" : rect_host.y + 120,
+            "text_switch_log_con" : text_switch_con
+         }
         ]
     #btn en attendant la fin
     btn_disconnect = pygame.Rect(200,200,20,20)
@@ -1110,7 +1121,7 @@ def compte():
     image_retour = pygame.transform.smoothscale(image_retour,(rect_goback.w,rect_goback.h))
     zone = 0 
     while continuer:
-        
+        print()
         mouse = pygame.mouse.get_pos()
         mouse_click = pygame.mouse.get_pressed()[0]
         screen.fill(fond_ecran)
@@ -1411,14 +1422,14 @@ def compte():
             all_rect[1][1].x = disposition[1]["rect_host_x"] + rect_host.w - 220
             rect_visible.y = disposition[zone]["rect_visible_y"] + all_rect[zone][-1].y
             rect_visible.x = disposition[zone]["rect_visible_x"] + all_rect[zone][-1].x
+            text_switch_log_con = disposition[zone]["text_switch_log_con"]
+            x_text_switch_question = disposition[zone]["x_question_rep_compte"]
+            y_text_switch_question_compte = disposition[zone]["y_question_compte"]
+            question_compte = disposition[zone]["question_compte"] #represente la premiere partie de la question sur le compte
+            reponse_compte = disposition[zone]["reponse_compte"] #represente la 2e partie
             rect_input_mdp = all_rect[zone][-1]
-            rect_save_user_data.x = rect_input_mdp.x
-            rect_save_user_data.y = rect_input_mdp.y + rect_input_mdp.h + 5
-            text_log = disposition[zone]["text_log"]
-            coupage = disposition[zone]["coupage"]
-            line = disposition[zone]["line"]
-            size_y = disposition[zone]["size_y"]
-            text_switch_log_con = disposition[zone]["switch"]
+            rect_save_user_data.x = rect_input_mdp.x + 10
+            rect_save_user_data.y = rect_input_mdp.y + rect_input_mdp.h + 5            
             text_bienvenu = disposition[zone]["text_bienvenu"]
             #gestion des champs invalides
             if invalid_champ:
@@ -1428,7 +1439,7 @@ def compte():
                 time = pygame.time.get_ticks() - time_start
                 draw_text(f"*{text_invalid}*", font = font_paragraphe,
                       size = 20, x = w_origine/2 - font_20.size(text_invalid)[0]/2,
-                      y = rect_host.y - 30,importer = True,color = (200,0,0))
+                      y = rect_host.y - 50,importer = True,color = (200,0,0))
                 if time/1000 >= 2:
                     invalid_champ = False
                     take = False
@@ -1439,7 +1450,7 @@ def compte():
                 time = pygame.time.get_ticks() - time_start
                 draw_text(f"*{text_n_correspond}*", font = font_paragraphe,
                       size = 20, x = w_origine/2 - font_20.size(text_n_correspond)[0]/2,
-                      y = rect_host.y - 30,importer = True,color = (200,0,0))
+                      y = rect_host.y - 50,importer = True,color = (200,0,0))
                 if time/1000 >= 2:
                     pas_correspondance = False
                     take = False 
@@ -1450,7 +1461,7 @@ def compte():
                 time = pygame.time.get_ticks() - time_start
                 draw_text(f"*{text_n_pseudo}*", font = font_paragraphe,
                       size = 20, x = w_origine/2 - font_20.size(text_n_pseudo)[0]/2,
-                      y = rect_host.y - 30,importer = True,color = (200,0,0))
+                      y = rect_host.y - 50,importer = True,color = (200,0,0))
                 if time/1000 >= 2:
                     n_pseudo = False
                     take = False
@@ -1477,30 +1488,26 @@ def compte():
                     invalid_mdp = False
                     take = False
            
-            draw_text(text_bienvenu, font = font_paragraphe,
-                    size = 60, x = w_origine/2 - font_60.size(text_bienvenu)[0]/2,
-                    y = 20,importer = True)
+            title(text_bienvenu,size = 60)
             Surface_host.fill((255,255,255,0))
             couleur_save_user_data = (255,0,0) if not check_save_con_data else (0,255,0)
-            pygame.draw.rect(Surface_host,blanc,(0,0,rect_host.w,rect_host.h),0,20)
+            pygame.draw.rect(Surface_host,palette_couleur.fond_un_login,(0,0,rect_host.w,rect_host.h),0,20)
             pygame.draw.rect(Surface_host,(0,0,0),(0,0,rect_host.w,rect_host.h),2,20)
             pygame.draw.rect(Surface_host,couleur_save_user_data,(rect_save_user_data.x - rect_host.x,rect_save_user_data.y - rect_host.y,
                             rect_save_user_data.w,rect_save_user_data.h))
             draw_text(contener = Surface_host, text = "Restez connecter",x = rect_save_user_data.x - rect_host.x + rect_save_user_data.w + 10,
                       y = rect_save_user_data.y - rect_host.y - 2, font = "Arial")
-            pygame.draw.rect(screen,(220,220,220),(rect_ctn_host))
-            pygame.draw.rect(screen,(0,0,0),(rect_ctn_host),2,
-                             border_top_right_radius = disposition[zone]["top_right"],
-                             border_bottom_right_radius = disposition[zone]["bottom_right"],
-                             border_top_left_radius = disposition[zone]["top_left"],
-                             border_bottom_left_radius = disposition[zone]["bottom_left"])
-            screen.blit(Surface_host,(rect_host.x,rect_host.y))            
+            pygame.draw.rect(screen,palette_couleur.fond_deux_login,(rect_ctn_host),0,20) #rpresente le 2e fond de connection et aussi creer compte
+            pygame.draw.rect(screen,(0,0,0),(rect_ctn_host),2,20)
+            screen.blit(Surface_host,(rect_host.x,rect_host.y))  #represente le contour forme du 2e fond          
             color_submit = bleu_s if not btn_submit.collidepoint(mouse) else (255,255,255)
-            pygame.draw.rect(screen,color_submit,btn_submit,0,10)
+            
+            pygame.draw.rect(screen,palette_couleur.fond_case_login,btn_submit,0,10)
             pygame.draw.rect(screen,(0,0,0),btn_submit,1,10)            
             draw_text("VALIDER", x = btn_submit.x + btn_submit.w/2 - font_20.size("VALIDER")[0]/2,
                       y = btn_submit.y + btn_submit.h/2 - font_20.size("VALIDER")[1]/2,
-                      font = font_paragraphe, importer = True)
+                      font = font_paragraphe, importer = True, color = blanc)
+            
             #mettre ma ptn de pp merde
             if not pp_choisi or not creer_compte:
                 pygame.draw.ellipse(surf2, (255, 255, 255), (0,0,*size))
@@ -1531,25 +1538,31 @@ def compte():
                         font = font_paragraphe, importer = True,
                         size = 20, color = color_edit)           
             for rect in all_rect[zone]:
-                pygame.draw.rect(screen,(fond_ecran), rect)
-                pygame.draw.rect(screen,(0,0,0), rect,1)
-            for i in range(line):
-                start = coupage[i]
-                if i != line -1:
-                    limite = coupage[i+1]
-                else:
-                    limite = len(text_log)
-                draw_text(f"{text_log[start:limite]}", x = rect_ctn_host.x + disposition[zone]["ajout_con"] + rect_ctn_host.w/2 - font_40.size(f"{text_log[start:limite]}")[0]/2,
-                          y = rect_ctn_host.y + rect_ctn_host.h/2 - size_y/2 + (font_40.size(f"{text_log[start:limite]}")[1]) * i,
-                          font = font_paragraphe, importer = True, size = 40,color = (0,0,200))
+                pygame.draw.rect(screen,blanc, rect,0,20)
+                pygame.draw.rect(screen,palette_couleur.couleur_contour_case, rect,2,20)
+            
+            
             #pygame.draw.rect(screen,(0,0,0),rect_visible)
             screen.blit(icone_mdp, rect_visible)
-            pygame.draw.rect(screen,bleu_s,rect_valider,0,40)
-            pygame.draw.rect(screen,(00,0,0),rect_valider,1,40)
+            #a remettre a une autre position
+            
+            pygame.draw.rect(screen,palette_couleur.fond_case_login,rect_valider,0,40)
+            pygame.draw.rect(screen,(0,0,0),rect_valider,1,40)
+            #dessine le texte dans case pour changer de compte
             draw_text(x = rect_valider.x + rect_valider.w/2 - font_20.size(text_switch_log_con)[0]/2,
                       y = rect_valider.y + rect_valider.h/2 - font_20.size(text_switch_log_con)[1]/2,
-                      text = text_switch_log_con, font = font_paragraphe, importer = True)
+                      text = text_switch_log_con, font = font_paragraphe, importer = True,color = blanc)
+            #dessine la question du compte
+            y_text_switch_question_compte += 20
+            draw_text(x = x_text_switch_question - font(font_paragraphe,20,True).size(question_compte)[0]/2, y = y_text_switch_question_compte, text = question_compte, size = 20,
+                      font = font_paragraphe,
+                      importer =True, color = blanc)
+            for i in range(2):
+                draw_text(x = x_text_switch_question - font(font_paragraphe,40,True).size(reponse_compte)[0]/2,
+                        y = y_text_switch_question_compte + 40, text = reponse_compte, font = font_paragraphe,importer =True, color = blanc,
+                        size = 40)            
             i = 0
+            #affiche les inputs
             for key,value in dict_input[zone].items():
                 if key != "input_mdp":
                     input_ = value["input"]
@@ -1560,12 +1573,11 @@ def compte():
                     value["depasse"] = True
                 else:
                     value["depasse"] = False 
-                x = all_rect[zone][i].x + 5       
-                y = all_rect[zone][i].y +5             
+                x = all_rect[zone][i].x + 10
+                y = all_rect[zone][i].y + 5        
                 draw_text(input_[value["coupage"]:], size = 20,
                         x = x,
-                        y = y, font = font_paragraphe, importer = True)
-                    
+                        y = y, font = font_paragraphe, importer = True,color = (0,0,0))                    
                 if value["active"]:
                     barre_type.fill((0,0,0))
                     rect_bt = (x + font_20.size(input_[value["coupage"]:])[0] ,y)
