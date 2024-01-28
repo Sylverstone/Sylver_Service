@@ -1,5 +1,5 @@
 
-import pygame,os,datetime,sys,threading,keyboard,time,pyperclip
+import pygame,os,datetime,string,sys,threading,keyboard,time,pyperclip
 from Sylver_class_import import Color,Gerer_requete,User,noFileException, userNonCharger, noConnection,Animation
 from Resize_image import AnnuleCropPhoto, resizeImage
 
@@ -16,6 +16,8 @@ width = resolution.current_w
 height = resolution.current_h
 screen = pygame.display.set_mode((width, height), pygame.FULLSCREEN | pygame.SCALED | pygame.HWSURFACE | pygame.DOUBLEBUF)
 
+liste_lettre = list(string.ascii_letters + string.digits + string.punctuation)
+print(liste_lettre)
 #class animation qui servira a declencher des chargement de deux maniere, soit a des periodes bloquante ou nonj
 animation_chargement = Animation(screen)
 animation_mise_en_ligne = Animation(screen, text_chargement="Mise en ligne")
@@ -161,13 +163,13 @@ def ecrire_tuto(user : User):
     """
     global fond_nav
     global continuer
-    barre_input = pygame.Surface((2,20))
+    barre_input = pygame.Surface((2,30))
     barre_input.fill(noir)
     font_paragraphe = apple_titre
     font20 = pygame.font.Font(font_paragraphe, 20)
     font40 = pygame.font.Font(font_paragraphe, 40)
     surf_valider = pygame.Surface((200,50), pygame.SRCALPHA)
-    surf_titre = pygame.Surface((200,50),pygame.SRCALPHA)
+    surf_titre = pygame.Surface((300,50),pygame.SRCALPHA)
     surf_valider.fill((0,0,0,0))
     s_width = surf_valider.get_width()
     s_height = surf_valider.get_height()
@@ -180,14 +182,14 @@ def ecrire_tuto(user : User):
 
     #peut etre remplacer par dess classes jsp
     dict_input = {
-        "input_titre" : { "max" : 50,"x" : 10,"y" : rect_titre.h/2 - font20.size("m")[1]/2,"surf" : surf_titre,"input" : ["Titre",],
+        "input_titre" : { "max" : 25,"x" : 10,"y" : rect_titre.h/2 - font(font_paragraphe,30,True).size("m")[1]/2,"surf" : surf_titre,"input" : ["Titre",],
                          "zone_ecrit" : 0,"can_do_multiple_lines" : False, "base" : "Titre", "active" : False,"rect" : rect_titre, "time": 0, "take_time" : False,
                          "coupage" : 0},
         
-        "input_text" : {"coupage" : 0, "max" : 5000,"x" : 20,"y" : 30 ,"surf" : surf_ecrit, "input" : ["Contenu",], "zone_ecrit" : 0,
+        "input_text" : {"coupage" : 0, "max" : 2500,"x" : 20,"y" : 30 ,"surf" : surf_ecrit, "input" : ["Contenu",], "zone_ecrit" : 0,
                         "can_do_multiple_lines" : True, "base" : "Contenu", "active" : False,"rect" : rect_surf_ecrit,"time": 0, "take_time" : False}
     }
-    menos = False
+    menos = False #indique si le dernier effacement a supprimer uneligne
     rect_goback = pygame.Rect(5,5,50,50)
     image_retour = pygame.image.load("Image/Icone_retour.png")
     image_retour = pygame.transform.smoothscale(image_retour,(rect_goback.w,rect_goback.h))
@@ -244,9 +246,11 @@ def ecrire_tuto(user : User):
                             elt["zone_ecrit"] -= 1 if len(elt["input"]) > 1 else 0
                         
                         elif event.key == pygame.K_DOWN and elt["can_do_multiple_lines"]:
-                            #ajouter une zone d'ecriture
-                            elt["zone_ecrit"] += 1
+                            elt["input"][elt["zone_ecrit"]] += "\n"
                             elt["input"].append("")
+                            #ajouter une zone d'ecriture
+                            elt["zone_ecrit"]+=1
+                            elt["input"][elt["zone_ecrit"]] = elt["input"][elt["zone_ecrit"]].strip()
                             
                         if event.key == pygame.K_v and pygame.key.get_mods() & pygame.KMOD_CTRL:
                             # CTRL + V pour coller
@@ -265,7 +269,7 @@ def ecrire_tuto(user : User):
                             while True:
                                 if enum > len(elt["input"][elt["zone_ecrit"]]):
                                     break
-                                if font20.size(elt["input"][elt["zone_ecrit"]][:enum])[0] > surf_ecrit.get_width() - 40:                                    
+                                if font(font_paragraphe,30,True).size(elt["input"][elt["zone_ecrit"]][:enum])[0] > surf_ecrit.get_width() - 40:                                    
                                     elt["input"][elt["zone_ecrit"]] = elt["input"][elt["zone_ecrit"]][:enum]
                                     save_enum = enum
                                     elt["input"].append("")
@@ -292,20 +296,22 @@ def ecrire_tuto(user : User):
                             elt["input"].append("")
                             #ajouter une zone d'ecriture
                             elt["zone_ecrit"]+=1
+                            elt["input"][elt["zone_ecrit"]] = elt["input"][elt["zone_ecrit"]].strip()
                         elif event.key == pygame.K_ESCAPE:
                             pass
                         else:
                             if len(elt["input"][elt["zone_ecrit"]]) < elt["max"]:
-                                elt["input"][elt["zone_ecrit"]] += event.unicode
+                                if event.unicode.isprintable() and event.unicode != "":
+                                    elt["input"][elt["zone_ecrit"]] += event.unicode
                             
                         if len(elt["input"][elt["zone_ecrit"]]) > 0 and not menos and elt["can_do_multiple_lines"]:
-                            if font20.size(elt["input"][elt["zone_ecrit"]])[0] >= surf_ecrit.get_width() - 40:
+                            if font(font_paragraphe,30,True).size(elt["input"][elt["zone_ecrit"]])[0] >= surf_ecrit.get_width() - 40:
                                 elt["input"].append("")
                                 elt["zone_ecrit"] +=1
                                 #ajouter une zone d'ecriture
                         elif elt["can_do_multiple_lines"] == False:
                              if len(elt["input"][elt["zone_ecrit"]]) < elt["max"]:
-                                if (font20.size(elt["input"][elt["zone_ecrit"]][elt["coupage"]:])[0] >= elt["surf"].get_width() - 20) or elt["coupage"] > 0:
+                                if (font(font_paragraphe,30,True).size(elt["input"][elt["zone_ecrit"]][elt["coupage"]:])[0] >= elt["surf"].get_width() - 40) or elt["coupage"] > 0:
                                     elt["coupage"] += 1 if event.key != pygame.K_BACKSPACE else -1
                                     if elt["coupage"] <= 0:
                                         elt["coupage"] = 0
@@ -322,7 +328,7 @@ def ecrire_tuto(user : User):
         color_valider = (0,255,0) if  rect_valider.collidepoint(mouse) else (0,0,0)
         pygame.draw.rect(surf_valider,color_valider,(0,0,*rect_valider[2:4]),1)
         draw_text(text = "Valider", contener = surf_valider,x= s_width/2 - font40.size("valider")[0]/2, font = font_paragraphe, importer=True, size = 40)    
-       
+        
         for keys,elt in dict_input.items():
             for enum,i in enumerate(elt["input"]):
                 #ecrire tout les lignes dans all_input
@@ -330,10 +336,10 @@ def ecrire_tuto(user : User):
                     add = 1
                 else:
                     add = 0
-                draw_text(i[elt["coupage"]:],importer=True,contener=elt["surf"], x = elt["x"], y = elt["y"]*(enum+add), font=font_paragraphe)
+                draw_text(i[elt["coupage"]:],importer=True,size = 30,contener=elt["surf"], x = elt["x"], y = elt["y"]*(enum+add), font=font_paragraphe)
             if elt["active"]:
                 add = 1 if keys == "input_titre" else 0
-                elt["surf"].blit(barre_input, (elt["x"] + font20.size(elt["input"][elt["zone_ecrit"]][elt["coupage"]:])[0], 2 + elt["y"] * (elt["zone_ecrit"]+add))) #le y le met a la position du texte adapter en fonction de zone_ecrit
+                elt["surf"].blit(barre_input, (elt["x"] + font(font_paragraphe,30,True).size(elt["input"][elt["zone_ecrit"]][elt["coupage"]:])[0], 2 + elt["y"] * (elt["zone_ecrit"]+add))) #le y le met a la position du texte adapter en fonction de zone_ecrit
         screen.blit(surf_titre,(rect_titre[0],rect_titre[1]))
         screen.blit(surf_valider,(rect_valider[0],rect_valider[1]))
         screen.blit(surf_ecrit,(rect_surf_ecrit[0],rect_surf_ecrit[1]))
@@ -389,7 +395,7 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
     font_paragraphe = apple_titre
     font_40 = pygame.font.Font(font_paragraphe, 40)
     font_20 = pygame.font.Font(font_paragraphe, 20)
-    coupage,line,heigth_text = make_line(text = text_info, font = font_40, size_max= size_max)
+    coupage,line,heigth_text = make_line(text = text_info, font = font(font_paragraphe,30,True), size_max= size_max)
     all_text = decoupe_text(coupage,line,text_info)
  
     moitier_text = []
@@ -410,10 +416,10 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
                 go_back = True
         if not "\n" in text_info:
             for i in range(line):
-                draw_text(all_text[i], color = (0,0,0), x = 10, y =20 + 40*i, size = 40, contener = surface_ecriture, font = font_paragraphe, importer = True)
+                draw_text(all_text[i], color = (0,0,0), x = 10, y =20 + 35*i, size = 30, contener = surface_ecriture, font = font_paragraphe, importer = True)
         else:
-            draw_text(text_info, color = (0,0,0),x = 10,y = 40,
-                       size = 40, contener = surface_ecriture, font = font_paragraphe, importer = True)
+            draw_text(text_info, color = (0,0,0),x = 10,y = 35,
+                       size = 30, contener = surface_ecriture, font = font_paragraphe, importer = True)
 
         #pygame.draw.rect(surface_ecriture, (255,0,0),(0,height/2,width,2))
         fond_nav.fill((0,0,0))
@@ -1223,15 +1229,14 @@ def compte():
                                         if look_mdp(0):
                                             
                                             try:
-                                                nom = dict_input[0]["input_nom"]["input"]
-                                                prenom = dict_input[0]["input_prenom"]["input"]
+                                                nom = dict_input[0]["input_nom"]["input"].strip()
+                                                prenom = dict_input[0]["input_prenom"]["input"].strip()
                                                 age = int(dict_input[0]["input_age"]["input"])
-                                                pseudo = dict_input[0]["input_pseudo"]["input"]
-                                                mdp = dict_input[0]["input_mdp"]["input_visible"]
+                                                pseudo = dict_input[0]["input_pseudo"]["input"].strip()
+                                                mdp = dict_input[0]["input_mdp"]["input_visible"].strip()
                                                 with open(chemin_pp,"rb") as fichier:
                                                     photo_profil = fichier.read()                                            
                                                 user = User(nom,prenom,age,pseudo,mdp,photo_profil,rect_pp = rect_ellipse)                                         
-                                                                            
                                                 user.save_user() 
                                                 connect = True
                                                 creer_compte = False
@@ -1266,7 +1271,7 @@ def compte():
                                             except noConnection:
                                                 Gerer_requete.connection_failed()                                                
                                             except Exception as e:
-                                                print("erreur :",e)
+                                                Gerer_requete.error_occured()
                                         else:
                                             print("invalide")
                                             invalid_mdp = True
@@ -1318,7 +1323,7 @@ def compte():
                                             except noConnection:
                                                 Gerer_requete.connection_failed()
                                             except Exception as e:
-                                                print("erreur :",e)
+                                                Gerer_requete.error_occured()
                                         else:
                                             print("invalide")
                                             invalid_mdp = True
@@ -1394,7 +1399,7 @@ def compte():
                                                 except:
                                                     pass
                                             else:
-                                                if event.unicode != " ":
+                                                if event.unicode.isprintable() and event.unicode != "":
                                                     value["input"] += event.unicode
                                                     if value["depasse"]:
                                                         value["coupage"] += 1                                        
@@ -1756,7 +1761,7 @@ def input_popup():
     height = container.get_height()
     active_input = False
     text_input = ""
-    max_input = 38
+    max_input = 25
     rect_quit = pygame.Rect(5,30,30,30)
     image_retour = pygame.image.load("Image/Icone_retour.png")
     image_retour = pygame.transform.smoothscale(image_retour,(rect_quit.w,rect_quit.h))
@@ -1793,7 +1798,8 @@ def input_popup():
                         text_input = text_input[:-1]
                     else:
                         if len(text_input) < max_input:
-                            text_input += event.unicode
+                            if event.unicode.isprintable() and event.unicode != "":
+                                text_input += event.unicode
                             
         rect_input = pygame.Rect(width/2 - (max(width/2, font(apple_titre,30,True).size(text_input)[0] + 15))/2,
                                  height/2 - 50/2,
@@ -1813,7 +1819,7 @@ def input_popup():
         if cancel or finished:
             break
     if finished:
-        return text_input
+        return text_input.strip()
     return False
         
 
