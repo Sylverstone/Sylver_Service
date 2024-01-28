@@ -15,9 +15,6 @@ resolution = pygame.display.Info()
 width = resolution.current_w
 height = resolution.current_h
 screen = pygame.display.set_mode((width, height), pygame.FULLSCREEN | pygame.SCALED | pygame.HWSURFACE | pygame.DOUBLEBUF)
-
-liste_lettre = list(string.ascii_letters + string.digits + string.punctuation)
-print(liste_lettre)
 #class animation qui servira a declencher des chargement de deux maniere, soit a des periodes bloquante ou nonj
 animation_chargement = Animation(screen)
 animation_mise_en_ligne = Animation(screen, text_chargement="Mise en ligne")
@@ -132,7 +129,6 @@ def draw_line(line :int,coupage : list,text :str,size : int,contener : pygame.Su
                 text = f"{text[start:limite]}",
                 size = size, importer = importer, font = font)   
 
-
 def decoupe_text(coupage : list ,line : int,text_info : str) :
     """Decouper un texte selon son coupage en le mettant dans une liste
 
@@ -151,10 +147,8 @@ def decoupe_text(coupage : list ,line : int,text_info : str) :
         except:
             limite = len(text_info)
         all_text.append(text_info[start:limite].strip())
-    return all_text
+    return all_text       
         
-        
-
 def ecrire_tuto(user : User):  
     """Fonction permettant a l'utilisateur décrire son tuto
 
@@ -174,8 +168,7 @@ def ecrire_tuto(user : User):
     s_width = surf_valider.get_width()
     s_height = surf_valider.get_height()
     rect_valider = surf_valider.get_rect(x=w_origine - s_width - 30,
-                                         y = h_origine - s_height - 20)
-    
+                                         y = h_origine - s_height - 20)    
     surf_ecrit = pygame.Surface((w_origine - 40, h_origine - 300 ), pygame.SRCALPHA)
     rect_titre = pygame.Rect(20,120,200,50)
     rect_surf_ecrit = pygame.Rect(20,200,surf_ecrit.get_width(),surf_ecrit.get_height())
@@ -184,10 +177,10 @@ def ecrire_tuto(user : User):
     dict_input = {
         "input_titre" : { "max" : 25,"x" : 10,"y" : rect_titre.h/2 - font(font_paragraphe,30,True).size("m")[1]/2,"surf" : surf_titre,"input" : ["Titre",],
                          "zone_ecrit" : 0,"can_do_multiple_lines" : False, "base" : "Titre", "active" : False,"rect" : rect_titre, "time": 0, "take_time" : False,
-                         "coupage" : 0},
+                         "coupage" : 0,"all_size" : 0,"can_write" : True},
         
-        "input_text" : {"coupage" : 0, "max" : 2500,"x" : 20,"y" : 30 ,"surf" : surf_ecrit, "input" : ["Contenu",], "zone_ecrit" : 0,
-                        "can_do_multiple_lines" : True, "base" : "Contenu", "active" : False,"rect" : rect_surf_ecrit,"time": 0, "take_time" : False}
+        "input_text" : {"coupage" : 0, "max" : 2000,"x" : 20,"y" : 30 ,"surf" : surf_ecrit, "input" : ["Contenu",], "zone_ecrit" : 0,
+                        "can_do_multiple_lines" : True,"can_write" : True, "base" : "Contenu", "all_size" : 0,"active" : False,"rect" : rect_surf_ecrit,"time": 0, "take_time" : False}
     }
     menos = False #indique si le dernier effacement a supprimer uneligne
     rect_goback = pygame.Rect(5,5,50,50)
@@ -241,49 +234,38 @@ def ecrire_tuto(user : User):
                         
                 if elt["active"]:
                     if event.type == pygame.KEYDOWN:
+                        #systeme de copié collé defaillant
+                        """if event.key == pygame.K_v and event.mod & pygame.KMOD_CTRL:
+                            text_pasted = pyperclip.paste()
+                            cursor = 0
+                            debut = 0
+                            while cursor < len(text_pasted):
+                                if font(font_paragraphe,30,True).size(elt["input"][elt["zone_ecrit"]] + text_pasted[debut:cursor])[0] > surf_ecrit.get_width() - 40:
+                                    elt["input"][elt["zone_ecrit"]] += text_pasted[debut:cursor]
+                                    elt["input"].append("")
+                                    debut = cursor +1
+                                    elt["zone_ecrit"] += 1
+                                cursor += 1"""
                         if event.key == pygame.K_UP and elt["can_do_multiple_lines"]:
                             #changer de zone d'ecriture vers le haut
                             elt["zone_ecrit"] -= 1 if len(elt["input"]) > 1 else 0
                         
-                        elif event.key == pygame.K_DOWN and elt["can_do_multiple_lines"]:
+                        elif event.key == pygame.K_DOWN and elt["can_do_multiple_lines"] and elt["can_write"]:
                             elt["input"][elt["zone_ecrit"]] += "\n"
                             elt["input"].append("")
                             #ajouter une zone d'ecriture
                             elt["zone_ecrit"]+=1
-                            elt["input"][elt["zone_ecrit"]] = elt["input"][elt["zone_ecrit"]].strip()
-                            
-                        if event.key == pygame.K_v and pygame.key.get_mods() & pygame.KMOD_CTRL:
-                            # CTRL + V pour coller
-                            text_pasted = pyperclip.paste()  # Colle le texte du presse-papiers
-                            # Faites quelque chose avec le texte collé (par exemple, l'afficher)
-                            all_len = [len(i) for i in elt["input"]]
-                            somme_len = sum(all_len)
-                            caractere_restant = elt["max"] - somme_len
-                            if len(text_pasted) > caractere_restant:
-                                fin = caractere_restant
-                            else:
-                                fin = len(text_pasted)
-                            elt["input"][elt["zone_ecrit"]] += text_pasted[:fin]
-                            enum = 0
-                            save_input = elt["input"][elt["zone_ecrit"]]
-                            while True:
-                                if enum > len(elt["input"][elt["zone_ecrit"]]):
-                                    break
-                                if font(font_paragraphe,30,True).size(elt["input"][elt["zone_ecrit"]][:enum])[0] > surf_ecrit.get_width() - 40:                                    
-                                    elt["input"][elt["zone_ecrit"]] = elt["input"][elt["zone_ecrit"]][:enum]
-                                    save_enum = enum
-                                    elt["input"].append("")
-                                    elt["zone_ecrit"] += 1
-                                    enum = 0
-                                enum += 1
-                            if elt["input"][elt["zone_ecrit"]] == "":
-                                elt["input"][elt["zone_ecrit"]] = "-" + save_input[save_enum:]                                                          
-                        elif event.key == pygame.K_SPACE:
-                            if len(elt["input"][elt["zone_ecrit"]]) < elt["max"]:
+                            elt["input"][elt["zone_ecrit"]] = elt["input"][elt["zone_ecrit"]].strip()                           
+                                                                               
+                        elif event.key == pygame.K_SPACE and elt["can_write"]:
+                            if elt["all_size"] < elt["max"]:
                                 elt["input"][elt["zone_ecrit"]] += " "
+                                elt["all_size"] += 1
+                                
                         elif event.key == pygame.K_BACKSPACE:
                             if elt["input"][elt["zone_ecrit"]] != "":
                                 elt["input"][elt["zone_ecrit"]] = elt["input"][elt["zone_ecrit"]][:-1]
+                                elt["all_size"] -= 1
                             else:
                                 if elt["can_do_multiple_lines"]:
                                     if len(elt["input"]) > 1:
@@ -291,7 +273,7 @@ def ecrire_tuto(user : User):
                                         del(elt["input"][elt["zone_ecrit"]])
                                         elt["zone_ecrit"] -= 1 
                                         menos = True #indique que une ligne a été sup                                   
-                        elif event.key == pygame.K_RETURN and elt["can_do_multiple_lines"]:
+                        elif event.key == pygame.K_RETURN and elt["can_do_multiple_lines"] and elt["can_write"]:
                             elt["input"][elt["zone_ecrit"]] += "\n"
                             elt["input"].append("")
                             #ajouter une zone d'ecriture
@@ -300,17 +282,21 @@ def ecrire_tuto(user : User):
                         elif event.key == pygame.K_ESCAPE:
                             pass
                         else:
-                            if len(elt["input"][elt["zone_ecrit"]]) < elt["max"]:
+                            if elt["all_size"] < elt["max"] and elt["can_write"]:
                                 if event.unicode.isprintable() and event.unicode != "":
                                     elt["input"][elt["zone_ecrit"]] += event.unicode
+                                    elt["all_size"] += 1
                             
                         if len(elt["input"][elt["zone_ecrit"]]) > 0 and not menos and elt["can_do_multiple_lines"]:
                             if font(font_paragraphe,30,True).size(elt["input"][elt["zone_ecrit"]])[0] >= surf_ecrit.get_width() - 40:
-                                elt["input"].append("")
-                                elt["zone_ecrit"] +=1
-                                #ajouter une zone d'ecriture
+                                if elt["y"] * len(elt["input"]) + 40 < surf_ecrit.get_height():
+                                    elt["input"].append("")
+                                    elt["zone_ecrit"] +=1
+                                else:
+                                    elt["can_write"] = False
+                                
                         elif elt["can_do_multiple_lines"] == False:
-                             if len(elt["input"][elt["zone_ecrit"]]) < elt["max"]:
+                             if elt["all_size"] < elt["max"]:
                                 if (font(font_paragraphe,30,True).size(elt["input"][elt["zone_ecrit"]][elt["coupage"]:])[0] >= elt["surf"].get_width() - 40) or elt["coupage"] > 0:
                                     elt["coupage"] += 1 if event.key != pygame.K_BACKSPACE else -1
                                     if elt["coupage"] <= 0:
@@ -327,8 +313,8 @@ def ecrire_tuto(user : User):
         pygame.draw.rect(screen,palette_couleur.fond_contenaire_page_tuto,(rect_surf_ecrit[0]-10,rect_surf_ecrit[1]-10,surf_ecrit.get_width() + 20,surf_ecrit.get_height() +20),0,20)
         color_valider = (0,255,0) if  rect_valider.collidepoint(mouse) else (0,0,0)
         pygame.draw.rect(surf_valider,color_valider,(0,0,*rect_valider[2:4]),1)
-        draw_text(text = "Valider", contener = surf_valider,x= s_width/2 - font40.size("valider")[0]/2, font = font_paragraphe, importer=True, size = 40)    
-        
+        draw_text(text = "Valider", contener = surf_valider,x= s_width/2 - font40.size("valider")[0]/2, font = font_paragraphe, importer=True, size = 40)       
+        print(dict_input["input_text"]["all_size"])
         for keys,elt in dict_input.items():
             for enum,i in enumerate(elt["input"]):
                 #ecrire tout les lignes dans all_input
@@ -467,7 +453,7 @@ def menu():
             num (int): nombre de résultat obtenu
         """
     
-        global access,zone_page,all_case_data,dict_rect_fleche,add_fleche,can_add,have_supprime,recherche_deja_effectuer
+        global access,zone_page,all_case_data,dict_rect_fleche,add_fleche,can_add,have_supprime
         #pygame.event.clear()        
         text = f"{num} résultat.s pour cette recherche !" if not flop_de_recherche else "OH :() une erreur est survenue"
         text = "Faites une recherche :)" if have_supprime else text
@@ -478,7 +464,6 @@ def menu():
                   ,ombre = True)
         
         if access:
-            recherche_deja_effectuer = False
             max_par_page = 12
             global page
             page = []
@@ -486,13 +471,13 @@ def menu():
             sous_list = []
             for i in range(len(detail)):
                 sous_list.append(detail[i])
-                count += 1
+                count+=1
                 if count >= max_par_page:
                     page.append(sous_list)
                     sous_list = []
                     count = 0
-            if len(page) == 0:
-                page.append(sous_list)
+            if len(sous_list) > 0:
+                page.append(sous_list) 
             decount_page = f"{zone_page+1}/{len(page)}"
             longueur_decompte = font_40.size(decount_page)[0]
             x1 = w_origine/2 + longueur_decompte + 10
@@ -587,7 +572,6 @@ def menu():
         Args:
             data (dict): donnée au sujet du tuto selectionner
         """
-        global recherche_deja_effectuer
         global all_case_data
         all_case_data = []
         global processing
