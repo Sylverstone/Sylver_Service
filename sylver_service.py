@@ -3,8 +3,9 @@ import pygame,os,datetime,sys,threading,keyboard,time,pyperclip
 from Sylver_class_import import Color,Gerer_requete,User,noFileException, userNonCharger, noConnection,Animation
 from Resize_image import AnnuleCropPhoto, resizeImage
 
+
 #reglage de l'ecran
-os.environ ['SDL_VIDEO_CENTERED'] = '1'
+os.environ['SDL_VIDEO_CENTERED'] = '1'
 pygame.init()
 pygame.mixer.init()
 pygame.display.init()
@@ -441,8 +442,8 @@ def menu():
     long_case = w_origine/2 - 20
     haut_case = 60
     
-    liste_indicey = [300+(haut_case+10)*i  for i in range(6)] *2 #on fait *2 car il est prévu 2 ranger
-    liste_indicex = [w_origine/2 - long_case -5] * 6 + [w_origine/2 + 5] * 6 #on fait *6 car c'est 6 par ranger
+    liste_indicey = [300+(haut_case+10)*i  for i in range(6)] *2 #on fait *2 car il est prévu 2 colonne
+    liste_indicex = [w_origine/2 - long_case -5] * 6 + [w_origine/2 + 5] * 6 #on fait *6 car c'est 6 par colonne
     surface_fleche = pygame.Surface((20,50))
     global page
     page = []
@@ -669,10 +670,6 @@ def menu():
                 ajout_text = ""
             animation_chargement.animate(fond_ecran,ajout_decriture=ajout_text)
         for event in pygame.event.get():
-            try:
-                print(event.key == pygame.K_RETURN)
-            except:
-                pass
             if active:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_SPACE:
@@ -985,11 +982,11 @@ def compte():
                 "input_prenom" : {"can_space" : True,"max" : 20, "input" : 'Prenom', "default" : "Prenom", "active" : False,"coupage" : 0,"depasse" : False,"rect_w" : rect_input_nom.w},
                 "input_pseudo" : {"can_space" : False,"max" : 20, "input" : 'Pseudo', "default" : "Pseudo", "active" : False,"coupage" : 0,"depasse" : False,"rect_w" : rect_input_nom.w},
                 "input_age" : {"can_space" :  False,"max" : 3, "input" : 'Age', "default" : "Age", "active" : False,"coupage" : 0,"depasse" : False,"rect_w" : rect_input_age.w},
-                "input_mdp" : {"can_space" : True,"max" : 20, "input_cache" : 'Mot de passe',"input_visible" : "", "default" : "Mot de passe","min" : 8, "active" : False,"coupage" : 0,"depasse" : False,"rect_w" : rect_input_mdp.w}
+                "input_mdp" : {"can_space" : True,"max" : 15, "input_cache" : 'Mot de passe',"input_visible" : "", "default" : "Mot de passe","min" : 8, "active" : False,"coupage" : 0,"depasse" : False,"rect_w" : rect_input_mdp.w}
                 },
                 {
                 "input_pseudo" : {"can_space" : False,"max" : 20, "input" : 'Pseudo', "default" : "Pseudo", "active" : False,"coupage" : 0,"depasse" : False,"rect_w" : rect_input_pseudo2.w},
-                "input_mdp" : {"can_space" :  True,"max" : 13, "input_cache" : 'Mot de passe',"input_visible" : "", "default" : "Mot de passe","min" : 8, "active" : False,"coupage" : 0,"depasse" : False,"rect_w" : rect_input_mdp2.w}
+                "input_mdp" : {"can_space" :  True,"max" : 15, "input_cache" : 'Mot de passe',"input_visible" : "", "default" : "Mot de passe","min" : 8, "active" : False,"coupage" : 0,"depasse" : False,"rect_w" : rect_input_mdp2.w}
                 }
                 ]
     
@@ -1121,7 +1118,6 @@ def compte():
     image_retour = pygame.transform.smoothscale(image_retour,(rect_goback.w,rect_goback.h))
     zone = 0 
     while continuer:
-        print()
         mouse = pygame.mouse.get_pos()
         mouse_click = pygame.mouse.get_pressed()[0]
         screen.fill(fond_ecran)
@@ -1212,9 +1208,8 @@ def compte():
                         icone_mdp = pygame.image.load("image/image_mdp_visu.png").convert_alpha() if not visible else pygame.image.load("image/image_mdp_cacher.png").convert_alpha()
                         icone_mdp = pygame.transform.smoothscale(icone_mdp,(rect_visible.w,rect_visible.h))
                 elif rect_editer_photo.collidepoint(mouse):
-                    color_edit = (0,200,0)
-                    if (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1):
-                        color_edit = (200,0,0)
+                    color_edit = palette_couleur.contour_input_login
+                    
                 else:
                     color_edit = (0,0,200)
                 if btn_submit.collidepoint(mouse):
@@ -1268,9 +1263,10 @@ def compte():
                                                     img_ = pygame.transform.smoothscale(img_, (new_width,new_height))
                                                     surf_image2 = resizeImage.rendre_transparent(img_,rect_pp,0)
                                                     surf_image2 = pygame.transform.smoothscale(surf_image2, size_grand)                                                
+                                            except noConnection:
+                                                Gerer_requete.connection_failed()                                                
                                             except Exception as e:
                                                 print("erreur :",e)
-                                                print(e.what())
                                         else:
                                             print("invalide")
                                             invalid_mdp = True
@@ -1319,8 +1315,10 @@ def compte():
                                                     surf_image2 = pygame.transform.smoothscale(surf_image2, size_grand)                                                
                                             except userNonCharger:
                                                 pas_correspondance = True
+                                            except noConnection:
+                                                Gerer_requete.connection_failed()
                                             except Exception as e:
-                                                print("erreur :",e)                                               
+                                                print("erreur :",e)
                                         else:
                                             print("invalide")
                                             invalid_mdp = True
@@ -1524,12 +1522,12 @@ def compte():
                 mask_y = mouse[1] - ellipse.y
                 if mask.get_at((mask_x, mask_y)):
                     collide_image = True
-                    color_bordure_image = (5,180,0)
+                    color_bordure_image = palette_couleur.contour_input_login
                 else:
                     collide_image = False
-                    color_bordure_image = (0,0,0)
+                    color_bordure_image = (0,0,200)
             else:                
-                color_bordure_image = (0,0,0)
+                color_bordure_image = (0,0,200)
                 collide_image = False
             Surface_edit_photo.fill((0,0,0,0))
             if zone == 0:
@@ -1678,13 +1676,17 @@ def compte():
                 screen.blit(surf_image2,(x_photo2,y_photo2))
             #masque fait pour detecter la collision très précisément
             mask = pygame.mask.from_surface(surf2g)
-            ellipse = pygame.draw.circle(screen,color_bordure_image,(x_photo2 + size_grand[0]/2,y_photo2+size_grand[0]/2),size_grand[0]/2,1)
+            ellipse_dessiner = pygame.draw.circle(screen,color_bordure_image,(x_photo2 + size_grand[0]/2 ,y_photo2+size_grand[0]/2 +1),size_grand[0]/2 +1,1)
+            fake_screen  =  pygame.Surface((screen.get_width(),screen.get_height()), pygame.SRCALPHA)
+            #pour eviter l'erreur que les mask_x et mask_y deborde du mask car l'ellipse dessiner est aggrandi intentionnellement a cause du
+            #dessin d'un rond merdique de pygame
+            ellipse = pygame.draw.circle(fake_screen,(0,0,0,0),(x_photo2 + size_grand[0]/2 ,y_photo2+size_grand[0]/2),size_grand[0]/2,1)
             if ellipse.collidepoint(mouse):
                 mask_x = mouse[0] - ellipse.left
-                mask_y = mouse[1] - ellipse.top
+                mask_y = mouse[1] - ellipse.top                
                 if mask.get_at((mask_x, mask_y)):
                     collide_image = True
-                    color_bordure_image = (5,180,0)
+                    color_bordure_image = palette_couleur.contour_input_login
                 else:
                     collide_image =False
                     color_bordure_image = (0,0,0)
@@ -1972,7 +1974,6 @@ while continuer:
                         else:
                             compte()
                 else:
-                    print(index)
                     is_on[index] = False
                     color_text[index] = blanc    
     date = datetime.datetime.today().strftime('%Hh%M')

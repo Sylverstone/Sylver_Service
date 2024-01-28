@@ -1,14 +1,8 @@
 import time
 import pygame
-import tkinter.filedialog
-import tkinter as tk
+import tkinter.filedialog,tkinter.messagebox
 import mysql.connector as sql
-import dotenv,os,datetime,sys,threading
-
-
-
-
-env = dotenv.dotenv_values()
+import os,datetime,threading
 
 class Color:
     """
@@ -30,6 +24,7 @@ class Color:
         self.fond_un_login = (142,142,142)
         self.fond_deux_login = (30,30,30)
         self.fond_contenaire_page_tuto = (142,142,142)
+    
         
 class Doc:
     """Class representant un fichier
@@ -41,7 +36,7 @@ class Doc:
         self.nom_tuto = nom_tuto
         self.auteur = auteur
         self.ext = ext
-        self.bytes = bytes_doc
+        self.bytes = bytes_doc #represente le document en bit
         self.chemin = chemin
     
     def get_extension(self):
@@ -60,7 +55,9 @@ class Doc:
         return ext
     
     def start(self):
+        """Fonction permettant de faire le processus afin de lancer un document"""
         if os.path.exists(self.chemin):
+            #verifier si le fichier existe déja, et donc le sup
             try:
                 os.remove(self.chemin)
             except:
@@ -73,18 +70,22 @@ class Doc:
             Gerer_requete.fail_open(f"{self.nom_tuto} par {self.auteur}{self.ext}")
             return
         else:
+            #no erreur
             self.start_now()
             
     
     def start_now(self):
+        """Fonction permettant de lancer un document"""
         try:
             os.startfile(self.chemin,"open")
         except Exception as e:
             print("erreur : ",e)
             Gerer_requete.fail_open()
+        else:
+            #no erreur
+            print("document started")           
+   
             
-            
-
 class noFileException(Exception):
     """Class reprensentant aucun fichier choisi
 
@@ -92,9 +93,9 @@ class noFileException(Exception):
             what (str): Message d'erreur
     """   
     def __init__(self, what : str) -> None:
-             
         self.what = what
         super().__init__(self.what)
+   
         
 class userNonCharger(Exception):
     """Classe representant un utilisateur non chargé
@@ -106,6 +107,7 @@ class userNonCharger(Exception):
         self.what = what
         super().__init__(self.what)
     
+
 class noConnection(Exception):
     """Class representant une erreur de connection
 
@@ -117,7 +119,7 @@ class noConnection(Exception):
         self.what = what
         super().__init__(self.what)
 
-def draw_text(text, font = "Comic Sans Ms", color = (0,0,0), x = 0, y = 0,contener = None,size = 20,importer = False, center_multi_line_y = False, ombre = False,center_multi_line = False):
+def draw_text(text, font = "Comic Sans Ms", color = (0,0,0), x = 0, y = 0,contener : pygame.Surface = None,size = 20,importer = False, center_multi_line_y = False, ombre = False,center_multi_line = False):
     """
         dessiner un texte a une position donné
         :param 1: text qu'on veut dessiner
@@ -144,6 +146,7 @@ def draw_text(text, font = "Comic Sans Ms", color = (0,0,0), x = 0, y = 0,conten
         text_ = font_.render(str(text), True, color)
         contener.blit(text_, (x,y+(size + 2)*enum))     
         
+
 class Animation:
     """Class permettant de generer une animation de chargement
 
@@ -153,7 +156,6 @@ class Animation:
             id_ (int, optional): id representant si l'animation est situé dans un endroit bloquant ou non. Defaults to 1.
     """
     def __init__(self,screen : pygame.Surface,text_chargement : str = "Chargement",id_ : int = 1):
-        
         self.screen = screen
         self.texte = text_chargement
         self.running = True
@@ -214,6 +216,7 @@ class Animation:
         self.running = False
         self.id_ = 1
         
+        
 class User:
     """Class Representant le compte de l'utilisateur
 
@@ -245,8 +248,8 @@ class User:
 
         Returns:
             bool: Renvoie la réponse de l'utilisateur
-        """        
-        ans = tk.messagebox.askyesno(title = "Exit", message = "Tu veux vraiment nous quitter :(")
+        """
+        ans = tkinter.messagebox.askyesno(title = "Exit", message = "Tu veux vraiment nous quitter :(")
         return ans
     
     @staticmethod
@@ -259,7 +262,7 @@ class User:
         Returns:
             boolean: Renvoie la reponse de l'utilisateur (True or False)
         """
-        ans = tk.messagebox.askyesno(title = "Word", message = f"Es-tu pour l'ouverture de {open} ?")
+        ans = tkinter.messagebox.askyesno(title = "Word", message = f"Es-tu pour l'ouverture de {open} ?")
         return ans
     
     @staticmethod
@@ -286,10 +289,10 @@ class User:
         data = None
         try:
             connection = sql.connect(
-                host = env.get('HOST'),
-                user = env.get('USER'),
-                password  = env.get('SQL_MOT_DE_PASSE'),
-                db=env.get('DB_NAME'),
+                host = os.environ.get('HOST'),
+                user = os.environ.get('USER'),
+                password  = os.environ.get('SQL_MOT_DE_PASSE'),
+                db=os.environ.get('DB_NAME'),
                 auth_plugin='mysql_native_password')
             cursor = connection.cursor()
             request = f"SELECT COUNT(*) FROM tuto WHERE auteur = '{self.auteur}';"
@@ -314,10 +317,10 @@ class User:
         """        
         try:
             connection = sql.connect(
-                host = env.get('HOST'),
-                user = env.get('USER'),
-                password  = env.get('SQL_MOT_DE_PASSE'),
-                db=env.get('DB_NAME'),
+                host = os.environ.get('HOST'),
+                user = os.environ.get('USER'),
+                password  = os.environ.get('SQL_MOT_DE_PASSE'),
+                db=os.environ.get('DB_NAME'),
                 auth_plugin='mysql_native_password')
             cursor = connection.cursor()
             request = """ INSERT INTO utilisateur (`nom`, `prenom`, `tuto_transmis`,`photo_profil`, `age`,`pseudo`,`mot_de_passe`,`rect_photo_profil`)
@@ -338,9 +341,7 @@ class User:
                     connection.close()
             except:
                 raise noConnection("connection failed")   
-                
-    
-                
+                      
     def change_element(self,nom = False, pseudo = False, prenom = False, photo_pp = False, tuto_transmi = False,rect_pp = False,Nouvelle_value = 0)-> None:
         """Fonction permettant de mettre a jour les éléments du compte de l'utilisation
 
@@ -356,7 +357,6 @@ class User:
         Raises:
             noConnection: Renvoie noConnection quand aucune connection n'a pu être initialisé
         """
-        pseudo_user = self.pseudo
         print("h")
         if nom:
             element = "nom"
@@ -381,10 +381,10 @@ class User:
         print("h")
         try:
             connection = sql.connect(
-                host = env.get('HOST'),
-                user = env.get('USER'),
-                password  = env.get('SQL_MOT_DE_PASSE'),
-                db=env.get('DB_NAME'),
+                host = os.environ.get('HOST'),
+                user = os.environ.get('USER'),
+                password  = os.environ.get('SQL_MOT_DE_PASSE'),
+                db=os.environ.get('DB_NAME'),
                 auth_plugin='mysql_native_password')
             cursor = connection.cursor()
             request = f"UPDATE utilisateur SET `{element}` = %s WHERE pseudo = %s;"
@@ -421,10 +421,10 @@ class User:
         """
         try:
             connection = sql.connect(
-                host = env.get('HOST'),
-                user = env.get('USER'),
-                password  = env.get('SQL_MOT_DE_PASSE'),
-                db=env.get('DB_NAME'),
+                host = os.environ.get('HOST'),
+                user = os.environ.get('USER'),
+                password  = os.environ.get('SQL_MOT_DE_PASSE'),
+                db=os.environ.get('DB_NAME'),
                 auth_plugin='mysql_native_password')
             cursor = connection.cursor()
             request =f"SELECT * FROM utilisateur WHERE pseudo = '{pseudo}'"
@@ -460,10 +460,10 @@ class User:
         print("in")
         try:
             connection = sql.connect(
-                host = env.get('HOST'),
-                user = env.get('USER'),
-                password  = env.get('SQL_MOT_DE_PASSE'),
-                db=env.get('DB_NAME'),
+                host = os.environ.get('HOST'),
+                user = os.environ.get('USER'),
+                password  = os.environ.get('SQL_MOT_DE_PASSE'),
+                db=os.environ.get('DB_NAME'),
                 auth_plugin='mysql_native_password')
             cursor = connection.cursor()
             request = """ SELECT pseudo FROM utilisateur
@@ -555,16 +555,15 @@ class Gerer_requete(User):
         current_date = current_date.strftime("%Y-%m-%d")
         date = current_date
         nom = nom_tuto
-        print(self)
         self.user.tuto_transmis += 1
         auteur = f"{self.pseudo}, {self.nom} {self.prenom}"
         file = Doc(doc).get_extension()
         try:
             connection = sql.connect(
-                host = env.get('HOST'),
-                user = env.get('USER'),
-                password  = env.get('SQL_MOT_DE_PASSE'),
-                db=env.get('DB_NAME'),
+                host = os.environ.get('HOST'),
+                user = os.environ.get('USER'),
+                password  = os.environ.get('SQL_MOT_DE_PASSE'),
+                db=os.environ.get('DB_NAME'),
                 auth_plugin='mysql_native_password')
             cursor = connection.cursor()
             if doc != None:
@@ -606,10 +605,10 @@ class Gerer_requete(User):
         try:
             data_recup = [None]            
             connection = sql.connect(
-                host = env.get('HOST'),
-                user = env.get('USER'),
-                password  = env.get('SQL_MOT_DE_PASSE'),
-                db=env.get('DB_NAME'),
+                host = os.environ.get('HOST'),
+                user = os.environ.get('USER'),
+                password  = os.environ.get('SQL_MOT_DE_PASSE'),
+                db=os.environ.get('DB_NAME'),
                 auth_plugin='mysql_native_password')
             print(connection)
             cursor = connection.cursor()
@@ -645,11 +644,13 @@ class Gerer_requete(User):
         """
         if not with_path:
             #créé le fichier si il n'existe pas
-            if not os.path.exists('img_center'):
-                os.makedirs('img_center')
-            path = os.path.join('img_center',f"{nom_tuto} par {auteur}{ext}")
-            document = Doc(path,doc,nom_tuto,auteur,ext)
-            document.start()
+            dir = tkinter.filedialog.askdirectory(title = "Lieu du Telechargement")
+            if dir:
+                path = os.path.join(dir,f"{nom_tuto} par {auteur}{ext}")
+                document = Doc(path,doc,nom_tuto,auteur,ext)
+                document.start()
+            else:
+                return 
         else:
             path = doc
             document = Doc(path)
@@ -662,7 +663,7 @@ class Gerer_requete(User):
         Args:
             nom_fichier (str, optional): Nom du fichier dont l'ouverture a echouer. Defaults to "".
         """
-        tk.messagebox.showerror("Erreur",f"WOW ! L'ouverture a flop :( \n Il se peut que le fichier ({nom_fichier}) \nsoit déjà ouvert !")
+        tkinter.messagebox.showerror("Erreur",f"WOW ! L'ouverture a flop :( \n Il se peut que le fichier ({nom_fichier}) \nsoit déjà ouvert !")
         pygame.event.clear()
         
     @staticmethod
