@@ -16,13 +16,14 @@ build_options = {
         ("Ressource","Ressource"),
         ("Resize_image.py","Resize_image.py"),
         (".env", ".env"),
+        ("desktop.ini","desktop.ini")
     ],
 }
 
 # Set up the setup function
 setup(
     name="sylver_service",
-    version='v0.1.2',
+    version='v1.0',
     options={"build_exe": build_options},
     author = "by Sylvio Pelage-Maxime",
     executables=executables,
