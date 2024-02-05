@@ -2,7 +2,10 @@ import time
 import pygame
 import tkinter.filedialog,tkinter.messagebox
 import mysql.connector as sql
-import os,datetime,threading
+import os,datetime,threading,dotenv
+
+path = ".env"
+dotenv.load_dotenv(path)
 
 class Color:
     """
@@ -71,8 +74,7 @@ class Doc:
             return
         else:
             #no erreur
-            self.start_now()
-            
+            self.start_now()            
     
     def start_now(self):
         """Fonction permettant de lancer un document"""
@@ -308,7 +310,20 @@ class User:
                 return data 
             except:
                 raise noConnection("connection failed")
-                
+         
+    def signalement(self, id_tuto_signaler : int, pseudo_accuser : str, id_signaleur : str,text_signalement : str):
+        connection = sql.connect(
+                host = os.environ.get('HOST'),
+                user = os.environ.get('USER'),
+                password  = os.environ.get('SQL_MOT_DE_PASSE'),
+                db=os.environ.get('DB_NAME'),
+                auth_plugin='mysql_native_password')
+        cursor = connection.cursor()
+        current_date = datetime.datetime.now()
+        current_date = current_date.strftime("%Y-%m-%d")
+        
+            
+        
     def save_user(self):
         """Fonction permettant de sauvegarder un compte d'utilisateur
 
@@ -664,18 +679,15 @@ class Gerer_requete(User):
             nom_fichier (str, optional): Nom du fichier dont l'ouverture a echouer. Defaults to "".
         """
         tkinter.messagebox.showerror("Erreur",f"WOW ! L'ouverture a flop :( \n Il se peut que le fichier ({nom_fichier}) \nsoit déjà ouvert !")
-        pygame.event.clear()
         
     @staticmethod
     def error_occured():
         """Fonction permettant d'afficher un message d'erreur"""
         tkinter.messagebox.showerror("Erreur","WOW ! Une erreur a eu lieu")
-        pygame.event.clear()
         
     def connection_failed():
         """Fonction permettant d'afficher une erreur de connection"""
         tkinter.messagebox.showerror("Erreur","WOW ! La connection n'a pas pu être initialisé :(")
-        pygame.event.clear()
         
     @staticmethod
     def est_bytes(doc):
@@ -690,4 +702,14 @@ class Gerer_requete(User):
         return isinstance(doc,bytes) and doc != b"0"
           
 if __name__ == "__main__":
-    pass
+    connection = sql.connect(
+                host = os.environ.get('HOST'),
+                user = os.environ.get('USER'),
+                password  = os.environ.get('SQL_MOT_DE_PASSE'),
+                db=os.environ.get('DB_NAME'),
+                auth_plugin='mysql_native_password')
+    cursor = connection.cursor()
+    request = "DESCRIBE signalements"
+    cursor.execute(request)
+    detail = cursor.fetchall()
+    print(detail)

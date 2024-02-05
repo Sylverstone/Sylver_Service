@@ -383,7 +383,10 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
     font_20 = pygame.font.Font(font_paragraphe, 20)
     coupage,line,heigth_text = make_line(text = text_info, font = font(font_paragraphe,30,True), size_max= size_max)
     all_text = decoupe_text(coupage,line,text_info)
- 
+    text_signalement = "Signaler"
+    surface_signalement = pygame.Surface(( font(font_paragraphe,30,True).size(text_signalement)[0] + 10, 40), pygame.SRCALPHA)
+    rect_signalement  = surface_signalement.get_rect( x = w_origine - surface_signalement.get_width() - 10,
+                                                      y = 50)
     moitier_text = []
     for i in range(len(all_text)):
         moitier_text.append(font_40.size(all_text[i])[0]/2)
@@ -392,6 +395,9 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
         mouse_click = pygame.mouse.get_pressed()[0]
         screen.fill((100,100,100))
         surface_ecriture.fill((255,255,255,0))
+        surface_signalement.fill((0,0,0,0))
+        pygame.draw.rect(surface_signalement,palette_couleur.fond_case_login,(0,0,surface_signalement.get_width(),surface_signalement.get_height()),0,20)
+        pygame.draw.rect(surface_signalement,(0,0,102),(0,0,surface_signalement.get_width(),surface_signalement.get_height()),1,20)
         pygame.draw.rect(screen,palette_couleur.fond_contenaire_page_tuto,(10,120,width + 30, height + 60),0,20)
         pygame.draw.rect(surface_ecriture,blanc,(0,0,width,height),0,20)
         for event in pygame.event.get():            
@@ -408,8 +414,10 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
                        size = 30, contener = surface_ecriture, font = font_paragraphe, importer = True)
 
         #pygame.draw.rect(surface_ecriture, (255,0,0),(0,height/2,width,2))
-        fond_nav.fill((0,0,0))
+        fond_nav.fill(palette_couleur.fond_bar_de_navigation)
+                         
         screen.blit(fond_nav,(0,0))
+        screen.blit(surface_signalement,(rect_signalement[0],rect_signalement[1]))
         screen.blit(image_retour,rect_goback)
         title(text_title, size = 40)
         if id_ > 1:
@@ -464,85 +472,90 @@ def menu():
                   ,ombre = True)
         
         if access:
-            max_par_page = 12
-            global page
-            page = []
-            count = 0
-            sous_list = []
-            for i in range(len(detail)):
-                sous_list.append(detail[i])
-                count+=1
-                if count >= max_par_page:
+            try:
+                max_par_page = 12
+                global page
+                page = []
+                count = 0
+                sous_list = []
+                for i in range(len(detail)):
+                    sous_list.append(detail[i])
+                    count+=1
+                    if count >= max_par_page:
+                        page.append(sous_list)
+                        sous_list = []
+                        count = 0
+                if len(sous_list) > 0:
                     page.append(sous_list)
-                    sous_list = []
-                    count = 0
-            if len(sous_list) > 0:
-                page.append(sous_list) 
-            decount_page = f"{zone_page+1}/{len(page)}"
-            longueur_decompte = font_40.size(decount_page)[0]
-            x1 = w_origine/2 + longueur_decompte + 10
-            x2 = w_origine/2 - longueur_decompte - 20            
-            use_list = page[zone_page]
-            rect_1 = pygame.Rect(x1,y_all,surface_fleche.get_width(),surface_fleche.get_height())
-            rect_2 = pygame.Rect(x2,y_all,surface_fleche.get_width(),surface_fleche.get_height())
-            dict_rect_fleche = [rect_1,rect_2]
-            add_fleche = [1,-1]
-            surface_fleche.fill((255,255,255))
-            screen.blit(surface_fleche,(x1,y_all))
-            screen.blit(surface_fleche,(x2,y_all))
-            draw_text(decount_page,color = blanc,
-                      x = w_origine/2 - longueur_decompte/2,
-                      y = y_all,
-                      font = font_paragraphe, importer = True,size = 40)
-            for index,data in enumerate(use_list):
-                nom_projet = data[0]
-                auteur = User.get_only_pseudo(data[5])
-                id_ = data[4]
-                doc  = data[2]
-                date = data[1]
-                file = data[6]
-                date = date.strftime("%d/%m/%Y")
-                date_actuelle = datetime.datetime.now()
-                date_actuelle = date_actuelle.strftime("%d/%m/%Y")
-                if date_actuelle == date:
-                    text_date = "posté aujourd'hui"
-                else:
-                    text_date = f"posté le {date}"
-                text = data[3]
-                rect_case = pygame.Rect(liste_indicex[index],
-                                        liste_indicey[index],
-                                        long_case,
-                                        haut_case)
-                if len(use_list) <=3:
-                    rect_case = pygame.Rect(w_origine/2 - long_case/2, liste_indicey[index],
+                elif len(page) == 0:
+                    page.append([])
+                decount_page = f"{zone_page+1}/{len(page)}"
+                longueur_decompte = font_40.size(decount_page)[0]
+                x1 = w_origine/2 + longueur_decompte + 10
+                x2 = w_origine/2 - longueur_decompte - 20            
+                use_list = page[zone_page]
+                rect_1 = pygame.Rect(x1,y_all,surface_fleche.get_width(),surface_fleche.get_height())
+                rect_2 = pygame.Rect(x2,y_all,surface_fleche.get_width(),surface_fleche.get_height())
+                dict_rect_fleche = [rect_1,rect_2]
+                add_fleche = [1,-1]
+                surface_fleche.fill((255,255,255))
+                screen.blit(surface_fleche,(x1,y_all))
+                screen.blit(surface_fleche,(x2,y_all))
+                draw_text(decount_page,color = blanc,
+                          x = w_origine/2 - longueur_decompte/2,
+                          y = y_all,
+                          font = font_paragraphe, importer = True,size = 40)
+                for index,data in enumerate(use_list):
+                    nom_projet = data[0]
+                    auteur = User.get_only_pseudo(data[5])
+                    id_ = data[4]
+                    doc  = data[2]
+                    date = data[1]
+                    file = data[6]
+                    date = date.strftime("%d/%m/%Y")
+                    date_actuelle = datetime.datetime.now()
+                    date_actuelle = date_actuelle.strftime("%d/%m/%Y")
+                    if date_actuelle == date:
+                        text_date = "posté aujourd'hui"
+                    else:
+                        text_date = f"posté le {date}"
+                    text = data[3]
+                    rect_case = pygame.Rect(liste_indicex[index],
+                                            liste_indicey[index],
                                             long_case,
                                             haut_case)
-                surface = pygame.Surface((rect_case.w,rect_case.h),pygame.SRCALPHA)
-                surface.fill((0,0,0,0))
-                pygame.draw.rect(surface,palette_couleur.couleur_fond_case_tuto,(0,0,surface.get_width(),surface.get_height()),0,20)
-                color_auteur = (255,0,0) if Gerer_requete.est_bytes(doc) else blanc
-                if len(auteur) >= 20:
-                    ecrit_auteur = auteur[:5] + ".."
-                else:
-                    ecrit_auteur = auteur
-                draw_text(color = color_auteur,contener = surface,
-                          text = f"{nom_projet} par {ecrit_auteur}", x = 10,
-                          y = 0, font = font_paragraphe,
-                          size = 30, importer = True)
-                draw_text(color = blanc,contener = surface,
-                          text = text_date, x = rect_case.w - font_30.size(text_date)[0] - 20,
-                          y = 5, importer = True,
-                          size = 30, font = font_paragraphe)
-                if len(use_list) > 6:
-                    screen.blit(surface,(liste_indicex[index],liste_indicey[index]))
-                else:
-                    screen.blit(surface,(w_origine/2 - long_case/2, liste_indicey[index]))                
-                pygame.draw.rect(screen,(255,255,255),rect_case,3,20)
-                case_data = {"zone" : zone_page,"nom_projet" : nom_projet, "contenu" : text, "auteur" : auteur, "date" : date,"rect" : rect_case,"doc" : doc,"id" : id_,"extension" : file}
-                if can_add:
-                    pygame.display.flip()
-                    all_case_data.append(case_data)
-            can_add = False         
+                    if len(use_list) <=3:
+                        rect_case = pygame.Rect(w_origine/2 - long_case/2, liste_indicey[index],
+                                                long_case,
+                                                haut_case)
+                    surface = pygame.Surface((rect_case.w,rect_case.h),pygame.SRCALPHA)
+                    surface.fill((0,0,0,0))
+                    pygame.draw.rect(surface,palette_couleur.couleur_fond_case_tuto,(0,0,surface.get_width(),surface.get_height()),0,20)
+                    color_auteur = (255,0,0) if Gerer_requete.est_bytes(doc) else blanc
+                    if len(auteur) >= 20:
+                        ecrit_auteur = auteur[:5] + ".."
+                    else:
+                        ecrit_auteur = auteur
+                    draw_text(color = color_auteur,contener = surface,
+                              text = f"{nom_projet} par {ecrit_auteur}", x = 10,
+                              y = 0, font = font_paragraphe,
+                              size = 30, importer = True)
+                    draw_text(color = blanc,contener = surface,
+                              text = text_date, x = rect_case.w - font_30.size(text_date)[0] - 20,
+                              y = 5, importer = True,
+                              size = 30, font = font_paragraphe)
+                    if len(use_list) > 6:
+                        screen.blit(surface,(liste_indicex[index],liste_indicey[index]))
+                    else:
+                        screen.blit(surface,(w_origine/2 - long_case/2, liste_indicey[index]))                
+                    pygame.draw.rect(screen,(255,255,255),rect_case,3,20)
+                    case_data = {"zone" : zone_page,"nom_projet" : nom_projet, "contenu" : text, "auteur" : auteur, "date" : date,"rect" : rect_case,"doc" : doc,"id" : id_,"extension" : file}
+                    if can_add:
+                        pygame.display.flip()
+                        all_case_data.append(case_data)
+                can_add = False
+            except:
+                Gerer_requete.error_occured()
     
     def start_tuto(data):
         """Fonction permettant de lancer le tuto
@@ -581,6 +594,8 @@ def menu():
         global detail,can_add,access,display,num_resultat,flop_de_recherche
         can_add = True
         access = False
+        global zone_page
+        zone_page = 0
         try:               
             detail = Gerer_requete.rechercher_data(nom_auteur = data["nom_auteur"], nom_tuto = data["nom_projet"])
             processing = False
