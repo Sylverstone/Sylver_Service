@@ -1737,15 +1737,15 @@ def request():
     go_back = False
     while continuer:
         mouse = pygame.mouse.get_pos()
-        screen.fill((100,100,100))
+        screen.fill(fond_ecran)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 continuer = False
             if rect_goback.collidepoint(mouse) and (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1):
                 go_back = True        
         
-        text = "Alors déjà bien jouer !\nMais y'a rien ici sauf un gris bizarre\nla rue la vrai, t'as vu le systeme de slash n il pète hein"+\
-        "\n de toute façon je sais qu'il peète mdr"
+        text = "Alors déjà bien jouer !\nMais y'a rien ici sauf un gris bizarre\nCette partie de l'application devrait être faite bientot !\n Ou pas !\n \
+            si elle est effectivement faite, ce sera une page qui regrouperait toute les annonces de tuto laissez par des utilisateurs ! :)"
         draw_text(text,color = (255,255,255), center_multi_line=True,x = 0,y = 0, center_multi_line_y= True,ombre = True)
         if go_back:
             break
