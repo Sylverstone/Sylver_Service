@@ -628,10 +628,11 @@ def menu():
     font_20 = pygame.font.Font(font_paragraphe,20)
     longueur_recherche = w_origine - 400
     surface_rechercher = pygame.Surface((longueur_recherche, 70), pygame.SRCALPHA)
-    rect_btn = pygame.Rect(0,0,50,20)
+    #represente le btn qui efface la recherche
+    rect_btn = pygame.Rect(0,0,50,40)
     rect_rechearch = pygame.Rect(100,150,longueur_recherche,70)
-    rect_btn.x = 100 + (longueur_recherche) - 100
-    rect_btn.y = 150 + 70/2 - 20/2
+    rect_btn.x = rect_rechearch.x + rect_rechearch.w - 100
+    rect_btn.y = rect_rechearch.y + rect_rechearch.h/2 - rect_btn.h/2
     input_research = input_apple
     barre_input = pygame.Surface((2,25))
     barre_input.fill((0,0,0))
@@ -656,9 +657,11 @@ def menu():
     indice_type = 0
     text_rechercher = "Recherche par"
     rect_aide = pygame.Rect(w_origine - 70, 15, 50,50)
-    image_aide = pygame.image.load("image/icone_interrogation.png")
+    image_aide = pygame.image.load(os.path.join("Image","icone_interrogation.png"))
     image_aide = pygame.transform.smoothscale(image_aide,(rect_aide.w,rect_aide.h))
     #boucle principale
+    image_effacer_recherche = pygame.image.load(os.path.join("Image","icone_annule_recherche.png"))
+    image_effacer_recherche = pygame.transform.smoothscale(image_effacer_recherche,(rect_btn.w,rect_btn.h))
     while continuer:
         clock.tick(120)
         dict_recherche = {"nom_projet" : None,"nom_auteur" : None}
@@ -768,7 +771,8 @@ def menu():
          
         screen.blit(surface_rechercher,(100,150))    
         pygame.draw.rect(screen,palette_couleur.couleur_contour_case,contour_surface_rechercher,5,20)
-        pygame.draw.rect(screen,couleur,rect_btn)
+        #pygame.draw.rect(screen,couleur,rect_btn)
+        screen.blit(image_effacer_recherche,rect_btn)
         fond_nav.fill(palette_couleur.fond_bar_de_navigation)
         screen.blit(fond_nav,(0,0))
         title("Bienvenue Dans l'espace recherche!")       
@@ -1020,6 +1024,7 @@ def compte():
     pseudo_ndispo = False
     text_ndispo = "Pseudo déjà existant"
     visible = False
+    #erreur un peu de nom, rect_visible reprensente la taille des images pour cacher/voir le mdp
     rect_visible = pygame.Rect(0,0,39,rect_input_mdp.h-5)
     rect_visible.x = rect_input_mdp.x + rect_input_mdp.w - rect_visible.w - 10
     rect_visible.y = rect_input_mdp.y + rect_input_mdp.h/2 - rect_visible.h/2
@@ -1040,7 +1045,8 @@ def compte():
     zone = 0
     pas_correspondance = False
     n_pseudo = False
-    rect_save_user_data = pygame.Rect(0,0,20,20)
+    #rect representant les dimensions de l'icone pour le restez connectez
+    rect_save_user_data = pygame.Rect(0,0,30,30)
     text_n_correspond = 'Mot de passe incorrect'
     text_n_pseudo = "Pseudo inexistants"
     
@@ -1118,7 +1124,10 @@ def compte():
     pp_choisi = False
     rect_ellipse = None
     global user
-    
+    liste_image_restez_co = [pygame.transform.scale(pygame.image.load(os.path.join("image","icone_restez_co_inactif.png")),(rect_save_user_data.w,rect_save_user_data.h)),
+                            pygame.transform.scale(pygame.image.load(os.path.join("image","icone_restez_co_actif.png")),(rect_save_user_data.w,rect_save_user_data.h))]
+    icone_restez_co = liste_image_restez_co[0]
+    changement_image = 0
     image_retour = pygame.image.load("Image/Icone_retour.png")
     image_retour = pygame.transform.smoothscale(image_retour,(rect_goback.w,rect_goback.h))
     zone = 0 
@@ -1135,7 +1144,10 @@ def compte():
                 go_back = True
             if rect_save_user_data.collidepoint(mouse):
                 if (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1):
+                    changement_image += 1
                     check_save_con_data = not check_save_con_data
+                    icone_restez_co = liste_image_restez_co[changement_image % 2]
+                    
             if (rect_editer_photo.collidepoint(mouse) or collide_image) and (zone == 0 or connect):
                 if (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1):
                     try:
@@ -1495,10 +1507,10 @@ def compte():
             couleur_save_user_data = (255,0,0) if not check_save_con_data else (0,255,0)
             pygame.draw.rect(Surface_host,palette_couleur.fond_un_login,(0,0,rect_host.w,rect_host.h),0,20)
             pygame.draw.rect(Surface_host,(0,0,0),(0,0,rect_host.w,rect_host.h),2,20)
-            pygame.draw.rect(Surface_host,couleur_save_user_data,(rect_save_user_data.x - rect_host.x,rect_save_user_data.y - rect_host.y,
-                            rect_save_user_data.w,rect_save_user_data.h))
+            
+            Surface_host.blit(icone_restez_co,((rect_save_user_data.x - rect_host.x,rect_save_user_data.y - rect_host.y)))
             draw_text(contener = Surface_host, text = "Restez connecter",x = rect_save_user_data.x - rect_host.x + rect_save_user_data.w + 10,
-                      y = rect_save_user_data.y - rect_host.y - 2, font = "Arial")
+                      y = rect_save_user_data.y - rect_host.y +5, font = "Arial")
             pygame.draw.rect(screen,palette_couleur.fond_deux_login,(rect_ctn_host),0,20) #rpresente le 2e fond de connection et aussi creer compte
             pygame.draw.rect(screen,(0,0,0),(rect_ctn_host),2,20)
             screen.blit(Surface_host,(rect_host.x,rect_host.y))  #represente le contour forme du 2e fond          
