@@ -22,7 +22,7 @@ animation_connection = Animation(screen, text_chargement = "Connection")
 animation_ouverture = Animation(screen, text_chargement = "Ouverture")
 palette_couleur = Color()
 
-def draw_text(text, font = "Comic Sans Ms", color = (0,0,0), x = 0, y = 0,contener = screen,size = 20,importer = False, center_multi_line_y = False, ombre = False,center_multi_line = False):
+def draw_text(text, font = "Comic Sans Ms", color = (0,0,0), x = 0, y = 0,reference_center_x = None,contener = screen,size = 20,importer = False, center_multi_line_y = False, ombre = False,center_multi_line = False):
     """
         dessiner un texte a une position donné
         :param 1: text qu'on veut dessiner
@@ -43,7 +43,10 @@ def draw_text(text, font = "Comic Sans Ms", color = (0,0,0), x = 0, y = 0,conten
     
     for enum,text in enumerate(all_text):
         if center_multi_line:
-            x = contener.get_rect()[2]/2 - font_.size(text)[0]/2
+            if reference_center_x==None:
+                x = contener.get_rect()[2]/2 - font_.size(text)[0]/2
+            else:
+                reference_center_x.get_rect()[2]/2 - font_.size(text)[0]/2
         if center_multi_line_y:
             y = contener.get_rect()[3]/2 - font_.size(text)[1] * len(all_text)/2
         if ombre:
@@ -1104,7 +1107,9 @@ def compte():
          }
         ]
     #btn en attendant la fin
-    btn_disconnect = pygame.Rect(200,200,20,20)
+    btn_disconnect = pygame.Rect(0,0,200,80)
+    btn_disconnect.x = w_origine/2 - btn_disconnect.w/2
+    btn_disconnect.y = h_origine - 200
     btn_postimg = pygame.Surface((210,100),pygame.SRCALPHA)
     rect_postimg = pygame.Rect(w_origine/2 - 20 - btn_postimg.get_width(),
                      y_photo2 + size_grand[1] + 150,
@@ -1603,8 +1608,8 @@ def compte():
                 font_25a = pygame.font.SysFont(arial, 25, bold=False, italic=True)
                 btn_postimg = pygame.Surface((210,100),pygame.SRCALPHA)
                 btn_maketuto = btn_postimg.copy()
-                text_postimg = "POSTEZ UN TUTO VISUEL !"
-                text_maketuto = "CREEZ UN TUTO EN TEXTE !"
+                text_postimg = "POSTEZ UN\n TUTO VISUEL !"
+                text_maketuto = "CREEZ UN\n TUTO EN TEXTE !"
                 coupage, line, size_y = make_line(text=text_postimg,font = font_25a, size_max = btn_postimg.get_width())
                 coupage2, line2, size_y2 = make_line(text=text_maketuto,font = font_25a, size_max = btn_postimg.get_width())
                 rect_postimg = pygame.Rect(w_origine/2 - 20 - btn_postimg.get_width(),
@@ -1623,6 +1628,7 @@ def compte():
             surface_ombre = pygame.Surface((btn_postimg.get_width() + 10, btn_postimg.get_height() + 10), pygame.SRCALPHA)
             surface_ombre.fill((0,0,0,0))
             surface_ombre2 = surface_ombre.copy()
+        
             draw_line(text = text_postimg,
                       x = True,
                       y = rect_postimg.h/2 - size_y/2,
@@ -1635,6 +1641,7 @@ def compte():
                       line = line2, coupage = coupage2,size = 25,
                       font = arial,fontz = font_25a,
                       contener = btn_maketuto,importer = False)
+            
             pygame.draw.rect(btn_postimg,(255,255,255),(0,0,btn_postimg.get_width(),btn_postimg.get_height()),1,20)
             pygame.draw.rect(btn_maketuto,(255,255,255),(0,0,btn_maketuto.get_width(),btn_maketuto.get_height()),1,20)
             #rep; continuez lanimation pour le 2e btn, continuer detoffer linterface user design
@@ -1681,7 +1688,12 @@ def compte():
             #image_pp = pygame.transform.smoothscale(image_pp,size_grand)
             rect_editer_photo.x = x_photo2 + size_grand[0]/2 - font_20.size(text_edit)[0]/2
             rect_editer_photo.y = y_photo2 + size_grand[1] + 5
-            pygame.draw.rect(screen,(0,0,0),btn_disconnect)
+            pygame.draw.rect(screen,palette_couleur.fond_case_login,btn_disconnect,0,20)
+            couleur_contour_disconnect = (255,255,255) if not btn_disconnect.collidepoint(mouse) else (0,0,0)
+            pygame.draw.rect(screen,couleur_contour_disconnect,btn_disconnect,1,20)
+
+            draw_text("Déconnexion", x = btn_disconnect.x + btn_disconnect.w/2 - font(font_paragraphe,57,True).size("Déconnexion")[0]/2, y = btn_disconnect.y + btn_disconnect.h/2 - font(font_paragraphe,57,True).size("Déconnexion")[1]/2,
+                      font = font_paragraphe, importer = True, color = blanc, size = 57)
             if user.rect_pp == None:
                 pygame.draw.ellipse(surf2g, (255, 255, 255), (0,0,*size_grand))            
                 surf3g.blit(surf2g, (0, 0))
