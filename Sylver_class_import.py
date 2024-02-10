@@ -28,7 +28,7 @@ class Color:
         self.fond_deux_login = (30,30,30)
         self.fond_contenaire_page_tuto = (142,142,142)
     
-        
+print("udjud")
 class Doc:
     """Class representant un fichier
 
