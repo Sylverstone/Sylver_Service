@@ -312,6 +312,7 @@ class User:
                 raise noConnection("connection failed")
          
     def signalement(self, id_tuto_signaler : int, pseudo_accuser : str, id_signaleur : str,text_signalement : str):
+        print("test")
         try:
             connection = sql.connect(
                     host = os.environ.get('HOST'),
