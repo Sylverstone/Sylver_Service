@@ -311,6 +311,7 @@ class User:
                 raise noConnection("connection failed")
          
     def signalement(self, id_tuto_signaler : int, pseudo_accuser : str, id_signaleur : str,text_signalement : str):
+        print("test")
         """Fonction gérant les soumissions de signalement par les utilisateurs
 
         Args:
@@ -322,7 +323,6 @@ class User:
         Raises:
             noConnection: Renvoie noConnection quand aucune connection n'a pu être initalisé
         """        
-        print("test")
         try:
             connection = sql.connect(
                     host = os.environ.get('HOST'),
