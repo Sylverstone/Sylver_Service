@@ -312,15 +312,32 @@ class User:
                 raise noConnection("connection failed")
          
     def signalement(self, id_tuto_signaler : int, pseudo_accuser : str, id_signaleur : str,text_signalement : str):
-        connection = sql.connect(
-                host = os.environ.get('HOST'),
-                user = os.environ.get('USER'),
-                password  = os.environ.get('SQL_MOT_DE_PASSE'),
-                db=os.environ.get('DB_NAME'),
-                auth_plugin='mysql_native_password')
-        cursor = connection.cursor()
-        current_date = datetime.datetime.now()
-        current_date = current_date.strftime("%Y-%m-%d")
+        try:
+            connection = sql.connect(
+                    host = os.environ.get('HOST'),
+                    user = os.environ.get('USER'),
+                    password  = os.environ.get('SQL_MOT_DE_PASSE'),
+                    db=os.environ.get('DB_NAME'),
+                    auth_plugin='mysql_native_password')
+            cursor = connection.cursor()
+            current_date = datetime.datetime.now()
+            current_date = current_date.strftime("%Y-%m-%d")
+            request = """ INSERT INTO signalements (`id_tuto_signaler`, `signalement`, `pseudo_accuseur`, `date`, `pseudo_accuse`)
+                          VALUES (%s,%s,%s,%s,%s);
+                        """
+            infos = (id_tuto_signaler, text_signalement, self.pseudo, current_date,  pseudo_accuser)
+            cursor.execute(request,infos)            
+            connection.commit()
+        except sql.Error as err:
+            print(err)
+        finally:
+            try:
+                if connection.is_connected():
+                    connection.close()
+                    
+            except Exception as e:
+                print(e)
+                raise noConnection("connection failed")
         
             
         
@@ -702,14 +719,5 @@ class Gerer_requete(User):
         return isinstance(doc,bytes) and doc != b"0"
           
 if __name__ == "__main__":
-    connection = sql.connect(
-                host = os.environ.get('HOST'),
-                user = os.environ.get('USER'),
-                password  = os.environ.get('SQL_MOT_DE_PASSE'),
-                db=os.environ.get('DB_NAME'),
-                auth_plugin='mysql_native_password')
-    cursor = connection.cursor()
-    request = "DESCRIBE signalements"
-    cursor.execute(request)
-    detail = cursor.fetchall()
-    print(detail)
+    perso = User("maxim", 4, "maximegay", "caca", "caca")
+    perso.signalement(2, "Elvann", "Maxime le gay", "Elvann est le plus beau du monde et je suis moin musclé que lui")
