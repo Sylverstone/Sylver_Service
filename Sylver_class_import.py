@@ -28,7 +28,6 @@ class Color:
         self.fond_deux_login = (30,30,30)
         self.fond_contenaire_page_tuto = (142,142,142)
     
-print("udjud")
 class Doc:
     """Class representant un fichier
 
@@ -312,6 +311,17 @@ class User:
                 raise noConnection("connection failed")
          
     def signalement(self, id_tuto_signaler : int, pseudo_accuser : str, id_signaleur : str,text_signalement : str):
+        """Fonction gérant les soumissions de signalement par les utilisateurs
+
+        Args:
+            id_tuto_signaler (int): Numéro d'identification du tuto signalé
+            pseudo_accuser (str): Pseudo du propriétaire du tuto signalé
+            id_signaleur (str): Nom de l'utilisateur qui signal le tuto
+            text_signalement (str): Texte de justification rédigé par l'utilisateur lorsqu'il signal le tuto
+
+        Raises:
+            noConnection: Renvoie noConnection quand aucune connection n'a pu être initalisé
+        """        
         print("test")
         try:
             connection = sql.connect(
@@ -720,5 +730,4 @@ class Gerer_requete(User):
         return isinstance(doc,bytes) and doc != b"0"
           
 if __name__ == "__main__":
-    perso = User("maxim", 4, "maximegay", "caca", "caca")
-    perso.signalement(2, "Elvann", "Maxime le gay", "Elvann est le plus beau du monde et je suis moin musclé que lui")
+    pass
