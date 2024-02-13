@@ -386,10 +386,6 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
     font_20 = pygame.font.Font(font_paragraphe, 20)
     coupage,line,heigth_text = make_line(text = text_info, font = font(font_paragraphe,30,True), size_max= size_max)
     all_text = decoupe_text(coupage,line,text_info)
-    text_signalement = "Signaler"
-    surface_signalement = pygame.Surface(( font(font_paragraphe,30,True).size(text_signalement)[0] + 10, 40), pygame.SRCALPHA)
-    rect_signalement  = surface_signalement.get_rect( x = w_origine - surface_signalement.get_width() - 10,
-                                                      y = 50)
     moitier_text = []
     for i in range(len(all_text)):
         moitier_text.append(font_40.size(all_text[i])[0]/2)
@@ -398,9 +394,8 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
         mouse_click = pygame.mouse.get_pressed()[0]
         screen.fill((100,100,100))
         surface_ecriture.fill((255,255,255,0))
-        surface_signalement.fill((0,0,0,0))
-        pygame.draw.rect(surface_signalement,palette_couleur.fond_case_login,(0,0,surface_signalement.get_width(),surface_signalement.get_height()),0,20)
-        pygame.draw.rect(surface_signalement,(0,0,102),(0,0,surface_signalement.get_width(),surface_signalement.get_height()),1,20)
+        
+        
         pygame.draw.rect(screen,palette_couleur.fond_contenaire_page_tuto,(10,120,width + 30, height + 60),0,20)
         pygame.draw.rect(surface_ecriture,blanc,(0,0,width,height),0,20)
         for event in pygame.event.get():            
@@ -420,11 +415,14 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
         fond_nav.fill(palette_couleur.fond_bar_de_navigation)
                          
         screen.blit(fond_nav,(0,0))
-        screen.blit(surface_signalement,(rect_signalement[0],rect_signalement[1]))
+        
         screen.blit(image_retour,rect_goback)
         title(text_title, size = 40)
         if id_ > 1:
+            #début de la concecption du signalement, utilisation d'une surface et de draw.rect pour le design
+            
             draw_text(date, x = w_origine - font_20.size(str(date))[0] - 10,y = 10, font = font_paragraphe, color = (255,255,255),importer = True)
+        
         if go_back:
             break
         screen.blit(surface_ecriture, (25,150))
