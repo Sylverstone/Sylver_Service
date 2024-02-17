@@ -1,9 +1,15 @@
 import sys
 from cx_Freeze import setup, Executable
+import platform
+
+# Obtenez le nom du système d'exploitation
+system_name = platform.system()
 
 # Define the executables
-executables = [Executable("sylver_service.py", base=None)]
-
+if system_name != "Windows":
+    executables = [Executable("sylver_service.py", base=None)]
+else:
+    executables = [Executable("sylver_service.py", base="Win32GUI")]
 
 build_options = {
     "packages": ["pygame","os","datetime","sys","threading","keyboard","tkinter","mysql.connector","tkinter.filedialog","time","pyperclip"],
