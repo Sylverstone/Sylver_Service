@@ -9,7 +9,7 @@ system_name = platform.system()
 if system_name != "Windows":
     executables = [Executable("sylver_service.py", base=None)]
 else:
-    executables = [Executable("sylver_service.py", base="Win32GUI")]
+    executables = [Executable("sylver_service.py", base="Win32GUI")] # le cmd ne s'ouvra pas
 
 build_options = {
     "packages": ["pygame","os","datetime","sys","threading","keyboard","tkinter","mysql.connector","tkinter.filedialog","time","pyperclip"],
