@@ -310,7 +310,7 @@ class User:
             except:
                 raise noConnection("connection failed")
          
-    def signalement(self, id_tuto_signaler : int, pseudo_accuser : str, id_signaleur : str,text_signalement : str):
+    def signalement(self, id_tuto_signaler : int, pseudo_accuser : str,text_signalement : str):
         print("test")
         """Fonction gérant les soumissions de signalement par les utilisateurs
 
@@ -712,7 +712,8 @@ class Gerer_requete(User):
     def error_occured():
         """Fonction permettant d'afficher un message d'erreur"""
         tkinter.messagebox.showerror("Erreur","WOW ! Une erreur a eu lieu")
-        
+    
+    @staticmethod
     def connection_failed():
         """Fonction permettant d'afficher une erreur de connection"""
         tkinter.messagebox.showerror("Erreur","WOW ! La connection n'a pas pu être initialisé :(")
@@ -728,6 +729,11 @@ class Gerer_requete(User):
             boolean: Return True si l'element est un fichier, sinon non
         """
         return isinstance(doc,bytes) and doc != b"0"
+    
+    @staticmethod
+    def connecte_toi():
+        """Fonction permettant de prévenir l'utilisateur qu'il doit se conecter pour signaler un tuto"""
+        tkinter.messagebox.showerror("Erreur","Vous ne pouvez pas signaler sans être connecté !")
           
 if __name__ == "__main__":
     pass

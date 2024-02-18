@@ -203,22 +203,32 @@ def ecrire_tuto(user : User):
                     go_back = True
             ### Validation de l'input => mettre le tuto en bdd ###
             if rect_valider.collidepoint(mouse):
-                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                    #.strip() utilisé pour supprimer les espaces au debut et a la fin
-                    text_pour_tuto = ' '.join(dict_input["input_text"]["input"])
-                    text_pour_tuto = text_pour_tuto.strip()
-                    titre = ''.join(dict_input["input_titre"]["input"])
-                    titre = titre.strip()
-                    try:
-                        animation_mise_en_ligne.start_anime(last_screen,(100,100,100))
-                        Gerer_requete(user).save_tuto(None,text_pour_tuto,titre)
-                        animation_mise_en_ligne.stop_anime()
-                        go_back = True 
-                    except noConnection:
-                        Gerer_requete.connection_failed()
+                if user != None:
+                    if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                        #.strip() utilisé pour supprimer les espaces au debut et a la fin
+                        text_pour_tuto = ' '.join(dict_input["input_text"]["input"])
+                        text_pour_tuto = text_pour_tuto.strip()
+                        titre = ''.join(dict_input["input_titre"]["input"])
+                        titre = titre.strip()
+                        try:
+                            animation_mise_en_ligne.start_anime(last_screen,(100,100,100))
+                            Gerer_requete(user).save_tuto(None,text_pour_tuto,titre)
+                            animation_mise_en_ligne.stop_anime()
+                            go_back = True 
+                        except noConnection:
+                            Gerer_requete.connection_failed()
+                            
+                        except Exception as e:
+                            Gerer_requete.error_occured()
+                else:
+                    if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                        #.strip() utilisé pour supprimer les espaces au debut et a la fin
+                        text_pour_tuto = ' '.join(dict_input["input_text"]["input"])
+                        text_pour_tuto = text_pour_tuto.strip()
+                        titre = ''.join(dict_input["input_titre"]["input"])
+                        titre = titre.strip()
+                        return text_pour_tuto, titre
                         
-                    except Exception as e:
-                        Gerer_requete.error_occured()
             ################################### Logique de l'input #################################      
             for elt in dict_input.values():
                 if elt["rect"].collidepoint(mouse): 
@@ -334,7 +344,10 @@ def ecrire_tuto(user : User):
         screen.blit(surf_ecrit,(rect_surf_ecrit[0],rect_surf_ecrit[1]))
         screen.blit(fond_nav,(0,0))
         screen.blit(image_retour,rect_goback) 
-        title(f"Ecrivez ici votre tutoriel {user.pseudo}")
+        if user != None:
+            title(f"Ecrivez ici votre tutoriel {user.pseudo}")
+        else:
+            title("Écrivez ici votre signalement")
         if go_back:
             break
         last_screen = screen.copy()
@@ -422,7 +435,15 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
             #début de la concecption du signalement, utilisation d'une surface et de draw.rect pour le design
             
             draw_text(date, x = w_origine - font_20.size(str(date))[0] - 10,y = 10, font = font_paragraphe, color = (255,255,255),importer = True)
-        
+            signal_button_rect = pygame.draw.rect(screen, (255, 255, 255), (w_origine - 50, 40, 20, 20))
+            if signal_button_rect.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if connect:
+                    text_signalement, titre = ecrire_tuto(None)
+                    signalement_final = titre + " | " + text_signalement
+                    user.signalement(id_tuto, auteur, signalement_final)
+                else:
+                    Gerer_requete.connecte_toi()
+                    
         if go_back:
             break
         screen.blit(surface_ecriture, (25,150))
