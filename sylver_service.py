@@ -227,6 +227,7 @@ def ecrire_tuto(user : User):
                         text_pour_tuto = text_pour_tuto.strip()
                         titre = ''.join(dict_input["input_titre"]["input"])
                         titre = titre.strip()
+                        animation_mise_en_ligne.start_anime(last_screen,(100,100,100))
                         return text_pour_tuto, titre
                         
             ################################### Logique de l'input #################################      
@@ -441,6 +442,7 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
                     text_signalement, titre = ecrire_tuto(None)
                     signalement_final = titre + " | " + text_signalement
                     user.signalement(id_tuto, auteur, signalement_final)
+                    animation_mise_en_ligne.stop_anime()
                 else:
                     Gerer_requete.connecte_toi()
                     
