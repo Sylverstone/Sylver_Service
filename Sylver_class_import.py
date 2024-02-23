@@ -1,4 +1,5 @@
 import time
+from mysqlx import InterfaceError
 import pygame
 import tkinter.filedialog,tkinter.messagebox
 import mysql.connector as sql
@@ -6,7 +7,6 @@ import os,datetime,threading,dotenv
 
 path = ".env"
 dotenv.load_dotenv(path)
-
 class Color:
     """
         Class repertoriant toute les couleurs possible dans l'applications
@@ -305,10 +305,12 @@ class User:
             try:
                 if connection.is_connected():
                     connection.close()
-                    
-                return data 
+                else:
+                    raise noConnection("connection faild") 
             except:
                 raise noConnection("connection failed")
+            else:
+                return data
          
     def signalement(self, id_tuto_signaler : int, pseudo_accuser : str,text_signalement : str):
         print("test")
@@ -420,8 +422,6 @@ class User:
             element = "rect_photo_profil"
             self.rect_pp = Gerer_requete.separe_rect(Nouvelle_value)
             Nouvelle_value = self.rect_pp
-            print("boum")
-        print("h")
         try:
             connection = sql.connect(
                 host = os.environ.get('HOST'),
@@ -435,7 +435,6 @@ class User:
             cursor.execute(request,infos)
             connection.commit()
         except sql.Error as err:
-            print("ERRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR")
             print(err)
         finally:
             try:
@@ -443,7 +442,7 @@ class User:
                     print("mp",self.rect_pp)
                     connection.close()
                 else:
-                    print("not connected")
+                    raise noConnection("connection failed")
             except:
                 raise noConnection("connection failed")
         
@@ -480,12 +479,16 @@ class User:
             try:
                 if connection.is_connected():
                     connection.close()
-                    if mdp == data[7]:
-                        return User(data[1],data[2],data[5],data[6],data[7],data[4],data[3],data[8])
-                    raise userNonCharger
+                    if mdp != data[7]:
+                        raise userNonCharger("mauvais mdp") 
+                else:
+                    raise noConnection("connection failed")
+            except userNonCharger:
+                raise userNonCharger("mauvais mdp")
             except:
                 raise noConnection("connection failed")
-                  
+            else:
+                return User(data[1],data[2],data[5],data[6],data[7],data[4],data[3],data[8])
     @staticmethod
     def verifier_pseudo(pseudo)->bool:
         """Fonction permettant de verifier que le pseudo saisi est disponible
@@ -500,7 +503,6 @@ class User:
             bool: Renvoie True si le tuto est disponible, False sinon
         """        
         disponible = True
-        print("in")
         try:
             connection = sql.connect(
                 host = os.environ.get('HOST'),
@@ -509,16 +511,12 @@ class User:
                 db=os.environ.get('DB_NAME'),
                 auth_plugin='mysql_native_password')
             cursor = connection.cursor()
-            request = """ SELECT pseudo FROM utilisateur
-                        """
+            request = f"SELECT pseudo FROM utilisateur WHERE pseudo LIKE '{pseudo}%'"
             cursor.execute(request)
             all_pseudo = cursor.fetchall()
-            print(all_pseudo)
-            print(pseudo)
             print("pseudo :",all_pseudo)
-            for pseudo_ in all_pseudo:
-                if pseudo_[0] == pseudo:
-                    disponible = False
+            if (pseudo,) in all_pseudo:
+                disponible = False
         except sql.Error as err:
             print(err)
         except Exception as e:
@@ -527,10 +525,17 @@ class User:
             try:
                 if connection.is_connected():
                     connection.close()
-                return disponible
+                else:
+                    raise noConnection("connection failed")
             except:
                 print("no con")
                 raise noConnection("connection failed")
+            else:
+                #aucune erreur n'a eu lieu
+                return disponible
+            
+                
+            
     
     @staticmethod
     def get_file(idd = 0):
@@ -627,6 +632,8 @@ class Gerer_requete(User):
             try:
                 if connection.is_connected():
                     connection.close()
+                else:
+                    raise noConnection("connection failed")
             except:
                 raise noConnection("connection failed")
                 
@@ -670,10 +677,13 @@ class Gerer_requete(User):
             try:
                 if connection.is_connected():
                     connection.close()
-                return data_recup
+                else:
+                    raise noConnection("connection failed")
             except:
                 raise noConnection("connection failed")
-    
+            else:
+                return data_recup
+
     @staticmethod
     def demarrer_fichier(doc : bytes | str,ext,with_path = False,nom_tuto = "",auteur = "")->None:
         """Fonction permettant de démarrer un fichier
@@ -698,6 +708,7 @@ class Gerer_requete(User):
             path = doc
             document = Doc(path)
             document.start_now()
+        
         
     @staticmethod
     def fail_open(nom_fichier = ""):
