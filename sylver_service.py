@@ -23,7 +23,7 @@ animation_ouverture = Animation(screen, text_chargement = "Ouverture")
 #palette de couleur qui regroupe toute les couleurs de l'app
 palette_couleur = Color()
 
-def verification_size(contenaire : pygame.Rect, nom_font : pygame.font, size : int, texte : str,importer : bool = True):
+def verification_size(contenaire : pygame.Rect, nom_font : pygame.font, size : int, texte : str,importer : bool = True, id = 0, all_texte = None):
     """Fonction récursive permettant de reduire la taille d'un texte si il est trop grand
 
     Args:
@@ -32,11 +32,25 @@ def verification_size(contenaire : pygame.Rect, nom_font : pygame.font, size : i
         size (int): _description_
         texte (str): _description_
     """
-    if contenaire.w <= font(nom_font,size,importer).size(texte)[0]:
-        size -= 2
-        return verification_size(contenaire,nom_font,size,texte,importer)
-    else:
-        return size
+    if id == 0:
+        if contenaire.w <= font(nom_font,size,importer).size(texte)[0]:
+            size -= 2
+            return verification_size(contenaire,nom_font,size,texte,importer)
+        else:
+            return size
+    elif id == 1:
+        if all_texte == None:
+            nb_ligne = len(texte.split("\n"))
+        else:
+            nb_ligne = len(all_texte)
+            
+        hauteur_text = font(nom_font,size,importer).size(texte)[1] * nb_ligne
+        if hauteur_text >= contenaire.h:
+            size -= 2
+            return verification_size(contenaire, nom_font, size, texte,importer, id, all_texte)
+        else:
+            return size
+        
     
 def draw_text(text, font = "Comic Sans Ms", color = (0,0,0), x = 0, y = 0,reference_center_x = None,contener = screen,size = 20,importer = False, center_multi_line_y = False, ombre = False,center_multi_line = False):
     """
@@ -168,11 +182,12 @@ def decoupe_text(coupage : list ,line : int,text_info : str) :
         all_text.append(text_info[start:limite].strip())
     return all_text       
         
-def ecrire_tuto(user : User):  
-    """Fonction permettant a l'utilisateur décrire son tuto
+def ecrire_tuto(user : User | None):  
+    """Fonction permettant a l'utilisateur décrire son tuto, cette fonction est également utilisé pour permettre a l'utilisateur décrire
+        un signalement
 
     Args:
-        user (User): Class representant les données de l'utilisateur
+        user (User | None): Class representant les données de l'utilisateur
     """
     global fond_nav
     global continuer
@@ -191,8 +206,6 @@ def ecrire_tuto(user : User):
     surf_ecrit = pygame.Surface((w_origine - 40, h_origine - 300 ), pygame.SRCALPHA)
     rect_titre = pygame.Rect(20,120,200,50)
     rect_surf_ecrit = pygame.Rect(20,200,surf_ecrit.get_width(),surf_ecrit.get_height())
-
-    #peut etre remplacer par dess classes jsp
     dict_input = {
         "input_titre" : { "max" : 25,"x" : 10,"y" : rect_titre.h/2 - font(font_paragraphe,30,True).size("m")[1]/2,"surf" : surf_titre,"input" : ["Titre",],
                          "zone_ecrit" : 0,"can_do_multiple_lines" : False, "base" : "Titre", "active" : False,"rect" : rect_titre, "time": 0, "take_time" : False,
@@ -394,6 +407,7 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
     width = w_origine - 50
     height = h_origine - 200
     surface_ecriture = pygame.Surface((width, height), pygame.SRCALPHA)
+    rect_surface_ecriture = surface_ecriture.get_rect()
     text_title = "A quoi sert Sylver_Service ?"
     if id_ > 1:
         date = date.strftime("%d/%m/%Y")
@@ -407,7 +421,7 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
         text_info = text
     if id_ == 0:
         with open("./Ressource/fichier_info.txt", "r+") as fichier:
-            text_info = fichier.read().replace("\n"," ")
+            text_info = fichier.read().replace("\n", " ")
         text_info = text_info.replace("Ã©","é")
         text_info = text_info.replace("Ã¨","è")
         text_info = text_info.replace("Ãª","ê")
@@ -416,8 +430,13 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
     font_paragraphe = apple_titre
     font_40 = pygame.font.Font(font_paragraphe, 40)
     font_20 = pygame.font.Font(font_paragraphe, 20)
-    coupage,line,heigth_text = make_line(text = text_info, font = font(font_paragraphe,30,True), size_max= size_max)
-    all_text = decoupe_text(coupage,line,text_info)
+    taille_ecriture = 30
+    coupage,line,heigth_text = make_line(text = text_info, font = font(font_paragraphe,taille_ecriture,True), size_max= size_max)
+    #mini système pour permettre l'adaptation au écran trop petit
+    while heigth_text >= rect_surface_ecriture.h:
+        taille_ecriture -= 2
+        coupage,line,heigth_text = make_line(text = text_info, font = font(font_paragraphe,taille_ecriture,True), size_max= size_max)
+    all_text = decoupe_text(coupage,line,text_info)        
     moitier_text = []
     for i in range(len(all_text)):
         moitier_text.append(font_40.size(all_text[i])[0]/2)
@@ -435,10 +454,10 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
                 go_back = True
         if not "\n" in text_info:
             for i in range(line):
-                draw_text(all_text[i], color = (0,0,0), x = 10, y =20 + 35*i, size = 30, contener = surface_ecriture, font = font_paragraphe, importer = True)
+                draw_text(all_text[i], color = (0,0,0), x = 10, y =20 + (taille_ecriture+5)*i, size = taille_ecriture, contener = surface_ecriture, font = font_paragraphe, importer = True)
         else:
             draw_text(text_info, color = (0,0,0),x = 10,y = 35,
-                       size = 30, contener = surface_ecriture, font = font_paragraphe, importer = True)
+                       size = taille_ecriture, contener = surface_ecriture, font = font_paragraphe, importer = True)
         #pygame.draw.rect(surface_ecriture, (255,0,0),(0,height/2,width,2))
         fond_nav.fill(palette_couleur.fond_bar_de_navigation)                         
         screen.blit(fond_nav,(0,0))        
@@ -1472,7 +1491,7 @@ def compte():
             fond_nav.fill(palette_couleur.fond_bar_de_navigation)
             screen.blit(fond_nav, (0,0))
             rect_host.x = disposition[zone]["rect_host_x"]
-            rect_ctn_host.x = disposition[zone]["rect_ctn_host_x"]
+            rect_ctn_host.x = disposition[zone]["rect_ctn_host_x"] #rpresente le 2e fond de connection et aussi creer compte
             rect_valider.x = disposition[zone]["rect_valider_x"] + rect_ctn_host.x
             rect_valider.y = disposition[zone]["rect_valider_y"]
             btn_submit.x = disposition[zone]["btn_submit_x"] + rect_host.x
@@ -1539,7 +1558,7 @@ def compte():
                       y = rect_save_user_data.y - rect_host.y +5, font = "Arial")
             pygame.draw.rect(screen,palette_couleur.fond_deux_login,(rect_ctn_host),0,20) #rpresente le 2e fond de connection et aussi creer compte
             pygame.draw.rect(screen,(0,0,0),(rect_ctn_host),2,20)
-            screen.blit(Surface_host,(rect_host.x,rect_host.y))  #represente la surface principal blanche         
+            screen.blit(Surface_host,(rect_host.x,rect_host.y))  #represente la surface principal grise         
             
             if pseudo_ndispo:
                 if not take:

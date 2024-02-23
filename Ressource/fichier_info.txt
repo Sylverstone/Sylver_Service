@@ -1,5 +1,8 @@
-Sylver Service a été crée dans le but des trophées Nsi Terminal de 2024. Entamez dès la fin des concours nsi Première 2023 cette application a pour but d'aider les élèves durant
-leur parcours scolaire, Vous pourrez y retrouver des Tutos, des demandes de tutos et même postez les votre. Via l'onglet Menu du début vous aurez accès a tous les tuto
- Via l'onglet annonce vous aurez accès aux donnés de toutes les annonces que vous avez mises en ligne. Et enfin via l'onglet compté vous pourrez soumettre des Tutos mais
-également faire des demandes de tutos. Le projet a été entrepris par Sylvio PelageMaxime, débuter en fin d'année scolaire 2023 et fini un jour peut-être !
-Le projet utilise une base de donné SQL passant par Mysql pour stocker ses utilisateurs mais également les tutos poster, ceux ci peuvent etre des images ou des documents words/pdf voir des textes directement écris dans l'interface
+Sylver Service a été créé dans le but des trophées NSI Terminal de 2024. Entamé dès la fin des concours NSI Première 2023,
+cette application a pour but d'aider les élèves durant leur parcours scolaire. Vous pourrez y retrouver des tutoriels, des
+demandes de tutoriels, et même poster les vôtres. Via l'onglet Menu du début, vous aurez accès à tous les tutoriels. Via 
+l'onglet Annonces, vous aurez accès aux données de toutes les annonces que vous avez mises en ligne. Et enfin, via l'onglet Compte,
+vous pourrez soumettre des tutoriels, mais également faire des demandes de tutoriels.
+Le projet a été entrepris par Sylvio PelageMaxime, débuté en fin d'année scolaire 2023 et fini un jour peut-être ! 
+Le projet utilise une base de données SQL passant par MySQL pour stocker ses utilisateurs, mais également les tutoriels postés. 
+Ceux-ci peuvent être des images, des documents Word/PDF, voire des textes directement écrits dans l'interface.
