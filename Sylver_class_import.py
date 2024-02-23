@@ -7,6 +7,12 @@ import os,datetime,threading,dotenv
 
 path = ".env"
 dotenv.load_dotenv(path)
+
+chemin = os.path.join("Ressource","compte_connecter.txt")
+if not os.path.exists(chemin):
+    #Creation du fichier vide
+    with open(chemin, "w") as fichier:
+        pass
 class Color:
     """
         Class repertoriant toute les couleurs possible dans l'applications

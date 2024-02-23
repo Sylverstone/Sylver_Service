@@ -1,4 +1,3 @@
-from ast import Break
 import pygame,os,datetime,string,sys,threading,keyboard,time,pyperclip
 from Sylver_class_import import Color,Gerer_requete,User,noFileException, userNonCharger, noConnection,Animation
 from Resize_image import AnnuleCropPhoto, resizeImage
@@ -214,7 +213,7 @@ def ecrire_tuto(user : User):
     #boucle principale
     while continuer:
         screen.fill((100,100,100))
-        fond_nav.fill((0,0,0))  
+        fond_nav.fill(palette_couleur.fond_bar_de_navigation)  
         mouse = pygame.mouse.get_pos()
         mouse_click = pygame.mouse.get_pressed()[0]
         #boucle evenementielle
@@ -912,6 +911,8 @@ def compte():
     global surf_image2
     global connect
     global continue_charging
+    global fond_nav
+    
     def look_valid(zone) -> bool:
         """Fonction qui Verifie si les input remplit le son correctement
 
@@ -948,7 +949,7 @@ def compte():
             pseudo (str): Pseudo de l'utilisateur
             mdp (str): mot de passe de l'utilisateur
         """
-        with open("./Ressource/compte_connecter.txt","w") as fichier:
+        with open("Ressource/compte_connecter.txt","w") as fichier:
             fichier.write(f"{pseudo}\n{mdp}")
     
     def look_for_connection_tools():
@@ -957,7 +958,7 @@ def compte():
         Returns:
             bool: Precision de si il y a un utilisateur connecter ou non
         """
-        with open("./Ressource/compte_connecter.txt", "r") as fichier:
+        with open("Ressource/compte_connecter.txt", "r") as fichier:
             return len(fichier.read().splitlines()) != 0
         
     text_edit = "Clickez pour editer"
@@ -1176,6 +1177,7 @@ def compte():
         mouse = pygame.mouse.get_pos()
         mouse_click = pygame.mouse.get_pressed()[0]
         screen.fill(fond_ecran)
+        
         for event in pygame.event.get():            
             if rect_valider.collidepoint(mouse):
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -1467,6 +1469,8 @@ def compte():
                         i += 1
         #interface user quand il n'est pas connecter
         if (creer_compte or not creer_compte) and not connect:
+            fond_nav.fill(palette_couleur.fond_bar_de_navigation)
+            screen.blit(fond_nav, (0,0))
             rect_host.x = disposition[zone]["rect_host_x"]
             rect_ctn_host.x = disposition[zone]["rect_ctn_host_x"]
             rect_valider.x = disposition[zone]["rect_valider_x"] + rect_ctn_host.x
