@@ -20,6 +20,7 @@ animation_chargement = Animation(screen)
 animation_mise_en_ligne = Animation(screen, text_chargement="Mise en ligne")
 animation_connection = Animation(screen, text_chargement = "Connection")
 animation_ouverture = Animation(screen, text_chargement = "Ouverture")
+animation_demarrage_application = Animation(screen,color = (255,255,255), text_chargement="Sylver.service")
 #palette de couleur qui regroupe toute les couleurs de l'app
 palette_couleur = Color()
 
@@ -437,9 +438,6 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
         taille_ecriture -= 2
         coupage,line,heigth_text = make_line(text = text_info, font = font(font_paragraphe,taille_ecriture,True), size_max= size_max)
     all_text = decoupe_text(coupage,line,text_info)        
-    moitier_text = []
-    for i in range(len(all_text)):
-        moitier_text.append(font_40.size(all_text[i])[0]/2)
     while continuer:
         mouse = pygame.mouse.get_pos()
         screen.fill((100,100,100))
@@ -927,8 +925,8 @@ surf_image2 = None
 continue_charging = None     
 def compte():
     """Fonction affichant la partie compte de l'application"""
-    global surf_image2
-    global connect
+    global surf_image2,creer_compte
+    global connect,pp_base
     global continue_charging
     global fond_nav
     
@@ -968,9 +966,13 @@ def compte():
             pseudo (str): Pseudo de l'utilisateur
             mdp (str): mot de passe de l'utilisateur
         """
-        with open("Ressource/compte_connecter.txt","w") as fichier:
+        with open(os.path.join("Ressource","compte_connecter.txt"),"w") as fichier:
             fichier.write(f"{pseudo}\n{mdp}")
     
+    def erase_connection_tools():
+        with open(os.path.join("Ressource","compte_connecter.txt"),"w" ):
+            pass
+        
     def look_for_connection_tools():
         """Fonction qui verifie si des données d'utilisateur sont déjà enregistrez
 
@@ -999,10 +1001,7 @@ def compte():
     rect_editer_photo.w = font_20.size(text_edit)[0]
     rect_editer_photo.h = font_20.size(text_edit)[1]
     chemin_pp = os.path.join("img_center","photo_profil_user.png")
-    global pp_base
-    #pp_base est le bit de la pw_origine/2 - rect_host.w/2hoto_de_profil basique de l'app
-    with open(os.path.join("img_base","photo_profil_user.png"),"rb") as fichier:
-        pp_base = fichier.read()
+    
         
     with open(chemin_pp,"wb") as fichier:
         fichier.write(pp_base)
@@ -1325,6 +1324,8 @@ def compte():
                                                     fichier.write(pp_base)                                            
                                             if check_save_con_data:
                                                 write_connection_tools(pseudo,mdp)
+                                            else:
+                                                erase_connection_tools()
                                             if user.photo_profil == pp_base:
                                                 image_pp = pygame.image.load(chemin_pp)
                                                 image_pp = pygame.transform.smoothscale(image_pp,size_grand)
@@ -1373,6 +1374,8 @@ def compte():
                                                     fichier.write(pp_base)
                                             if check_save_con_data:
                                                 write_connection_tools(pseudo,mdp)
+                                            else:
+                                                erase_connection_tools()
                                             if user.photo_profil == pp_base:
                                                 image_pp = pygame.image.load(chemin_pp)
                                                 image_pp = pygame.transform.smoothscale(image_pp,size_grand)
@@ -1941,7 +1944,74 @@ taille_origine = pygame.display.Info()
 w_origine = taille_origine.current_w
 h_origine = taille_origine.current_h
 continuer = True
+#variable qui va permettre de savoir si l'utilisateur est connecté
 connect = False
+##proeccessus de verification si l'uti
+chemin_image_logo_app = os.path.join("Image","Logo_app.png")
+image_logo_app = pygame.image.load(chemin_image_logo_app)
+width_logo,height_logo = image_logo_app.get_width(),image_logo_app.get_height()
+r = 1.5 #ration d'aggrandissement
+image_logo_app = pygame.transform.smoothscale(image_logo_app,(width_logo * r,height_logo*r))
+screen.blit(image_logo_app,(w_origine/2 - (width_logo*r)/2,h_origine/2 - (height_logo*r)/2))
+pygame.display.update()
+
+with open(os.path.join("img_base","photo_profil_user.png"),"rb") as fichier:
+        pp_base = fichier.read()
+  
+#processus de verification de si l'utilisateur est connecter, si oui, connexion au compte
+with open(os.path.join("Ressource", "compte_connecter.txt"), "r+") as fichier:
+    contenu = fichier.read().splitlines()
+    last_screen = screen.copy()
+    fondd_ecran = (0,0,0)
+    if contenu:
+        animation_demarrage_application.start_anime(last_screen,fondd_ecran,20)  
+        pseudo = contenu[0]
+        mdp = contenu[1]
+        try:
+            animation_demarrage_application.texte = "Connexion a votre compte"
+            user = User.log_user(pseudo,mdp)
+        except userNonCharger:
+            pas_correspondance = True
+        except noConnection:
+            Gerer_requete.connection_failed()
+        else:
+            animation_demarrage_application.texte = "Récupération de votre photo de profil"
+            chemin_pp = os.path.join("img_center","photo_profil_user.png") 
+            connect = True
+            creer_compte = False
+            with open(chemin_pp,"wb") as fichier:
+                if user.photo_profil != pp_base:
+                    fichier.write(user.photo_profil)
+                else:
+                    fichier.write(pp_base)
+            #pygame.time.delay(2000)
+            if user.photo_profil == pp_base:
+                image_pp = pygame.image.load(chemin_pp)
+                image_pp = pygame.transform.smoothscale(image_pp,(200,200))
+            else:
+                #processus de reconstruction de la pdp car sinon si on aggrandi juste la surface surf_image elle est flou
+                animation_demarrage_application.texte = "Reconstruction de votre photo de profil"
+                rect_pp = user.rect_pp
+                if isinstance(rect_pp,pygame.Rect):
+                    rect_pp = Gerer_requete.separe_rect(user.rect_pp)
+                rect_pp = rect_pp.split(",")
+                rect_pp = [int(i) for i in rect_pp]
+                rect_pp = pygame.Rect(rect_pp)
+                img_ = pygame.image.load(chemin_pp).convert_alpha()
+                old_width, old_height = img_.get_size()
+                # Définir la nouvelle largeur (ou hauteur)
+                new_width = 500
+                # Calculer la nouvelle hauteur (ou largeur) pour conserver le rapport d'aspect (produit en croix)
+                new_height = int(old_height * new_width / old_width)
+                # Redimensionner l'image
+                img_ = pygame.transform.smoothscale(img_, (new_width,new_height))
+                surf_image2 = resizeImage.rendre_transparent(img_,rect_pp,0)
+                surf_image2 = pygame.transform.smoothscale(surf_image2, (200,200))
+                #pygame.time.delay(2000)
+    else:
+        animation_demarrage_application.start_anime(last_screen,fondd_ecran,3) 
+        pygame.time.wait(3000)
+animation_demarrage_application.stop_anime()   
 comic_sans_ms = pygame.font.SysFont("Comic Sans Ms", 20)
 csm = "Comic Sans Ms"
 arial = "Arial"
