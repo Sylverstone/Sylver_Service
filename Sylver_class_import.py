@@ -326,7 +326,6 @@ class User:
                 return data
          
     def signalement(self, id_tuto_signaler : int, pseudo_accuser : str,text_signalement : str):
-        print("test")
         """Fonction gérant les soumissions de signalement par les utilisateurs
 
         Args:
@@ -360,7 +359,8 @@ class User:
             try:
                 if connection.is_connected():
                     connection.close()
-                    
+                else:
+                    raise noConnection("connection failed")
             except Exception as e:
                 print(e)
                 raise noConnection("connection failed")

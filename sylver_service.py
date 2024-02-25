@@ -1,4 +1,4 @@
-import pygame,os,datetime,string,sys,threading,keyboard,time,pyperclip
+import pygame,os,datetime,sys,threading,keyboard,time
 from Sylver_class_import import Color,Gerer_requete,User,noFileException, userNonCharger, noConnection,Animation
 from Resize_image import AnnuleCropPhoto, resizeImage
 
@@ -103,13 +103,18 @@ def make_line(text : str,font : pygame.font,size_max : int):
     line = 1
     start = 0
     i = 0
+    print(text)
     while i < len(text):
         size = font.size(text[start:i])[0]
         if size + 5 > size_max:
             w = -1
-            while text[start:i][w] != " ":
+            while text[start:i][w] != " " and abs(w) < len(text[start:i]):
+                print(w)
                 w -= 1
-            i += w
+            if abs(w) == len(text[start:i]):
+                #dans le cas ou il n'y a pas d'espace avant le mot
+                w = -1
+            i += w #i recule jusqua la position de l'espace, pour eviter de couper un mot
             start = i
             coupage.append(start)
             line+=1
@@ -222,8 +227,12 @@ def ecrire_tuto(user : User | None):
     go_back = False
     rect_a_ne_pas_depasser = rect_screen
     rect_a_ne_pas_depasser.w -= (image_retour.get_width() * 2)
-    texte_title = f"Ecrivez ici votre tutoriel {user.pseudo}"
-    size_du_titre = verification_size(rect_a_ne_pas_depasser,chivo_titre,size_for_title,texte_title,True)
+    if user != None:
+        texte_title = f"Ecrivez ici votre tutoriel {user.pseudo}"
+        size_du_titre = verification_size(rect_a_ne_pas_depasser,chivo_titre,size_for_title,texte_title,True)
+    else:
+        texte_title = "Écrivez ici votre signalement"
+        size_du_titre = verification_size(rect_a_ne_pas_depasser,chivo_titre,size_for_title,texte_title,True)
     #boucle principale
     while continuer:
         screen.fill((100,100,100))
@@ -387,6 +396,7 @@ def ecrire_tuto(user : User | None):
             break
         last_screen = screen.copy()
         pygame.display.flip()
+    
         
 def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.datetime = None, id_tuto : int = None):
     """Fonction permettant d'afficher un texte au sujet de Sylver_Service, cette fonction sert aussi a afficher un tuto
@@ -467,10 +477,16 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
             signal_button_rect = pygame.draw.rect(screen, (255, 255, 255), (w_origine - 50, 40, 20, 20))
             if signal_button_rect.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 if connect:
-                    text_signalement, titre = ecrire_tuto(None)
-                    signalement_final = titre + " | " + text_signalement
-                    user.signalement(id_tuto, auteur, signalement_final)
-                    animation_mise_en_ligne.stop_anime()
+                    try:
+                        text_signalement, titre = ecrire_tuto(None)
+                        signalement_final = titre + " | " + text_signalement
+                        user.signalement(id_tuto, auteur, signalement_final)
+                        animation_mise_en_ligne.stop_anime()
+                    except noConnection:
+                        Gerer_requete.connection_failed()
+                    except Exception:
+                        print("Quitte le signalement sans rien y faire")
+                        pass
                 else:
                     Gerer_requete.connecte_toi()
                     
