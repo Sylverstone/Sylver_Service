@@ -77,7 +77,7 @@ def draw_text(text, font = "Comic Sans Ms", color = (0,0,0), x = 0, y = 0,refere
             if reference_center_x==None:
                 x = contener.get_rect()[2]/2 - font_.size(text)[0]/2
             else:
-                reference_center_x.get_rect()[2]/2 - font_.size(text)[0]/2
+                x = reference_center_x.get_rect()[2]/2 - font_.size(text)[0]/2
         if center_multi_line_y:
             y = contener.get_rect()[3]/2 - font_.size(text)[1] * len(all_text)/2
         if ombre:
@@ -923,9 +923,10 @@ def make_chargement(last_screen,text = "Chargement",delay = 200,animation = 2):
             
 surf_image2 = None 
 continue_charging = None     
+
 def compte():
     """Fonction affichant la partie compte de l'application"""
-    global surf_image2,creer_compte
+    global surf_image2,creer_compte,zone
     global connect,pp_base
     global continue_charging
     global fond_nav
@@ -1190,7 +1191,10 @@ def compte():
     changement_image = 0
     image_retour = pygame.image.load("Image/Icone_retour.png")
     image_retour = pygame.transform.smoothscale(image_retour,(rect_goback.w,rect_goback.h))
-    zone = 0 
+    zone = 0 if creer_compte else 1 #permet une logique par rapport a creer_compte
+    cursor_position = 0 
+    message_photo_profil = ""
+    temoin_processus_fini_pp = [False,]
     while continuer:
         mouse = pygame.mouse.get_pos()
         mouse_click = pygame.mouse.get_pressed()[0]
@@ -1225,24 +1229,32 @@ def compte():
                             if not connect:
                                 surf_image = pygame.transform.smoothscale(surf_image,size)
                             else:
-                                surf_image2 = pygame.transform.smoothscale(surf_image2,size_grand)
+                                surf_image2 = pygame.transform.smoothscale(surf_image,size_grand)
+                            print("les surfs :",surf_image,surf_image2)
                             try:                                
                                 with open(path,"rb") as fichier:
                                     nv_pp = fichier.read()
                                 with open(chemin_pp,"wb") as fichier:
                                     fichier.write(nv_pp)
                                 if connect:
-                                    user.change_element(photo_pp= True,Nouvelle_value=nv_pp)
-                                    user.change_element(rect_pp = True,Nouvelle_value=rect_ellipse)
+                                    message_photo_profil = "Votre photo de profil est cours de traitement, si vous quittez/vous déconnectez maintenant elle ne sera pas sauvegardée"
+                                    th_pp = threading.Thread(target = user.change_element, args=(False,False,False,True,False,False,nv_pp))
+                                    th_pp.start()
+                                    th_rect_pp = threading.Thread(target = user.change_element, args=(False,False,False,False,False,True,rect_ellipse,True,temoin_processus_fini_pp))
+                                    th_rect_pp.start()
                                 pp_choisi = True
                             except OSError:
-                                Gerer_requete.fail_open()    
+                                Gerer_requete.fail_open() 
+                                print("err")   
                                                                 
                             except Exception:
+                                print("err")
                                 Gerer_requete.error_occured()
                                 
                         except AnnuleCropPhoto as err:
-                            print(err.what)         
+                            print(err)    
+                        except Exception as e:
+                            print(e)     
                                            
                     except noFileException:
                         pass
@@ -1250,8 +1262,13 @@ def compte():
             if connect:
                 if btn_disconnect.collidepoint(mouse):
                     if (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1):
+                        #remettre la photo de profil de base dans chemin_pp
+                        print(creer_compte,zone)
+                        with open(chemin_pp,"wb") as fichier:
+                            fichier.write(pp_base)
                         connect = False
                         del user
+                        pp_choisi = False
                         image_pp = pygame.transform.smoothscale(image_pp,size)
                         element_page_user = False
                        
@@ -1316,7 +1333,7 @@ def compte():
                                             Gerer_requete.connection_failed()
                                         else:
                                             connect = True
-                                            creer_compte = False
+                                            #creer_compte = False
                                             with open(chemin_pp,"wb") as fichier:                                                
                                                 if user.photo_profil != pp_base:
                                                     fichier.write(user.photo_profil)
@@ -1448,7 +1465,17 @@ def compte():
                                                 value["active"] = False
                                                 value["input"] = value["default"] if value["input"] == "" else value["input"]                     
                         if value["active"]:
-                            if event.type == pygame.KEYDOWN:                            
+                            if event.type == pygame.KEYDOWN:
+                                if event.key == pygame.K_LEFT:
+                                    cursor_position -= 1
+                                    print("right")
+                                    if len(value["input"]) - cursor_position <= 0:
+                                        cursor_position = len(value["input"])
+                                elif event.key == pygame.K_RIGHT:
+                                    cursor_position += 1
+                                    print("left")
+                                    if cursor_position >= 0:
+                                        cursor_position = 0
                                 if event.key == pygame.K_BACKSPACE:
                                     if key != "input_mdp":
                                         value["input"] = value["input"][:-1]
@@ -1471,14 +1498,16 @@ def compte():
                                     if key != "input_mdp":
                                         if len(value["input"]) < value["max"]:
                                             if key == "input_age":
-                                                try:
-                                                    m = int(event.unicode)
+                                                if event.unicode.isdigit():
                                                     value["input"] += event.unicode
-                                                except:
+                                                else:
                                                     pass
                                             else:
                                                 if event.unicode.isprintable() and event.unicode != "":
+                                                    print(cursor_position)
                                                     value["input"] += event.unicode
+                                                    
+                                                    print(value["input"])
                                                     if value["depasse"]:
                                                         value["coupage"] += 1                                        
                                     else:
@@ -1594,6 +1623,7 @@ def compte():
                       font = font_paragraphe, importer = True, color = blanc)
             
             #mettre ma ptn de pp merde
+            print(pp_choisi,creer_compte)
             if not pp_choisi or not creer_compte:
                 pygame.draw.ellipse(surf2, (255, 255, 255), (0,0,*size))
                 surf3.blit(surf2, (0, 0))
@@ -1703,7 +1733,12 @@ def compte():
                         ((w_origine/2 - 20 - btn_postimg.get_width()) - 100 -taille_en_plus/2, y_photo2 - 20 - taille_en_plus/2))
             screen.blit(surface_fond_user_co,
                         ((w_origine/2 - 20 - btn_postimg.get_width()) - 100, y_photo2 - 20))
-            
+            #Informer l'utilisateur qu'il ne doit pas quitter
+            if message_photo_profil:
+                draw_text(message_photo_profil,font = font_paragraphe,importer = True,center_multi_line=True,color = (255,255,255))
+                if temoin_processus_fini_pp[0] == True:
+                    message_photo_profil = ""
+                    temoin_processus_fini_pp[0] = False
             color_btn1 = (185,185,185) if not rect_postimg.collidepoint(mouse) else (255,255,255)
             color_btn2 = (185,185,185) if not rect_maketuto.collidepoint(mouse) else (255,255,255)
             pygame.draw.rect(btn_postimg,color_btn1,(0,0,btn_postimg.get_width(),btn_postimg.get_height()),0,20)
@@ -1786,6 +1821,7 @@ def compte():
                 surf3g.blit(surf2g, (0, 0))
                 surf3g.blit(image_pp, (0, 0), special_flags=pygame.BLEND_RGBA_MIN)
                 screen.blit(surf3g, (x_photo2, y_photo2))
+                
             else:
                 #blit pp
                 screen.blit(surf_image2,(x_photo2,y_photo2))
@@ -1984,7 +2020,13 @@ with open(os.path.join("Ressource", "compte_connecter.txt"), "r+") as fichier:
                     fichier.write(user.photo_profil)
                 else:
                     fichier.write(pp_base)
+                    
             #pygame.time.delay(2000)
+            print(user.photo_profil == pp_base)
+            
+            print()
+            print()
+            print()
             if user.photo_profil == pp_base:
                 image_pp = pygame.image.load(chemin_pp)
                 image_pp = pygame.transform.smoothscale(image_pp,(200,200))
@@ -2008,6 +2050,8 @@ with open(os.path.join("Ressource", "compte_connecter.txt"), "r+") as fichier:
                 surf_image2 = resizeImage.rendre_transparent(img_,rect_pp,0)
                 surf_image2 = pygame.transform.smoothscale(surf_image2, (200,200))
                 #pygame.time.delay(2000)
+            creer_compte = False
+            zone = 1
     else:
         animation_demarrage_application.start_anime(last_screen,fondd_ecran,3) 
         pygame.time.wait(3000)

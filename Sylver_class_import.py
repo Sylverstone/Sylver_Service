@@ -1,5 +1,4 @@
 import time
-from mysqlx import InterfaceError
 import pygame
 import tkinter.filedialog,tkinter.messagebox
 import mysql.connector as sql
@@ -401,7 +400,7 @@ class User:
             except:
                 raise noConnection("connection failed")   
                       
-    def change_element(self,nom = False, pseudo = False, prenom = False, photo_pp = False, tuto_transmi = False,rect_pp = False,Nouvelle_value = 0)-> None:
+    def change_element(self,nom = False, pseudo = False, prenom = False, photo_pp = False, tuto_transmi = False,rect_pp = False,Nouvelle_value = 0, notif = False,temoin = None)-> None:
         """Fonction permettant de mettre a jour les éléments du compte de l'utilisation
 
         Args:
@@ -455,6 +454,8 @@ class User:
                 if connection.is_connected():
                     print("mp",self.rect_pp)
                     connection.close()
+                    if notif:
+                        Gerer_requete.processus_fini(temoin=temoin)
                 else:
                     raise noConnection("connection failed")
             except:
@@ -667,22 +668,26 @@ class Gerer_requete(User):
             list: Liste comportant tout les tuto retourner
         """
         try:
-            data_recup = [None]            
+            data_recup = [None]  
+            temp = time.time()          
             connection = sql.connect(
                 host = os.environ.get('HOST'),
                 user = os.environ.get('USER'),
                 password  = os.environ.get('SQL_MOT_DE_PASSE'),
                 db=os.environ.get('DB_NAME'),
                 auth_plugin='mysql_native_password')
-            print(connection)
+            temp_actu = time.time() -temp
+            print(temp_actu)
+            temp = time.time()
             cursor = connection.cursor()
             if nom_tuto != None:
                  request = f" SELECT * FROM tuto WHERE nom LIKE '%{nom_tuto}%'"
             elif nom_auteur != None:
                 request = f"SELECT * FROM tuto WHERE auteur LIKE '{nom_auteur}%' ORDER BY date DESC"
+            
             cursor.execute(request)
             data_recup = cursor.fetchall()  
-            connection.commit()
+            print(time.time() -temp)
         except sql.Error as err:
             print(err)
             print("erreur")
@@ -732,7 +737,15 @@ class Gerer_requete(User):
             nom_fichier (str, optional): Nom du fichier dont l'ouverture a echouer. Defaults to "".
         """
         tkinter.messagebox.showerror("Erreur",f"WOW ! L'ouverture a flop :( \n Il se peut que le fichier ({nom_fichier}) \nsoit déjà ouvert !")
+      
+      
+    @staticmethod
+    def processus_fini(message = "Votre photo de profil a été sauvegardée",temoin = [False,]):
         
+        """Fonction permettant d'afficher un message sur un processus fini"""  
+        temoin[0] = True
+        tkinter.messagebox.showinfo("Fini",message)
+
     @staticmethod
     def error_occured():
         """Fonction permettant d'afficher un message d'erreur"""
