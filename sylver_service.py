@@ -391,7 +391,7 @@ def ecrire_tuto(user : User | None):
         if user != None:
             title(texte_title,size = size_du_titre)
         else:
-            title("Écrivez ici votre signalement")
+            title("Écrivez ici votre signalement",size = size_du_titre)
         if go_back:
             break
         last_screen = screen.copy()
@@ -733,6 +733,11 @@ def menu():
     #boucle principale
     image_effacer_recherche = pygame.image.load(os.path.join("Image","icone_annule_recherche.png"))
     image_effacer_recherche = pygame.transform.smoothscale(image_effacer_recherche,(rect_btn.w,rect_btn.h))
+    text_title = "Bienvenue Dans l'espace recherche!"
+    rect_a_ne_pas_depasser = rect_screen
+    rect_a_ne_pas_depasser.w -=(rect_aide.w +20)
+    rect_a_ne_pas_depasser.h -= (rect_goback.w+20)
+    size_du_titre = verification_size(rect_a_ne_pas_depasser,font_paragraphe,size_for_title,text_title,True)
     while continuer:
         clock.tick(120)
         dict_recherche = {"nom_projet" : None,"nom_auteur" : None}
@@ -846,7 +851,7 @@ def menu():
         screen.blit(image_effacer_recherche,rect_btn)
         fond_nav.fill(palette_couleur.fond_bar_de_navigation)
         screen.blit(fond_nav,(0,0))
-        title("Bienvenue Dans l'espace recherche!")       
+        title("Bienvenue Dans l'espace recherche!", size = size_du_titre)       
         pygame.draw.rect(surface_type_recherche,palette_couleur.fond_case_login,(0,0,rect_type_recherche[2],rect_type_recherche[3]),0,20)
         pygame.draw.rect(surface_type_recherche,(255,255,255),(0,0,rect_type_recherche.w,rect_type_recherche.h),2,20)
         draw_text(contener = surface_type_recherche,
