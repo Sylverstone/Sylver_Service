@@ -1469,7 +1469,7 @@ def compte():
                                 if event.key == pygame.K_LEFT:
                                     cursor_position -= 1
                                     print("right")
-                                    if len(value["input"]) - cursor_position <= 0:
+                                    if len(value["input"][value["coupage"]:]) - cursor_position <= 0:
                                         cursor_position = len(value["input"])
                                 elif event.key == pygame.K_RIGHT:
                                     cursor_position += 1
@@ -1478,18 +1478,30 @@ def compte():
                                         cursor_position = 0
                                 if event.key == pygame.K_BACKSPACE:
                                     if key != "input_mdp":
-                                        value["input"] = value["input"][:-1]
+                                        separation_1 = value["input"][:len(value["input"]) + cursor_position][:-1]
+                                        separation_2 = value["input"][len(value["input"]) + cursor_position:]
+                                        value["input"] = separation_1 + separation_2
                                     else:
-                                        value["input_visible"] = value["input_visible"][:-1]
-                                        value["input_cache"] = value["input_cache"][:-1]
+                                        separation_1_1 = value["input_visible"][:len(value["input_visible"]) + cursor_position][:-1]
+                                        separation_2_1 = value["input_visible"][len(value["input_visible"]) + cursor_position:]
+                                        value["input_visible"] = separation_1_1 + separation_2_1 
+                                        separation_1_2 = value["input_cache"][:len(value["input_cache"]) + cursor_position][:-1]
+                                        separation_2_2 = value["input_cache"][len(value["input_cache"]) + cursor_position:]
+                                        value["input_cache"] = separation_1_2 + separation_2_2
                                     if value["depasse"] and value["coupage"] > 0:
                                         value["coupage"] -= 1
                                 elif event.key == pygame.K_SPACE and value["can_space"]:
                                     if key != "input_mdp":
-                                        value["input"] += " "
+                                        separation_1 = value["input"][:len(value["input"]) + cursor_position]
+                                        separation_2 = value["input"][len(value["input"]) + cursor_position:]
+                                        value["input"] = separation_1 + " " + separation_2
                                     else:  
-                                        value["input_visible"] += " "
-                                        value["input_cache"]  += "*"
+                                        separation_1_1 = value["input_visible"][:len(value["input_visible"]) + cursor_position] + " "
+                                        separation_2_1 = value["input_visible"][len(value["input_visible"]) + cursor_position:]
+                                        value["input_visible"] = separation_1_1 + separation_2_1 
+                                        separation_1_2 = value["input_cache"][:len(value["input_cache"]) + cursor_position] + " "
+                                        separation_2_2 = value["input_cache"][len(value["input_cache"]) + cursor_position:]
+                                        value["input_cache"] = separation_1_2 + separation_2_2
                                     if value["depasse"]:
                                         value["coupage"] += 1
                                 elif event.key == pygame.K_RETURN:
@@ -1505,8 +1517,9 @@ def compte():
                                             else:
                                                 if event.unicode.isprintable() and event.unicode != "":
                                                     print(cursor_position)
-                                                    value["input"] += event.unicode
-                                                    
+                                                    separation_1 = value["input"][:len(value["input"]) + cursor_position]
+                                                    separation_2 = value["input"][len(value["input"]) + cursor_position:]
+                                                    value["input"] = separation_1 + event.unicode + separation_2
                                                     print(value["input"])
                                                     if value["depasse"]:
                                                         value["coupage"] += 1                                        
@@ -1695,7 +1708,7 @@ def compte():
                         y = y, font = font_paragraphe, importer = True,color = (0,0,0))                    
                 if value["active"]:
                     barre_type.fill((0,0,0))
-                    rect_bt = (x + font_20.size(input_[value["coupage"]:])[0] ,y)
+                    rect_bt = (x + font_20.size(input_[value["coupage"]:][:len(input_) + cursor_position])[0] ,y)
                     screen.blit(barre_type,rect_bt)
                 i += 1       
             screen.blit(Surface_edit_photo,(rect_editer_photo.x,rect_editer_photo.y))
