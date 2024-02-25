@@ -1453,6 +1453,7 @@ def compte():
                     for key,value in dict_input[zone].items():
                         if all_rect[zone][i].collidepoint(mouse):
                             if mouse_click and not rect_visible.collidepoint(mouse):
+                                cursor_position = 0
                                 if key != "input_mdp":
                                     value["active"] = not value["active"]
                                     value["input"] = "" if value["input"] == value["default"] else value["input"]
