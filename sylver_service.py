@@ -668,7 +668,7 @@ def menu():
         global zone_page
         zone_page = 0
         try:      
-            flop_recherche = False         
+            flop_de_recherche = False         
             detail = Gerer_requete.rechercher_data(nom_auteur = data["nom_auteur"], nom_tuto = data["nom_projet"])
             processing = False
             num_resultat = len(detail)
