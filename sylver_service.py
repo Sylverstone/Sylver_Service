@@ -1,5 +1,5 @@
 import pygame,os,datetime,sys,threading,keyboard,time
-from Sylver_class_import import Color,Gerer_requete,User,noFileException, userNonCharger, noConnection,Animation
+from Sylver_class_import import Color,Gerer_requete,User,noFileException, userNonCharger, noConnection,Animation,connection_principale
 from Resize_image import AnnuleCropPhoto, resizeImage
 
 
@@ -667,7 +667,8 @@ def menu():
         access = False
         global zone_page
         zone_page = 0
-        try:               
+        try:      
+            flop_recherche = False         
             detail = Gerer_requete.rechercher_data(nom_auteur = data["nom_auteur"], nom_tuto = data["nom_projet"])
             processing = False
             num_resultat = len(detail)
@@ -2153,7 +2154,7 @@ def gestion_event():
     """
         Gère l'évènement pour quitter l'app
     """
-    global continuer
+    global continuer,connection_principale
     while continuer:
         try:
             if keyboard.is_pressed("Escape"):
@@ -2164,7 +2165,10 @@ def gestion_event():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 continuer = False
+        
         time.sleep(0.1)
+    if connection_principale != None:
+        connection_principale.close()
     print("bye")
 
 
@@ -2179,25 +2183,23 @@ rect_dispo = [pygame.Rect(pos[0][0],pos[0][1],size_box_grand_w,size_box_grand_h)
 clock = pygame.time.Clock()
 while continuer:
     screen.fill(fond_ecran)
-    try:
+    if connect:
         text_user_co = f"Salut {user.pseudo} ravis de te voir :)"
         draw_text(text_user_co, x = w_origine/2 - font(chivo_titre,36,True).size(text_user_co)[0]/2,
                   y = fond_nav.get_height() + 20, font = chivo_titre, color = blanc,
                   size = 36, importer = True)
-    except Exception as e:
+    else:
         draw_text(text_user_pas_co, x = w_origine/2 - font(chivo_titre,36,True).size(text_user_pas_co)[0]/2,
                   y = fond_nav.get_height() + 20, font = chivo_titre, color = blanc,
                   size = 36, importer = True)
-    finally:
-        #ici draw_text fr
-        pass
+    
     mouse = pygame.mouse.get_pos()    
     fond_nav.fill(palette_couleur.fond_bar_de_navigation)
     screen.blit(fond_nav,(0,0))
     #pp user
     if connect:
-        size_pp_user = (75,75)
-        x_pp,y_pp = 20,fond_nav.get_height() - size_pp_user[1] - 10
+        size_pp_user = (72,72)
+        x_pp,y_pp = 20,fond_nav.get_height()/2 - size_pp_user[1]/2
         if user.photo_profil == pp_base:            
             surf1 = pygame.Surface(size_pp_user,pygame.SRCALPHA)
             surf2 = pygame.Surface(size_pp_user,pygame.SRCALPHA)
@@ -2211,7 +2213,7 @@ while continuer:
             screen.blit(image_pp_user,(x_pp,y_pp))
     draw_text(accueil_complement, size = 14, color=blanc, x = w_origine/2 - font_chivo_14.size(accueil_complement)[0]/2,
               y = 5, importer= True, font=chivo_titre)
-    draw_text(accueil, size = 72,color = palette_couleur.couleur_titre, x = w_origine/2 - font_chivo.size(accueil)[0]/2, y = fond_nav.get_height() - font_chivo.size(accueil)[1], font = chivo_titre,importer = True)
+    title(accueil)
     for event in pygame.event.get():        
         if event.type == pygame.KEYDOWN:
             pass

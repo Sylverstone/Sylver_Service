@@ -1,3 +1,4 @@
+
 import time
 import pygame
 import tkinter.filedialog,tkinter.messagebox
@@ -12,6 +13,57 @@ if not os.path.exists(chemin):
     #Creation du fichier vide
     with open(chemin, "w") as fichier:
         pass
+try:
+    connection_principale = sql.connect(
+                    host = os.environ.get('HOST'),
+                    user = os.environ.get('USER'),
+                    password  = os.environ.get('SQL_MOT_DE_PASSE'),
+                    db=os.environ.get('DB_NAME'),
+                    auth_plugin='mysql_native_password')
+    if not connection_principale.is_connected():
+        connection_principale = None
+except:
+    connection_principale = None
+
+    
+print(connection_principale)
+def look_for_connection():
+    global connection_principale 
+    if connection_principale == None:
+        try:
+            connection_principale = sql.connect(
+                            host = os.environ.get('HOST'),
+                            user = os.environ.get('USER'),
+                            password  = os.environ.get('SQL_MOT_DE_PASSE'),
+                            db=os.environ.get('DB_NAME'),
+                            auth_plugin='mysql_native_password')
+            if not connection_principale.is_connected():
+                connection_principale = None
+        except:
+            connection_principale = None
+    elif not connection_principale.is_connected():
+        try:
+            print("trying to reconnect")
+            connection_principale = sql.connect(
+                            host = os.environ.get('HOST'),
+                            user = os.environ.get('USER'),
+                        password  = os.environ.get('SQL_MOT_DE_PASSE'),
+                        db=os.environ.get('DB_NAME'),
+            auth_plugin='mysql_native_password')
+            attempt = 1
+            if connection_principale.is_connected():
+                return True
+            return False
+        except:
+            print("echec_connection")
+            connection_principale = None
+            return False
+    else:
+        return True
+
+        
+
+   
 class Color:
     """
         Class repertoriant toute les couleurs possible dans l'applications
@@ -302,22 +354,18 @@ class User:
         """
         data = None
         try:
-            connection = sql.connect(
-                host = os.environ.get('HOST'),
-                user = os.environ.get('USER'),
-                password  = os.environ.get('SQL_MOT_DE_PASSE'),
-                db=os.environ.get('DB_NAME'),
-                auth_plugin='mysql_native_password')
-            cursor = connection.cursor()
+            cursor = connection_principale.cursor()
             request = f"SELECT COUNT(*) FROM tuto WHERE auteur = '{self.auteur}';"
             cursor.execute(request)
             data = cursor.fetchone()[0]
         except sql.Error as err:
             print(err)
+        except:
+            pass
         finally:
             try:
-                if connection.is_connected():
-                    connection.close()
+                if connection_principale.is_connected():
+                    connection_principale.close()
                 else:
                     raise noConnection("connection faild") 
             except:
@@ -338,13 +386,7 @@ class User:
             noConnection: Renvoie noConnection quand aucune connection n'a pu être initalisé
         """        
         try:
-            connection = sql.connect(
-                    host = os.environ.get('HOST'),
-                    user = os.environ.get('USER'),
-                    password  = os.environ.get('SQL_MOT_DE_PASSE'),
-                    db=os.environ.get('DB_NAME'),
-                    auth_plugin='mysql_native_password')
-            cursor = connection.cursor()
+            cursor = connection_principale.cursor()
             current_date = datetime.datetime.now()
             current_date = current_date.strftime("%Y-%m-%d")
             request = """ INSERT INTO signalements (`id_tuto_signaler`, `signalement`, `pseudo_accuseur`, `date`, `pseudo_accuse`)
@@ -352,13 +394,15 @@ class User:
                         """
             infos = (id_tuto_signaler, text_signalement, self.pseudo, current_date,  pseudo_accuser)
             cursor.execute(request,infos)            
-            connection.commit()
+            connection_principale.commit()
         except sql.Error as err:
             print(err)
+        except:
+            pass
         finally:
             try:
-                if connection.is_connected():
-                    connection.close()
+                if connection_principale.is_connected():
+                    connection_principale.close()
                 else:
                     raise noConnection("connection failed")
             except Exception as e:
@@ -373,14 +417,8 @@ class User:
         Raises:
             noConnection: Renvoie noConnection quand aucune connection n'a pu être initialisation
         """        
-        try:
-            connection = sql.connect(
-                host = os.environ.get('HOST'),
-                user = os.environ.get('USER'),
-                password  = os.environ.get('SQL_MOT_DE_PASSE'),
-                db=os.environ.get('DB_NAME'),
-                auth_plugin='mysql_native_password')
-            cursor = connection.cursor()
+        try:            
+            cursor = connection_principale.cursor()
             request = """ INSERT INTO utilisateur (`nom`, `prenom`, `tuto_transmis`,`photo_profil`, `age`,`pseudo`,`mot_de_passe`,`rect_photo_profil`)
                           VALUES (%s,%s,%s,%s,%s,%s,%s,%s);
                         """
@@ -390,13 +428,17 @@ class User:
                 rect_pp = None
             infos = (self.nom,self.prenom,self.tuto_transmis,self.photo_profil,self.age,self.pseudo,self.mdp,rect_pp)
             cursor.execute(request,infos)            
-            connection.commit()
+            connection_principale.commit()
         except sql.Error as err:
             print(err,"wesh")
+        except:
+            pass
         finally:
             try:
-                if connection.is_connected():
-                    connection.close()
+                if connection_principale.is_connected():
+                    connection_principale.close()
+                else:
+                    raise noConnection("connection_failed")
             except:
                 raise noConnection("connection failed")   
                       
@@ -436,24 +478,22 @@ class User:
             self.rect_pp = Gerer_requete.separe_rect(Nouvelle_value)
             Nouvelle_value = self.rect_pp
         try:
-            connection = sql.connect(
-                host = os.environ.get('HOST'),
-                user = os.environ.get('USER'),
-                password  = os.environ.get('SQL_MOT_DE_PASSE'),
-                db=os.environ.get('DB_NAME'),
-                auth_plugin='mysql_native_password')
-            cursor = connection.cursor()
-            request = f"UPDATE utilisateur SET `{element}` = %s WHERE pseudo = %s;"
-            infos = (Nouvelle_value,self.pseudo)
-            cursor.execute(request,infos)
-            connection.commit()
+            if connection_principale != None and connection_principale.is_connected():
+                cursor = connection_principale.cursor()
+                request = f"UPDATE utilisateur SET `{element}` = %s WHERE pseudo = %s;"
+                infos = (Nouvelle_value,self.pseudo)
+                cursor.execute(request,infos)
+                connection_principale.commit()
+            else:
+                raise noConnection("connection failed")
         except sql.Error as err:
             print(err)
+        except:
+            pass
         finally:
             try:
-                if connection.is_connected():
-                    print("mp",self.rect_pp)
-                    connection.close()
+                if connection_principale.is_connected():
+                    connection_principale.close()
                     if notif:
                         Gerer_requete.processus_fini(temoin=temoin)
                 else:
@@ -477,23 +517,22 @@ class User:
             User: Renvoie la classe User du compte
         """
         try:
-            connection = sql.connect(
-                host = os.environ.get('HOST'),
-                user = os.environ.get('USER'),
-                password  = os.environ.get('SQL_MOT_DE_PASSE'),
-                db=os.environ.get('DB_NAME'),
-                auth_plugin='mysql_native_password')
-            cursor = connection.cursor()
-            request =f"SELECT * FROM utilisateur WHERE pseudo = '{pseudo}'"
-            cursor.execute(request)
-            data = cursor.fetchone()
-            connection.commit()
+            if connection_principale != None and connection_principale.is_connected():
+                cursor = connection_principale.cursor()
+                request =f"SELECT * FROM utilisateur WHERE pseudo = '{pseudo}'"
+                cursor.execute(request)
+                data = cursor.fetchone()
+                connection_principale.commit()
+            else:
+                raise noConnection("connection failed")
         except sql.Error as err:
             print(err)
+        except:
+            pass
         finally:
             try:
-                if connection.is_connected():
-                    connection.close()
+                if connection_principale.is_connected():
+                    connection_principale.close()
                     if mdp != data[7]:
                         raise userNonCharger("mauvais mdp") 
                 else:
@@ -504,6 +543,8 @@ class User:
                 raise noConnection("connection failed")
             else:
                 return User(data[1],data[2],data[5],data[6],data[7],data[4],data[3],data[8])
+            
+            
     @staticmethod
     def verifier_pseudo(pseudo)->bool:
         """Fonction permettant de verifier que le pseudo saisi est disponible
@@ -519,27 +560,25 @@ class User:
         """        
         disponible = True
         try:
-            connection = sql.connect(
-                host = os.environ.get('HOST'),
-                user = os.environ.get('USER'),
-                password  = os.environ.get('SQL_MOT_DE_PASSE'),
-                db=os.environ.get('DB_NAME'),
-                auth_plugin='mysql_native_password')
-            cursor = connection.cursor()
-            request = f"SELECT pseudo FROM utilisateur WHERE pseudo LIKE '{pseudo}%'"
-            cursor.execute(request)
-            all_pseudo = cursor.fetchall()
-            print("pseudo :",all_pseudo)
-            if (pseudo,) in all_pseudo:
-                disponible = False
+            if connection_principale != None and connection_principale.is_connected():
+                cursor = connection_principale.cursor()
+                request = f"SELECT pseudo FROM utilisateur WHERE pseudo LIKE '{pseudo}%'"
+                cursor.execute(request)
+                all_pseudo = cursor.fetchall()
+                print("pseudo :",all_pseudo)
+                if (pseudo,) in all_pseudo:
+                    disponible = False
+            else:
+                raise noConnection("connection failed")
+            
         except sql.Error as err:
             print(err)
         except Exception as e:
             print(e)
         finally:
             try:
-                if connection.is_connected():
-                    connection.close()
+                if connection_principale.is_connected():
+                    connection_principale.close()
                 else:
                     raise noConnection("connection failed")
             except:
@@ -622,31 +661,30 @@ class Gerer_requete(User):
         auteur = f"{self.pseudo}, {self.nom} {self.prenom}"
         file = Doc(doc).get_extension()
         try:
-            connection = sql.connect(
-                host = os.environ.get('HOST'),
-                user = os.environ.get('USER'),
-                password  = os.environ.get('SQL_MOT_DE_PASSE'),
-                db=os.environ.get('DB_NAME'),
-                auth_plugin='mysql_native_password')
-            cursor = connection.cursor()
-            if doc != None:
-                with open(doc,"rb") as fichier:
-                    doc = fichier.read()
-            request = """ INSERT INTO tuto (`nom`,`date`,`doc`,`text_ctn`,`auteur`,`file`)
-                          VALUES (%s,%s,%s,%s,%s,%s);
-                        """
-            infos = (nom,date,doc,Text,auteur,file)
-            cursor.execute(request,infos)
-            request = f"UPDATE utilisateur SET tuto_transmis = tuto_transmis + 1 WHERE pseudo = '{self.pseudo}'"
-            cursor.execute(request)
-            if not experiment:
-                connection.commit()
+            if connection_principale != None and connection_principale.is_connected():
+                cursor = connection_principale.cursor()
+                if doc != None:
+                    with open(doc,"rb") as fichier:
+                        doc = fichier.read()
+                request = """ INSERT INTO tuto (`nom`,`date`,`doc`,`text_ctn`,`auteur`,`file`)
+                            VALUES (%s,%s,%s,%s,%s,%s);
+                            """
+                infos = (nom,date,doc,Text,auteur,file)
+                cursor.execute(request,infos)
+                request = f"UPDATE utilisateur SET tuto_transmis = tuto_transmis + 1 WHERE pseudo = '{self.pseudo}'"
+                cursor.execute(request)
+                if not experiment:
+                    connection_principale.commit()
+            else:
+                raise noConnection("connection failed")
         except sql.Error as err:
             print(err)
+        except:
+            pass
         finally:
             try:
-                if connection.is_connected():
-                    connection.close()
+                if connection_principale.is_connected():
+                    connection_principale.close()
                 else:
                     raise noConnection("connection failed")
             except:
@@ -668,34 +706,35 @@ class Gerer_requete(User):
             list: Liste comportant tout les tuto retourner
         """
         try:
-            data_recup = [None]  
-            temp = time.time()          
-            connection = sql.connect(
-                host = os.environ.get('HOST'),
-                user = os.environ.get('USER'),
-                password  = os.environ.get('SQL_MOT_DE_PASSE'),
-                db=os.environ.get('DB_NAME'),
-                auth_plugin='mysql_native_password')
-            temp_actu = time.time() -temp
-            print(temp_actu)
-            temp = time.time()
-            cursor = connection.cursor()
-            if nom_tuto != None:
-                 request = f" SELECT * FROM tuto WHERE nom LIKE '%{nom_tuto}%'"
-            elif nom_auteur != None:
-                request = f"SELECT * FROM tuto WHERE auteur LIKE '{nom_auteur}%' ORDER BY date DESC"
-            
-            cursor.execute(request)
-            data_recup = cursor.fetchall()  
-            print(time.time() -temp)
+            if look_for_connection():
+                data_recup = [None]  
+                temp = time.time()          
+                
+                temp_actu = time.time() -temp
+                print("temp 1", temp_actu)
+                temp = time.time()
+                cursor = connection_principale.cursor()
+                if nom_tuto != None:
+                    request = f" SELECT * FROM tuto WHERE nom LIKE '%{nom_tuto}%'"
+                elif nom_auteur != None:
+                    request = f"SELECT * FROM tuto WHERE auteur LIKE '{nom_auteur}%' ORDER BY date DESC"
+                
+                cursor.execute(request)
+                data_recup = cursor.fetchall()  
+                print("temp 2",time.time() -temp)
+            else:
+                print("no con")
+                raise noConnection("connection failed")
         except sql.Error as err:
-            print(err)
+            print(e)
+
             print("erreur")
-        
+        except Exception as e:
+            print(e)
         finally:
             try:
-                if connection.is_connected():
-                    connection.close()
+                if connection_principale.is_connected():
+                    connection_principale.close()
                 else:
                     raise noConnection("connection failed")
             except:
