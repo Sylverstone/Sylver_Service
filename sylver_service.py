@@ -34,6 +34,7 @@ def verification_size(contenaire : pygame.Rect, nom_font : pygame.font, size : i
         texte (str): texte a afficher
     """
     if id == 0:
+        print("taille",font(nom_font,size,importer).size(texte)[0])
         if contenaire.w <= font(nom_font,size,importer).size(texte)[0]:
             size -= 2
             return verification_size(contenaire,nom_font,size,texte,importer)
@@ -506,16 +507,16 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
                 break
             if rect_goback.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 go_back = True
-            if rect_abs_icone_tuto_utilisateur.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            if afficher_option and id_ > 1 and rect_abs_icone_tuto_utilisateur.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 if auteur != "":
                     menu(1,auteur)
                 else:
                     Gerer_requete.message("L'auteur n'existe pas !")
-            if rect_triple_bar.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            if id_ > 1 and rect_triple_bar.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 afficher_option = not afficher_option
                 if afficher_option == False:
                     retirez_option = True
-            if rect_absolute_icone_signalement.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and afficher_option:
+            if id_ > 1 and rect_absolute_icone_signalement.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and afficher_option:
                 print("collide")
                 if connect:
                     try:
@@ -542,7 +543,7 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
         screen.blit(fond_nav,(0,0))  
         screen.blit(image_retour,rect_goback)
         title(text_title, size = 40)
-        if 1:
+        if id_ > 1:
             pygame.draw.rect(surface_popup,(0,0,0),surface_popup.get_rect(),1)
             taille_case = surface_popup.get_height() - rect_icone_signalement.y - 10
             #afficher le texte de signalement dans les options
@@ -552,8 +553,8 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
             
             draw_text(texte_pour_voir_tout_les_tuto,font_paragraphe,(0,0,0),
                       x  = 20 + rect_icone_signalement.w + 5, y = rect_icone_tuto_utilisateur.y + rect_icone_tuto_utilisateur.h/2 - taille_voir_tout_les_tuto[1]/2,
-                      size = size_texte_pour_voir_tout_les_tuto, importer=True,contener=surface_popup)
-            
+                      size = size_texte_pour_voir_tout_les_tuto, importer=True,contener=surface_popup) 
+                       
             trait(surf = surface_popup, x = 0, y = rect_icone_signalement.y - 10,longueur = surface_popup.get_width(),epaisseur = 1)
             surface_popup.blit(icone_signalement,(rect_icone_signalement.x,rect_icone_signalement.y))
             trait(surf = surface_popup, x = 0, y = rect_icone_tuto_utilisateur.y -10,longueur = surface_popup.get_width(),epaisseur = 1)
@@ -564,17 +565,17 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
         if go_back:
             break
         screen.blit(surface_ecriture, (25,150))
-        if afficher_option:
-            position_popup += 20
-            if position_popup >= position_de_fin:
-                position_popup = position_de_fin            
-            screen.blit(surface_popup,(rect_popup_btn.x,position_popup))
-        elif retirez_option:
-            position_popup -= 20
-            if position_popup <= -surface_popup.get_height():
-                position_popup = -surface_popup.get_height()            
-            screen.blit(surface_popup,(rect_popup_btn.x,position_popup))
-        if 1:
+        if id_ >1:
+            if afficher_option:
+                position_popup += 20
+                if position_popup >= position_de_fin:
+                    position_popup = position_de_fin            
+                screen.blit(surface_popup,(rect_popup_btn.x,position_popup))
+            elif retirez_option:
+                position_popup -= 20
+                if position_popup <= -surface_popup.get_height():
+                    position_popup = -surface_popup.get_height()            
+                screen.blit(surface_popup,(rect_popup_btn.x,position_popup))
             screen.blit(triple_bar_option,rect_triple_bar)
         pygame.display.flip()
         
@@ -819,17 +820,19 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
     surface_type_recherche = pygame.Surface((100,60), pygame.SRCALPHA)
     indice_type = 0
     text_rechercher = "Recherche par"
-    rect_aide = pygame.Rect(w_origine - 70, 15, 50,50)
+    rect_aide = pygame.Rect(w_origine - 50 - 5, 15, 50,50)
     image_aide = pygame.image.load(os.path.join("Image","icone_interrogation.png"))
     image_aide = pygame.transform.smoothscale(image_aide,(rect_aide.w,rect_aide.h))
     #boucle principale
     image_effacer_recherche = pygame.image.load(os.path.join("Image","icone_annule_recherche.png"))
     image_effacer_recherche = pygame.transform.smoothscale(image_effacer_recherche,(rect_btn.w,rect_btn.h))
-    rect_a_ne_pas_depasser = rect_screen
-    rect_a_ne_pas_depasser.w -=(rect_aide.w +20)
-    rect_a_ne_pas_depasser.h -= (rect_goback.w+20)
+    rect_a_ne_pas_depasser = rect_screen.copy()
+    print(w_origine)
+    rect_a_ne_pas_depasser.w -= (rect_aide.w + 5)
+    rect_a_ne_pas_depasser.w -= (rect_goback.w+5)
+    print(rect_a_ne_pas_depasser.w)
     text_title = "Bienvenue Dans l'espace recherche !" if id_ == 0 else f"Voici les tutos de l'utilisateur {auteur_rechercher} !"
-    size_du_titre = verification_size(rect_a_ne_pas_depasser,font_paragraphe,size_for_title,text_title,True)
+    size_du_titre = verification_size(rect_a_ne_pas_depasser,chivo_titre,size_for_title,text_title,True)
     global enter_pressed
     enter_pressed = False
     not_enter = False #sert juste a bloquer l'acces
