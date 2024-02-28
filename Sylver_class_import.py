@@ -1,13 +1,14 @@
 
+from http.client import NO_CONTENT
 import time
 import pygame
 import tkinter.filedialog,tkinter.messagebox
-import mysql.connector as sql
+import pymysql as sql
 import os,datetime,threading,dotenv
 
 path = ".env"
 dotenv.load_dotenv(path)
-
+lock = threading.Lock()
 chemin = os.path.join("Ressource","compte_connecter.txt")
 if not os.path.exists(chemin):
     #Creation du fichier vide
@@ -19,49 +20,50 @@ try:
                     user = os.environ.get('USER'),
                     password  = os.environ.get('SQL_MOT_DE_PASSE'),
                     db=os.environ.get('DB_NAME'),
-                    auth_plugin='mysql_native_password')
-    if not connection_principale.is_connected():
-        connection_principale = None
-    else:
-        print("vous êtes connectés")
-except:
+                    )
+    connection_principale.ping(False)
+except Exception as e:
+    print(e)
     connection_principale = None
-
     
-print(connection_principale)
-def look_for_connection():
-    global connection_principale 
-    if connection_principale == None:
-        try:
-            connection_principale = sql.connect(
-                            host = os.environ.get('HOST'),
-                            user = os.environ.get('USER'),
-                            password  = os.environ.get('SQL_MOT_DE_PASSE'),
-                            db=os.environ.get('DB_NAME'),
-                            auth_plugin='mysql_native_password')
-            if not connection_principale.is_connected():
-                connection_principale = None
-        except:
-            connection_principale = None
+def connect_to_database():
     try:
-        if connection_principale != None and not connection_principale.is_connected():
-            try:
-                print("trying to reconnect")
-                connection_principale.reconnect()
-                if connection_principale.is_connected():
-                    return True
-                return False
-            except:
-                print("echec_connection")
+        conn = sql.connect(
+            host=os.environ.get('HOST'),
+            user=os.environ.get('USER'),
+            password=os.environ.get('SQL_MOT_DE_PASSE'),
+            db=os.environ.get('DB_NAME'),
+            )
+        conn.ping()
+        return conn
+    except Exception as e:
+        print(f"Erreur de connexion : {e}")
+        return None
+
+
+print(connection_principale)
+
+def look_for_connection():
+    global connection_principale
+
+    with lock:
+        if connection_principale is None:
+            new_connection = connect_to_database()
+            if new_connection:
+                connection_principale = new_connection
+                return True
+            else:
                 connection_principale = None
                 return False
         else:
-            return True
-    except:
-         connection_principale = None
-         return look_for_connection()
-
-        
+            try:
+                print("attemp reconnection")
+                connection_principale.ping(reconnect=True)
+                return True
+            except sql.Error as e:
+                print(e)
+                connection_principale = None
+                return False
 
    
 class Color:
@@ -326,6 +328,8 @@ class User:
         root = tkinter.Tk()
         root.withdraw()
         ans = tkinter.messagebox.askyesno(title = "Exit", message = "Tu veux vraiment nous quitter :(")
+        if ans == None:
+            ans = False
         return ans
     
     @staticmethod
@@ -394,28 +398,29 @@ class User:
 
         Raises:
             noConnection: Renvoie noConnection quand aucune connection n'a pu être initalisé
-        """        
+        """     
+        no_connection = False   
         try:
-            cursor = connection_principale.cursor()
-            current_date = datetime.datetime.now()
-            current_date = current_date.strftime("%Y-%m-%d")
-            request = """ INSERT INTO signalements (`id_tuto_signaler`, `signalement`, `pseudo_accuseur`, `date`, `pseudo_accuse`)
-                          VALUES (%s,%s,%s,%s,%s);"""
-            infos = (id_tuto_signaler, text_signalement, self.pseudo, current_date,  pseudo_accuser)
-            cursor.execute(request,infos)            
-            connection_principale.commit()
+            if look_for_connection():
+                cursor = connection_principale.cursor()
+                current_date = datetime.datetime.now()
+                current_date = current_date.strftime("%Y-%m-%d")
+                request = """ INSERT INTO signalements (`id_tuto_signaler`, `signalement`, `pseudo_accuseur`, `date`, `pseudo_accuse`)
+                            VALUES (%s,%s,%s,%s,%s);"""
+                infos = (id_tuto_signaler, text_signalement, self.pseudo, current_date,  pseudo_accuser)
+                cursor.execute(request,infos)            
+                connection_principale.commit()
+            else:
+                no_connection = True
+                raise noConnection("connection failed")
         except sql.Error as err:
             print(err)
-        except:
-            pass
+            no_connection = True
+        except Exception as e:
+            print(e)
+            no_connection = True
         finally:
-            try:
-                if connection_principale.is_connected():
-                    pass
-                else:
-                    raise noConnection("connection failed")
-            except Exception as e:
-                print(e)
+            if no_connection:
                 raise noConnection("connection failed")
         
             
@@ -425,29 +430,29 @@ class User:
 
         Raises:
             noConnection: Renvoie noConnection quand aucune connection n'a pu être initialisation
-        """        
-        try:            
-            cursor = connection_principale.cursor()
-            request = """ INSERT INTO utilisateur (`nom`, `prenom`, `tuto_transmis`,`photo_profil`, `age`,`pseudo`,`mot_de_passe`,`rect_photo_profil`)
-                          VALUES (%s,%s,%s,%s,%s,%s,%s,%s);"""
-            if isinstance(self.rect_pp,pygame.Rect):
-                rect_pp = Gerer_requete.separe_rect(self.rect_pp)
+        """
+        no_connection = False        
+        try:   
+            if look_for_connection():         
+                cursor = connection_principale.cursor()
+                request = """ INSERT INTO utilisateur (`nom`, `prenom`, `tuto_transmis`,`photo_profil`, `age`,`pseudo`,`mot_de_passe`,`rect_photo_profil`)
+                            VALUES (%s,%s,%s,%s,%s,%s,%s,%s);"""
+                if isinstance(self.rect_pp,pygame.Rect):
+                    rect_pp = Gerer_requete.separe_rect(self.rect_pp)
+                else:
+                    rect_pp = None
+                infos = (self.nom,self.prenom,self.tuto_transmis,self.photo_profil,self.age,self.pseudo,self.mdp,rect_pp)
+                cursor.execute(request,infos)            
+                connection_principale.commit()
             else:
-                rect_pp = None
-            infos = (self.nom,self.prenom,self.tuto_transmis,self.photo_profil,self.age,self.pseudo,self.mdp,rect_pp)
-            cursor.execute(request,infos)            
-            connection_principale.commit()
+                no_connection = True
         except sql.Error as err:
             print(err,"wesh")
+            no_connection = True
         except:
-            pass
+            no_connection = True
         finally:
-            try:
-                if connection_principale.is_connected():
-                    pass
-                else:
-                    raise noConnection("connection_failed")
-            except:
+            if no_connection:
                 raise noConnection("connection failed")   
                       
     def change_element(self,nom = False, pseudo = False, prenom = False, photo_pp = False, tuto_transmi = False,rect_pp = False,Nouvelle_value = 0, notif = False,temoin = None)-> None:
@@ -465,7 +470,7 @@ class User:
         Raises:
             noConnection: Renvoie noConnection quand aucune connection n'a pu être initialisé
         """
-        print("h")
+        no_connection = False
         if nom:
             element = "nom"
             self.nom = Nouvelle_value
@@ -493,21 +498,19 @@ class User:
                 cursor.execute(request,infos)
                 connection_principale.commit()
             else:
+                no_connection = True 
                 raise noConnection("connection failed")
         except sql.Error as err:
-            print(err)
+            no_connection = True
         except:
-            pass
+            no_connection = True
         finally:
-            try:
-                if connection_principale.is_connected():
-                    pass
-                    if notif:
-                        Gerer_requete.processus_fini(temoin=temoin)
-                else:
-                    raise noConnection("connection failed")
-            except:
+            if not no_connection:
+                if notif:
+                    Gerer_requete.processus_fini(temoin=temoin)
+            else:
                 raise noConnection("connection failed")
+            
         
     @staticmethod    
     def log_user(pseudo,mdp):
@@ -524,6 +527,7 @@ class User:
         Returns:
             User: Renvoie la classe User du compte
         """
+        no_connection = False
         try:
             if look_for_connection():
                 cursor = connection_principale.cursor()
@@ -532,25 +536,33 @@ class User:
                 data = cursor.fetchone()
                 connection_principale.commit()
             else:
+                no_connection = True
                 raise noConnection("connection failed")
         except sql.Error as err:
             print(err)
-        except:
-            pass
+            no_connection = True
+        except Exception as e:
+            print(e)
+            no_connection = True
+            
         finally:
-            try:
-                if connection_principale.is_connected():
-                    pass
-                    if mdp != data[7]:
-                        raise userNonCharger("mauvais mdp") 
+            if not no_connection:
+                if mdp != data[7]:
+                    raise userNonCharger("mauvais mdp")
                 else:
-                    raise noConnection("connection failed")
+                    return User(data[1],data[2],data[5],data[6],data[7],data[4],data[3],data[8])
+            else:
+                raise noConnection("connection failed")
+            """try:
+                connection_principale.ping(False)
+                if mdp != data[7]:
+                    raise userNonCharger("mauvais mdp") 
             except userNonCharger:
                 raise userNonCharger("mauvais mdp")
             except:
                 raise noConnection("connection failed")
             else:
-                return User(data[1],data[2],data[5],data[6],data[7],data[4],data[3],data[8])
+                return User(data[1],data[2],data[5],data[6],data[7],data[4],data[3],data[8])"""
             
             
     @staticmethod
@@ -567,6 +579,7 @@ class User:
             bool: Renvoie True si le tuto est disponible, False sinon
         """        
         disponible = True
+        no_connection = False
         try:
             if look_for_connection():
                 cursor = connection_principale.cursor()
@@ -577,14 +590,22 @@ class User:
                 if (pseudo,) in all_pseudo:
                     disponible = False
             else:
+                no_connection = True
                 raise noConnection("connection failed")
             
         except sql.Error as err:
             print(err)
+            no_connection = True
+
         except Exception as e:
             print(e)
+            no_connection = True
         finally:
-            try:
+            if not no_connection:
+                return disponible
+            else:
+                raise noConnection("connection failed")
+            """try:
                 if connection_principale.is_connected():
                     pass
                 else:
@@ -594,7 +615,7 @@ class User:
                 raise noConnection("connection failed")
             else:
                 #aucune erreur n'a eu lieu
-                return disponible
+                return disponible"""
             
                 
             
@@ -660,7 +681,8 @@ class Gerer_requete(User):
 
         Raises:
             noConnection: Renvoie noConnection quand la conenction n'a pu être établie
-        """        
+        """   
+        no_connection = False     
         current_date = datetime.datetime.now()
         current_date = current_date.strftime("%Y-%m-%d")
         date = current_date
@@ -687,16 +709,19 @@ class Gerer_requete(User):
                 raise noConnection("connection failed")
         except sql.Error as err:
             print(err)
+            no_connection = True
         except:
-            pass
+            no_connection = True
         finally:
-            try:
+            if no_connection:
+                raise noConnection("connection failed")
+            """try:
                 if connection_principale.is_connected():
                     pass
                 else:
                     raise noConnection("connection failed")
             except:
-                raise noConnection("connection failed")
+                raise noConnection("connection failed")"""
                 
     @staticmethod  
     def rechercher_data(nom_tuto : str = None,nom_auteur : str = None)->list:
@@ -713,9 +738,11 @@ class Gerer_requete(User):
         Returns:
             list: Liste comportant tout les tuto retourner
         """
+        no_connection = False
         try:
+            data_recup = [None]
             if look_for_connection():
-                data_recup = [None]  
+                  
                 print("va prendre le cursor")
                 cursor = connection_principale.cursor()
                 print("a prit le cursor")
@@ -729,23 +756,24 @@ class Gerer_requete(User):
                 data_recup = cursor.fetchall()  
             else:
                 print("no con")
+                no_connection = True
                 raise noConnection("connection failed")
         except sql.Error as err:
             print(err)
-
+            no_connection = False
             print("erreur")
-        except:
-            pass
+        except noConnection as e:
+            print(e)
+            no_connection = True
+            
+        except Exception as e:
+            print(e)
+            no_connection = True
+            print("raise")
         finally:
-            try:
-                if connection_principale.is_connected():
-                    pass
-                else:
-                    raise noConnection("connection failed")
-            except:
-                raise noConnection("connection failed")
-            else:
+            if not no_connection:
                 return data_recup
+            raise noConnection("l")
 
     @staticmethod
     def demarrer_fichier(doc : bytes | str,ext,with_path = False,nom_tuto = "",auteur = "")->None:
