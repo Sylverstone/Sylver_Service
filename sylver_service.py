@@ -9,7 +9,7 @@ pygame.init()
 pygame.mixer.init()
 pygame.display.init()
 pygame.font.init()
-pygame.key.set_repeat(200,50)
+pygame.key.set_repeat(500,50)
 resolution = pygame.display.Info()
 width = resolution.current_w
 height = resolution.current_h
@@ -28,10 +28,10 @@ def verification_size(contenaire : pygame.Rect, nom_font : pygame.font, size : i
     """Fonction récursive permettant de reduire la taille d'un texte si il est trop grand
 
     Args:
-        contenaire (pygame.Rect): _description_
-        font (pygame.font): _description_
-        size (int): _description_
-        texte (str): _description_
+        contenaire (pygame.Rect): Rect que le texte ne doit pas dépasser
+        nom_font (pygame.font): nom de la police utilisée
+        size (int): taille du texte original
+        texte (str): texte a afficher
     """
     if id == 0:
         if contenaire.w <= font(nom_font,size,importer).size(texte)[0]:
@@ -43,14 +43,21 @@ def verification_size(contenaire : pygame.Rect, nom_font : pygame.font, size : i
         
     
 def draw_text(text, font = "Comic Sans Ms", color = (0,0,0), x = 0, y = 0,reference_center_x = None,contener = screen,size = 20,importer = False, center_multi_line_y = False, ombre = False,center_multi_line = False):
-    """
-        dessiner un texte a une position donné
-        :param 1: text qu'on veut dessiner
-        :param 2: font qu'utilise le texte
-        :param 3: couleur du texte
-        :param 4: coordonne x ou le dessiner
-        :param 5: coordonne y ou le dessiner
-        :CU: arg 1 est un str, arg 2 est de type font.FONT ou font.SysFont, arg 3 est un rbg, arg 4 et 5 sont des int
+    """Fonction affichant un texte a l'écran
+
+    Args:
+        text (str): texte a afficher
+        font (str, optional): nom de la police a afficher. Defaults to "Comic Sans Ms".
+        color (tuple, optional): couleur du texte a afficher. Defaults to (0,0,0).
+        x (int, optional): position en x du texte a afficher. Defaults to 0.
+        y (int, optional): position en y du texte a afficher. Defaults to 0.
+        reference_center_x (pygame.Surface, optional): Surface sur laquelle le texte doit être centré en x. Defaults to None.
+        contener (pygame.Surface, optional): Surface sur laquelle le texte doit être afficher. Defaults to screen.
+        size (int, optional): taille du texte a afficher. Defaults to 20.
+        importer (bool, optional): Variable indiquant si la varible n'est pas native a pygame ou non. Defaults to False.
+        center_multi_line_y (bool, optional): Variable indiquant si le texte est centrer en y (pour les textes avec \\n). Defaults to False.
+        ombre (bool, optional): Variable indiquant si le texte doit comporter une ombre. Defaults to False.
+        center_multi_line (bool, optional): Variable indiquant si le texte est centrer en x (pour les textes avec \\n). Defaults to False.
     """
     
     text = str(text) #transformer le texte en str 
@@ -80,13 +87,15 @@ def make_line(text : str,font : pygame.font,size_max : int):
     """Fonction permettant de faire le coupage d'un texte par rapport a son contenaire,
     renvoie le nombre de ligne du texte et ses zones de coupages en plus de sa hauteur
 
-    Args:
+    # Args:
         text (str): text que l'on choisi
         font (pygame.font): la police attribué a ce text
         size_max (int): la taille maximum a ne pas depasser
 
-    Returns:
-        _type_: _description_
+    # Returns:
+        (list,int,float): Renvoie la liste de coupages des caractères, renvoie le nombre de ligne qu'occupe le texte, renvoie la hauteur qu'occupe le texte
+    
+    * Liste de coupages : liste comportant les indices où une nouvelle ligne commence pour le texte
     """
     coupage = [0]
     line = 1
@@ -386,7 +395,15 @@ def ecrire_tuto(user : User | None):
         pygame.display.flip()
     
   
-def trait(x,y,longueur,surf,epaisseur = 3):
+def trait(x : float,y : float ,longueur : float ,surf : pygame.Surface,epaisseur = 2):
+    """Fonction permettant de dessiner un trait
+    Args:
+        x (float): position x du trait
+        y (float): position y du trait
+        longueur (float): longueur du trait a dessiner
+        surf (pygame.Surface): Surface sur laquelle est dessinée le trait
+        epaisseur (int, optional): epaisseur du trait. Defaults to 3.
+    """
     pygame.draw.rect(surf,(0,0,0),(x,y,longueur,epaisseur))      
     
 def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.datetime = None, id_tuto : int = None):
@@ -563,8 +580,13 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
         
         
 
-def menu(id_ = 0,auteur_rechercher = None):
-    """Fonction affichant le menu recherche de l'application"""
+def menu(id_ : int = 0,auteur_rechercher : str = None):
+    """Fonction permettant de rechercher des tutos | elle sert également a afficher tout les tutos d'un utilisateur
+
+    Args:
+        id_ (int, optional): _description_. Variable permettant de changer l'utilisation de la fonction to 0.
+        auteur_rechercher (str, optional): Auteur recherché si la fonction sert a afficher les tutos d'un utilisateur. Defaults to None.
+    """
     #ecrire_tuto(None)
     global display       
     global processing
@@ -592,12 +614,11 @@ def menu(id_ = 0,auteur_rechercher = None):
         """Fonction permettant d'afficher le résultat d'une recherche précise
 
         Args:
-            num (int): nombre de résultat obtenu
+            num (int): nombres de résultats obtenu
         """
-    
         global access,zone_page,all_case_data,dict_rect_fleche,add_fleche,can_add,have_supprime
         #pygame.event.clear()        
-        text = f"{num} résultat.s pour cette recherche !" if not flop_de_recherche else "OH :() une erreur est survenue"
+        text = f"{num} résultat.s pour cette recherche !" if not flop_de_recherche else "Une erreur est survenue ! la recherche n'a pas aboutie"
         text = "Faites une recherche :)" if have_supprime else text
         screen.fill(fond_ecran,(w_origine/2 - font.size(text)[0]/2,230,300,100))
         draw_text(text,color = (255,255,255),
@@ -722,7 +743,7 @@ def menu(id_ = 0,auteur_rechercher = None):
         Args:
             data (dict): donnée au sujet du tuto selectionner
         """
-        global all_case_data
+        global all_case_data,enter_pressed
         all_case_data = []
         global processing
         processing = True
@@ -741,6 +762,7 @@ def menu(id_ = 0,auteur_rechercher = None):
             num_resultat = len(detail)
             access = True
             display = True
+            enter_pressed = False
         except noConnection:
             processing = False
             Gerer_requete.connection_failed()
@@ -808,7 +830,8 @@ def menu(id_ = 0,auteur_rechercher = None):
     rect_a_ne_pas_depasser.h -= (rect_goback.w+20)
     text_title = "Bienvenue Dans l'espace recherche !" if id_ == 0 else f"Voici les tutos de l'utilisateur {auteur_rechercher} !"
     size_du_titre = verification_size(rect_a_ne_pas_depasser,font_paragraphe,size_for_title,text_title,True)
-    
+    global enter_pressed
+    enter_pressed = False
     not_enter = False #sert juste a bloquer l'acces
     while continuer:
         if id_ != 0 and not not_enter:
@@ -840,8 +863,10 @@ def menu(id_ = 0,auteur_rechercher = None):
                         input_host += " "
                     elif event.key == pygame.K_BACKSPACE:
                         input_host = input_host[:-1]
-                    elif event.key == pygame.K_RETURN:
-                        pygame.event.clear()
+                    elif event.key == pygame.K_RETURN and not enter_pressed:
+                        data_recup = {}
+                        display = False
+                        enter_pressed = True
                         recherche_type = liste_rech[indice_type+2]
                         dict_recherche[recherche_type] = input_host
                         thread_recherche = threading.Thread(target=research, args=(dict_recherche,), daemon=True)                       
@@ -979,53 +1004,6 @@ def relative_at(rect : pygame.Rect,relative : pygame.Rect) -> pygame.Rect:
         pygame.Rect: Rect relatif de rect a relative
     """
     return pygame.Rect(rect.x - relative.x,rect.y - relative.y,rect.w,rect.h)
-
-global make_chargement
-
-def make_chargement(last_screen,text = "Chargement",delay = 200,animation = 2):
-        """Fonction qui fait un chargement animer
-
-        Args:
-            text (str, optional): text a animer. Defaults to "Chargement...".
-        """
-        global continue_charging
-        
-        try:
-            if animation == 1:
-                screen.blit(last_screen,(0,0))
-                pygame.display.flip()
-                nb_point = 0
-                while continue_charging:
-                    nb_point += 1     
-                    point = "."*((nb_point %4))                                                
-                    rect_a_update = pygame.Rect(w_origine/2 - font(csm,20).size(text)[0]/2,h_origine - 40,200,
-                                                50)
-                    screen.fill(fond_ecran,rect_a_update)
-                    
-                    draw_text(text + point,x = w_origine/2 - font(csm,20).size(text)[0]/2, y = h_origine - 40)
-                    pygame.display.update(rect_a_update)        
-                    pygame.time.delay(delay)     
-            elif animation == 2:
-                text += "..." if not "..." in text else ""
-                ensemble_text = [letter for letter in text]
-                screen.blit(last_screen,(0,0))
-                nb_caractere = len(ensemble_text)
-                texte = ""
-                caractere = 0
-                while continue_charging:
-                    
-                    if caractere % nb_caractere == 0:
-                        texte = ""
-                    texte += ensemble_text[caractere % nb_caractere]
-                    rect_a_update = pygame.Rect(w_origine/2 - font(csm,20).size(text)[0]/2,h_origine - 40,200,
-                                                50)
-                    screen.fill(fond_ecran,rect_a_update)
-                    caractere += 1
-                    draw_text(texte,x = w_origine/2 - font(csm,20).size(texte)[0]/2, y = h_origine - 40)
-                    pygame.display.update(rect_a_update)        
-                    pygame.time.delay(delay)             
-        except Exception as e:
-            print("erreur : ",e)
             
             
 surf_image2 = None 
@@ -1329,8 +1307,8 @@ def compte():
                         try:
                             global surf_image
                             screen.blit(last_screen,(0,0))
-                            draw_text("Clickez pour valider",x = w_origine/2 - font(font_paragraphe,18,True).size("Clickez pour valider")[0]/2,
-                                      y = h_origine - 30, importer = True, size = 18, font = font_paragraphe)
+                            draw_text("Clickez pour valider",x = w_origine/2 - font(font_paragraphe,35,True).size("Clickez pour valider")[0]/2,
+                                      y = fond_nav.get_height() + 5, importer = True, size = 35, font = font_paragraphe,ombre = True,color = blanc)
                             pygame.display.update()
                             surf_image,rect_ellipse,image_photo_pp = img.try_to_resize(screen)
                             if not connect:
@@ -2021,6 +1999,11 @@ def request():
         pygame.display.flip()
 
 def input_popup():
+    """Fonction permettant d'afficher une input en popup
+
+    Returns:
+        bool | str: retourne False si l'input n'a pas été validez, le texte de l'input sinon
+    """
     pygame.display.flip()
     global continuer
     container = pygame.Surface((w_origine/3,h_origine/3), pygame.SRCALPHA)

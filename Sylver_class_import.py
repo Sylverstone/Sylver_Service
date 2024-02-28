@@ -178,14 +178,21 @@ class noConnection(Exception):
         super().__init__(self.what)
 
 def draw_text(text, font = "Comic Sans Ms", color = (0,0,0), x = 0, y = 0,contener : pygame.Surface = None,size = 20,importer = False, center_multi_line_y = False, ombre = False,center_multi_line = False):
-    """
-        dessiner un texte a une position donné
-        :param 1: text qu'on veut dessiner
-        :param 2: font qu'utilise le texte
-        :param 3: couleur du texte
-        :param 4: coordonne x ou le dessiner
-        :param 5: coordonne y ou le dessiner
-        :CU: arg 1 est un str, arg 2 est de type font.FONT ou font.SysFont, arg 3 est un rbg, arg 4 et 5 sont des int
+    """Fonction affichant un texte a l'écran
+
+    Args:
+        text (str): texte a afficher
+        font (str, optional): nom de la police a afficher. Defaults to "Comic Sans Ms".
+        color (tuple, optional): couleur du texte a afficher. Defaults to (0,0,0).
+        x (int, optional): position en x du texte a afficher. Defaults to 0.
+        y (int, optional): position en y du texte a afficher. Defaults to 0.
+        reference_center_x (pygame.Surface, optional): Surface sur laquelle le texte doit être centré en x. Defaults to None.
+        contener (pygame.Surface, optional): Surface sur laquelle le texte doit être afficher. Defaults to screen.
+        size (int, optional): taille du texte a afficher. Defaults to 20.
+        importer (bool, optional): Variable indiquant si la varible n'est pas native a pygame ou non. Defaults to False.
+        center_multi_line_y (bool, optional): Variable indiquant si le texte est centrer en y (pour les textes avec \\n). Defaults to False.
+        ombre (bool, optional): Variable indiquant si le texte doit comporter une ombre. Defaults to False.
+        center_multi_line (bool, optional): Variable indiquant si le texte est centrer en x (pour les textes avec \\n). Defaults to False.
     """
     w_origine = contener.get_rect()[2]
     text = str(text) #transformer le texte en str 
@@ -254,8 +261,9 @@ class Animation:
             draw_text(self.texte + point +"\n"+ajout_decriture,center_multi_line=True, y = screen.get_rect()[3] - 80,contener=screen,color = self.color)
         else:
             print("chargement started")
-            pygame.display.update()
+            
             screen.blit(last_screen,(0,0))
+            pygame.display.update()
             debut = time.time()
             while self.running:
                 self.nb_point += 1
@@ -315,6 +323,8 @@ class User:
         Returns:
             bool: Renvoie la réponse de l'utilisateur
         """
+        root = tkinter.Tk()
+        root.withdraw()
         ans = tkinter.messagebox.askyesno(title = "Exit", message = "Tu veux vraiment nous quitter :(")
         return ans
     
@@ -390,8 +400,7 @@ class User:
             current_date = datetime.datetime.now()
             current_date = current_date.strftime("%Y-%m-%d")
             request = """ INSERT INTO signalements (`id_tuto_signaler`, `signalement`, `pseudo_accuseur`, `date`, `pseudo_accuse`)
-                          VALUES (%s,%s,%s,%s,%s);
-                        """
+                          VALUES (%s,%s,%s,%s,%s);"""
             infos = (id_tuto_signaler, text_signalement, self.pseudo, current_date,  pseudo_accuser)
             cursor.execute(request,infos)            
             connection_principale.commit()
@@ -420,8 +429,7 @@ class User:
         try:            
             cursor = connection_principale.cursor()
             request = """ INSERT INTO utilisateur (`nom`, `prenom`, `tuto_transmis`,`photo_profil`, `age`,`pseudo`,`mot_de_passe`,`rect_photo_profil`)
-                          VALUES (%s,%s,%s,%s,%s,%s,%s,%s);
-                        """
+                          VALUES (%s,%s,%s,%s,%s,%s,%s,%s);"""
             if isinstance(self.rect_pp,pygame.Rect):
                 rect_pp = Gerer_requete.separe_rect(self.rect_pp)
             else:
@@ -478,7 +486,7 @@ class User:
             self.rect_pp = Gerer_requete.separe_rect(Nouvelle_value)
             Nouvelle_value = self.rect_pp
         try:
-            if connection_principale != None and connection_principale.is_connected():
+            if look_for_connection():
                 cursor = connection_principale.cursor()
                 request = f"UPDATE utilisateur SET `{element}` = %s WHERE pseudo = %s;"
                 infos = (Nouvelle_value,self.pseudo)
@@ -517,7 +525,7 @@ class User:
             User: Renvoie la classe User du compte
         """
         try:
-            if connection_principale != None and connection_principale.is_connected():
+            if look_for_connection():
                 cursor = connection_principale.cursor()
                 request =f"SELECT * FROM utilisateur WHERE pseudo = '{pseudo}'"
                 cursor.execute(request)
@@ -560,7 +568,7 @@ class User:
         """        
         disponible = True
         try:
-            if connection_principale != None and connection_principale.is_connected():
+            if look_for_connection():
                 cursor = connection_principale.cursor()
                 request = f"SELECT pseudo FROM utilisateur WHERE pseudo LIKE '{pseudo}%'"
                 cursor.execute(request)
@@ -661,7 +669,7 @@ class Gerer_requete(User):
         auteur = f"{self.pseudo}, {self.nom} {self.prenom}"
         file = Doc(doc).get_extension()
         try:
-            if connection_principale != None and connection_principale.is_connected():
+            if look_for_connection():
                 cursor = connection_principale.cursor()
                 if doc != None:
                     with open(doc,"rb") as fichier:
