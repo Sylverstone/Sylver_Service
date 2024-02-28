@@ -9,7 +9,7 @@ pygame.init()
 pygame.mixer.init()
 pygame.display.init()
 pygame.font.init()
-pygame.key.set_repeat(500,50)
+pygame.key.set_repeat(750,50)
 resolution = pygame.display.Info()
 width = resolution.current_w
 height = resolution.current_h
@@ -750,7 +750,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
         processing = True
         global have_supprime
         have_supprime = False   
-        global detail,can_add,access,display,num_resultat,flop_de_recherche
+        global detail,can_add,access,display,num_resultat,flop_de_recherche,enter_pressed
         can_add = True
         access = False
         global zone_page
@@ -765,11 +765,13 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
             display = True
             enter_pressed = False
         except noConnection:
+            enter_pressed = False
             processing = False
             Gerer_requete.connection_failed()
             
         except Exception as e:
             print(e)
+            enter_pressed = False
             flop_de_recherche = True
             processing = False
             access = False
@@ -867,7 +869,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                     elif event.key == pygame.K_BACKSPACE:
                         input_host = input_host[:-1]
                     elif event.key == pygame.K_RETURN and not enter_pressed:
-                        data_recup = {}
+                        all_case_data = {}
                         display = False
                         enter_pressed = True
                         recherche_type = liste_rech[indice_type+2]
@@ -926,7 +928,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
             if rect_btn.collidepoint(mouse):
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and bool(input_host):
                     access = False
-                    data_recup = {}
+                    all_case_data = {}
                     display = True
                     have_supprime = True
         rect_surf_rechercher = pygame.Rect(100,150,surface_rechercher.get_width(),surface_rechercher.get_height())
@@ -2314,7 +2316,7 @@ while continuer:
     clock.tick(144)
     fps = clock.get_fps()
     draw_text(f"fps : {int(fps)}",x=10,y=100,color=(255,255,255))
-    
+  
     for index,elt in enumerate(proposition):
         if index != 0:
             rect = rect_choose
