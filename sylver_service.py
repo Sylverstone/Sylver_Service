@@ -39,18 +39,7 @@ def verification_size(contenaire : pygame.Rect, nom_font : pygame.font, size : i
             return verification_size(contenaire,nom_font,size,texte,importer)
         else:
             return size
-    elif id == 1:
-        if all_texte == None:
-            nb_ligne = len(texte.split("\n"))
-        else:
-            nb_ligne = len(all_texte)
-            
-        hauteur_text = font(nom_font,size,importer).size(texte)[1] * nb_ligne
-        if hauteur_text >= contenaire.h:
-            size -= 2
-            return verification_size(contenaire, nom_font, size, texte,importer, id, all_texte)
-        else:
-            return size
+    
         
     
 def draw_text(text, font = "Comic Sans Ms", color = (0,0,0), x = 0, y = 0,reference_center_x = None,contener = screen,size = 20,importer = False, center_multi_line_y = False, ombre = False,center_multi_line = False):
@@ -109,7 +98,6 @@ def make_line(text : str,font : pygame.font,size_max : int):
         if size + 5 > size_max:
             w = -1
             while text[start:i][w] != " " and abs(w) < len(text[start:i]):
-                print(w)
                 w -= 1
             if abs(w) == len(text[start:i]):
                 #dans le cas ou il n'y a pas d'espace avant le mot
@@ -397,7 +385,10 @@ def ecrire_tuto(user : User | None):
         last_screen = screen.copy()
         pygame.display.flip()
     
-        
+  
+def trait(x,y,longueur,surf,epaisseur = 3):
+    pygame.draw.rect(surf,(0,0,0),(x,y,longueur,epaisseur))      
+    
 def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.datetime = None, id_tuto : int = None):
     """Fonction permettant d'afficher un texte au sujet de Sylver_Service, cette fonction sert aussi a afficher un tuto
 
@@ -447,8 +438,46 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
     while heigth_text >= rect_surface_ecriture.h:
         taille_ecriture -= 2
         coupage,line,heigth_text = make_line(text = text_info, font = font(font_paragraphe,taille_ecriture,True), size_max= size_max)
-    all_text = decoupe_text(coupage,line,text_info)        
+    all_text = decoupe_text(coupage,line,text_info)
+    width_surface_popup = 300      
+    rect_popup_btn = pygame.Rect(w_origine - width_surface_popup,40,width_surface_popup,h_origine/4)
+    surface_popup = pygame.Surface((width_surface_popup,h_origine/4)) 
+    icone_signalement = pygame.image.load(os.path.join("Image","icone_signalement.png"))
+    icone_signalement = pygame.transform.smoothscale(icone_signalement,(50, 50))
+    rect_icone_signalement = icone_signalement.get_rect()
+    rect_icone_signalement.x = 20
+    rect_icone_signalement.y = surface_popup.get_height() - icone_signalement.get_height() - 10
+    rect_absolute_icone_signalement = rect_icone_signalement.copy()
+    rect_absolute_icone_signalement.x += rect_popup_btn.x
+    rect_absolute_icone_signalement.y += rect_popup_btn.y
+    triple_bar_option = pygame.image.load(os.path.join("Image","3_barre_proto.png"))
+    triple_bar_option = pygame.transform.smoothscale(triple_bar_option,(50,50))
+    rect_triple_bar = pygame.Rect(w_origine - surface_popup.get_width()/2 - triple_bar_option.get_width()/2
+                                  ,40,triple_bar_option.get_width(),triple_bar_option.get_height())
+    icone_tuto_utilisateur = pygame.image.load(os.path.join("Image","icone_interrogation.png"))
+    icone_tuto_utilisateur = pygame.transform.smoothscale(icone_tuto_utilisateur,(50,50))
+    rect_icone_tuto_utilisateur = pygame.Rect(rect_icone_signalement.x
+                                  ,rect_icone_signalement.y - rect_icone_signalement.h - 20,
+                                  icone_tuto_utilisateur.get_width(),icone_tuto_utilisateur.get_height())
+    rect_abs_icone_tuto_utilisateur = rect_icone_tuto_utilisateur.copy()
+    rect_abs_icone_tuto_utilisateur.x += rect_popup_btn.x
+    rect_abs_icone_tuto_utilisateur.y += rect_popup_btn.y
+    print(rect_absolute_icone_signalement,rect_icone_signalement)
+    
+    texte_pour_signalement = "Signaler ce tuto"
+    texte_pour_voir_tout_les_tuto = "Voir les tutos de cette utilisateur"
+    rect_a_pas_depasser = pygame.Rect(0,0,surface_popup.get_width() - 50 - 25,0 )
+    size_texte_pour_signalement = verification_size(rect_a_pas_depasser,font_paragraphe,40,texte_pour_signalement,True)
+    size_texte_pour_voir_tout_les_tuto = verification_size(rect_a_pas_depasser,font_paragraphe,40,texte_pour_voir_tout_les_tuto,True)
+    taille_texte_signalement = font(font_paragraphe,size_texte_pour_signalement,True).size(texte_pour_signalement)
+    taille_voir_tout_les_tuto = font(font_paragraphe,size_texte_pour_voir_tout_les_tuto,True).size(texte_pour_voir_tout_les_tuto)
+
+    position_popup = -h_origine/4
+    position_de_fin = 40
+    afficher_option = False
+    retirez_option = False
     while continuer:
+        
         mouse = pygame.mouse.get_pos()
         screen.fill((100,100,100))
         surface_ecriture.fill((255,255,255,0))       
@@ -460,22 +489,17 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
                 break
             if rect_goback.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 go_back = True
-        if not "\n" in text_info:
-            for i in range(line):
-                draw_text(all_text[i], color = (0,0,0), x = 10, y =20 + (taille_ecriture+5)*i, size = taille_ecriture, contener = surface_ecriture, font = font_paragraphe, importer = True)
-        else:
-            draw_text(text_info, color = (0,0,0),x = 10,y = 35,
-                       size = taille_ecriture, contener = surface_ecriture, font = font_paragraphe, importer = True)
-        #pygame.draw.rect(surface_ecriture, (255,0,0),(0,height/2,width,2))
-        fond_nav.fill(palette_couleur.fond_bar_de_navigation)                         
-        screen.blit(fond_nav,(0,0))        
-        screen.blit(image_retour,rect_goback)
-        title(text_title, size = 40)
-        if id_ > 1:
-            #début de la concecption du signalement, utilisation d'une surface et de draw.rect pour le design
-            draw_text(date, x = w_origine - font_20.size(str(date))[0] - 10,y = 10, font = font_paragraphe, color = (255,255,255),importer = True)
-            signal_button_rect = pygame.draw.rect(screen, (255, 255, 255), (w_origine - 50, 40, 20, 20))
-            if signal_button_rect.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            if rect_abs_icone_tuto_utilisateur.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if auteur != "":
+                    menu(1,auteur)
+                else:
+                    Gerer_requete.message("L'auteur n'existe pas !")
+            if rect_triple_bar.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                afficher_option = not afficher_option
+                if afficher_option == False:
+                    retirez_option = True
+            if rect_absolute_icone_signalement.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and afficher_option:
+                print("collide")
                 if connect:
                     try:
                         text_signalement, titre = ecrire_tuto(None)
@@ -489,15 +513,57 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
                         pass
                 else:
                     Gerer_requete.connecte_toi()
-                    
+        if not "\n" in text_info:
+            for i in range(line):
+                draw_text(all_text[i], color = (0,0,0), x = 10, y =20 + (taille_ecriture+5)*i, size = taille_ecriture, contener = surface_ecriture, font = font_paragraphe, importer = True)
+        else:
+            draw_text(text_info, color = (0,0,0),x = 10,y = 35,
+                       size = taille_ecriture, contener = surface_ecriture, font = font_paragraphe, importer = True)
+        #pygame.draw.rect(surface_ecriture, (255,0,0),(0,height/2,width,2))
+        fond_nav.fill(palette_couleur.fond_bar_de_navigation)   
+        surface_popup.fill((255,255,255))                      
+        screen.blit(fond_nav,(0,0))  
+        screen.blit(image_retour,rect_goback)
+        title(text_title, size = 40)
+        if 1:
+            pygame.draw.rect(surface_popup,(0,0,0),surface_popup.get_rect(),1)
+            taille_case = surface_popup.get_height() - rect_icone_signalement.y - 10
+            #afficher le texte de signalement dans les options
+            draw_text(texte_pour_signalement,font_paragraphe,(0,0,0),
+                      x  = 20 + rect_icone_signalement.w + 5, y = rect_icone_signalement.y + rect_icone_signalement.h/2 - taille_texte_signalement[1]/2,
+                      size = size_texte_pour_signalement, importer=True,contener=surface_popup)
+            
+            draw_text(texte_pour_voir_tout_les_tuto,font_paragraphe,(0,0,0),
+                      x  = 20 + rect_icone_signalement.w + 5, y = rect_icone_tuto_utilisateur.y + rect_icone_tuto_utilisateur.h/2 - taille_voir_tout_les_tuto[1]/2,
+                      size = size_texte_pour_voir_tout_les_tuto, importer=True,contener=surface_popup)
+            
+            trait(surf = surface_popup, x = 0, y = rect_icone_signalement.y - 10,longueur = surface_popup.get_width(),epaisseur = 1)
+            surface_popup.blit(icone_signalement,(rect_icone_signalement.x,rect_icone_signalement.y))
+            trait(surf = surface_popup, x = 0, y = rect_icone_tuto_utilisateur.y -10,longueur = surface_popup.get_width(),epaisseur = 1)
+            surface_popup.blit(icone_tuto_utilisateur,rect_icone_tuto_utilisateur)
+            #début de la concecption du signalement, utilisation d'une surface et de draw.rect pour le design
+            draw_text(date, x = w_origine - font_20.size(str(date))[0] - 10,y = 10, font = font_paragraphe, color = (255,255,255),importer = True)
+           
         if go_back:
             break
         screen.blit(surface_ecriture, (25,150))
+        if afficher_option:
+            position_popup += 20
+            if position_popup >= position_de_fin:
+                position_popup = position_de_fin            
+            screen.blit(surface_popup,(rect_popup_btn.x,position_popup))
+        elif retirez_option:
+            position_popup -= 20
+            if position_popup <= -surface_popup.get_height():
+                position_popup = -surface_popup.get_height()            
+            screen.blit(surface_popup,(rect_popup_btn.x,position_popup))
+        if 1:
+            screen.blit(triple_bar_option,rect_triple_bar)
         pygame.display.flip()
         
         
 
-def menu():
+def menu(id_ = 0,auteur_rechercher = None):
     """Fonction affichant le menu recherche de l'application"""
     #ecrire_tuto(None)
     global display       
@@ -668,7 +734,8 @@ def menu():
         global zone_page
         zone_page = 0
         try:      
-            flop_de_recherche = False         
+            flop_de_recherche = False   
+            print("commence la recherche") 
             detail = Gerer_requete.rechercher_data(nom_auteur = data["nom_auteur"], nom_tuto = data["nom_projet"])
             processing = False
             num_resultat = len(detail)
@@ -679,6 +746,7 @@ def menu():
             Gerer_requete.connection_failed()
             
         except Exception as e:
+            print(e)
             flop_de_recherche = True
             processing = False
             access = False
@@ -688,6 +756,7 @@ def menu():
     global continuer
     global finish
     global have_supprime
+        
     have_supprime = False
     finish = False
     rect_goback = pygame.Rect(5,15,50,50)
@@ -734,12 +803,22 @@ def menu():
     #boucle principale
     image_effacer_recherche = pygame.image.load(os.path.join("Image","icone_annule_recherche.png"))
     image_effacer_recherche = pygame.transform.smoothscale(image_effacer_recherche,(rect_btn.w,rect_btn.h))
-    text_title = "Bienvenue Dans l'espace recherche!"
     rect_a_ne_pas_depasser = rect_screen
     rect_a_ne_pas_depasser.w -=(rect_aide.w +20)
     rect_a_ne_pas_depasser.h -= (rect_goback.w+20)
+    text_title = "Bienvenue Dans l'espace recherche !" if id_ == 0 else f"Voici les tutos de l'utilisateur {auteur_rechercher} !"
     size_du_titre = verification_size(rect_a_ne_pas_depasser,font_paragraphe,size_for_title,text_title,True)
+    
+    not_enter = False #sert juste a bloquer l'acces
     while continuer:
+        if id_ != 0 and not not_enter:
+            th = threading.Thread(target = research, args=({"nom_auteur": auteur_rechercher,"nom_projet" : None},),daemon=True)
+            if not th.is_alive():
+                debut = time.time()
+                th.start()
+                print("thread started")
+                not_enter = True
+            
         clock.tick(120)
         dict_recherche = {"nom_projet" : None,"nom_auteur" : None}
         mouse = pygame.mouse.get_pos()
@@ -767,6 +846,7 @@ def menu():
                         dict_recherche[recherche_type] = input_host
                         thread_recherche = threading.Thread(target=research, args=(dict_recherche,), daemon=True)                       
                         if not thread_recherche.is_alive():
+                            print("start research")
                             debut = time.time()
                             thread_recherche.start()
                                             
@@ -808,7 +888,7 @@ def menu():
                 break
             if rect_goback.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 go_back = True
-            if rect_rechearch.collidepoint(mouse) and not rect_btn.collidepoint(mouse):
+            if rect_rechearch.collidepoint(mouse) and not rect_btn.collidepoint(mouse) and id_ == 0:
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     active = not active
                     if len(input_host) == 0 and not active:
@@ -818,6 +898,7 @@ def menu():
             if rect_btn.collidepoint(mouse):
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and bool(input_host):
                     access = False
+                    data_recup = {}
                     display = True
                     have_supprime = True
         rect_surf_rechercher = pygame.Rect(100,150,surface_rechercher.get_width(),surface_rechercher.get_height())
@@ -845,14 +926,15 @@ def menu():
         else:
             time_ = 0
             take_time = False
-         
-        screen.blit(surface_rechercher,(100,150))    
-        pygame.draw.rect(screen,palette_couleur.couleur_contour_case,contour_surface_rechercher,5,20)
-        #pygame.draw.rect(screen,couleur,rect_btn)
-        screen.blit(image_effacer_recherche,rect_btn)
+        
+        if id_ == 0:
+            screen.blit(surface_rechercher,(100,150))    
+            pygame.draw.rect(screen,palette_couleur.couleur_contour_case,contour_surface_rechercher,5,20)
+            #pygame.draw.rect(screen,couleur,rect_btn)
+            screen.blit(image_effacer_recherche,rect_btn)
         fond_nav.fill(palette_couleur.fond_bar_de_navigation)
         screen.blit(fond_nav,(0,0))
-        title("Bienvenue Dans l'espace recherche!", size = size_du_titre)       
+        title(text_title, size = size_du_titre)       
         pygame.draw.rect(surface_type_recherche,palette_couleur.fond_case_login,(0,0,rect_type_recherche[2],rect_type_recherche[3]),0,20)
         pygame.draw.rect(surface_type_recherche,(255,255,255),(0,0,rect_type_recherche.w,rect_type_recherche.h),2,20)
         draw_text(contener = surface_type_recherche,
@@ -861,21 +943,24 @@ def menu():
                   y = rect_type_recherche.h/2 - font_30.size(liste_rech[indice_type])[1]/2,size = 30,
                   font = font_paragraphe,
                   importer = True)
-        draw_text(text = text_rechercher,
-                  x = rect_type_recherche.x
-                  + rect_type_recherche.w/2 - font_30.size(text_rechercher)[0]/2,
-                  y = rect_type_recherche.y - 40,
-                  color = blanc, importer = True, font = font_paragraphe,size = 30,
-                  )
-        screen.blit(surface_type_recherche,rect_type_recherche)
+        if id_ == 0:
+            draw_text(text = text_rechercher,
+                    x = rect_type_recherche.x
+                    + rect_type_recherche.w/2 - font_30.size(text_rechercher)[0]/2,
+                    y = rect_type_recherche.y - 40,
+                    color = blanc, importer = True, font = font_paragraphe,size = 30,
+                    )
+        if id_ == 0:
+            screen.blit(surface_type_recherche,rect_type_recherche)
         screen.blit(image_aide,rect_aide)
         if display:
             display_result(num_resultat)
         screen.blit(image_retour,rect_goback)
-        draw_text(text_on,color = (255,255,255),
-                  x =0,
-                  y = 0, font = chivo_titre,
-                  size = 30)
+        if id_ == 0:
+            draw_text(text_on,color = (255,255,255),
+                    x =0,
+                    y = 0, font = chivo_titre,
+                    size = 30)
         if go_back:
             break
         last_screen = screen.copy()
@@ -2058,11 +2143,7 @@ with open(os.path.join("Ressource", "compte_connecter.txt"), "r+") as fichier:
                     fichier.write(pp_base)
                     
             #pygame.time.delay(2000)
-            print(user.photo_profil == pp_base)
             
-            print()
-            print()
-            print()
             if user.photo_profil == pp_base:
                 image_pp = pygame.image.load(chemin_pp)
                 image_pp = pygame.transform.smoothscale(image_pp,(200,200))
@@ -2217,10 +2298,11 @@ while continuer:
     for event in pygame.event.get():        
         if event.type == pygame.KEYDOWN:
             pass
-        if event.type == pygame.QUIT:
+        elif event.type == pygame.QUIT:
             continuer = False
-        if info.collidepoint(mouse):
+        elif info.collidepoint(mouse):
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                print("click")
                 page_info()
         if len(rect_dispo) > 0:
             for index, rect in enumerate(rect_dispo):

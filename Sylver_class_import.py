@@ -22,6 +22,8 @@ try:
                     auth_plugin='mysql_native_password')
     if not connection_principale.is_connected():
         connection_principale = None
+    else:
+        print("vous êtes connectés")
 except:
     connection_principale = None
 
@@ -41,25 +43,23 @@ def look_for_connection():
                 connection_principale = None
         except:
             connection_principale = None
-    elif not connection_principale.is_connected():
-        try:
-            print("trying to reconnect")
-            connection_principale = sql.connect(
-                            host = os.environ.get('HOST'),
-                            user = os.environ.get('USER'),
-                        password  = os.environ.get('SQL_MOT_DE_PASSE'),
-                        db=os.environ.get('DB_NAME'),
-            auth_plugin='mysql_native_password')
-            attempt = 1
-            if connection_principale.is_connected():
-                return True
-            return False
-        except:
-            print("echec_connection")
-            connection_principale = None
-            return False
-    else:
-        return True
+    try:
+        if connection_principale != None and not connection_principale.is_connected():
+            try:
+                print("trying to reconnect")
+                connection_principale.reconnect()
+                if connection_principale.is_connected():
+                    return True
+                return False
+            except:
+                print("echec_connection")
+                connection_principale = None
+                return False
+        else:
+            return True
+    except:
+         connection_principale = None
+         return look_for_connection()
 
         
 
@@ -365,7 +365,7 @@ class User:
         finally:
             try:
                 if connection_principale.is_connected():
-                    connection_principale.close()
+                    pass
                 else:
                     raise noConnection("connection faild") 
             except:
@@ -402,7 +402,7 @@ class User:
         finally:
             try:
                 if connection_principale.is_connected():
-                    connection_principale.close()
+                    pass
                 else:
                     raise noConnection("connection failed")
             except Exception as e:
@@ -436,7 +436,7 @@ class User:
         finally:
             try:
                 if connection_principale.is_connected():
-                    connection_principale.close()
+                    pass
                 else:
                     raise noConnection("connection_failed")
             except:
@@ -493,7 +493,7 @@ class User:
         finally:
             try:
                 if connection_principale.is_connected():
-                    connection_principale.close()
+                    pass
                     if notif:
                         Gerer_requete.processus_fini(temoin=temoin)
                 else:
@@ -532,7 +532,7 @@ class User:
         finally:
             try:
                 if connection_principale.is_connected():
-                    connection_principale.close()
+                    pass
                     if mdp != data[7]:
                         raise userNonCharger("mauvais mdp") 
                 else:
@@ -578,7 +578,7 @@ class User:
         finally:
             try:
                 if connection_principale.is_connected():
-                    connection_principale.close()
+                    pass
                 else:
                     raise noConnection("connection failed")
             except:
@@ -684,7 +684,7 @@ class Gerer_requete(User):
         finally:
             try:
                 if connection_principale.is_connected():
-                    connection_principale.close()
+                    pass
                 else:
                     raise noConnection("connection failed")
             except:
@@ -708,33 +708,30 @@ class Gerer_requete(User):
         try:
             if look_for_connection():
                 data_recup = [None]  
-                temp = time.time()          
-                
-                temp_actu = time.time() -temp
-                print("temp 1", temp_actu)
-                temp = time.time()
+                print("va prendre le cursor")
                 cursor = connection_principale.cursor()
+                print("a prit le cursor")
                 if nom_tuto != None:
-                    request = f" SELECT * FROM tuto WHERE nom LIKE '%{nom_tuto}%'"
+                    request = f" SELECT * FROM tuto WHERE nom LIKE '%{nom_tuto}%';"
                 elif nom_auteur != None:
-                    request = f"SELECT * FROM tuto WHERE auteur LIKE '{nom_auteur}%' ORDER BY date DESC"
-                
+                    request = f"SELECT * FROM tuto WHERE auteur LIKE '{nom_auteur}%' ORDER BY date DESC;"
+                print("va executer la recherche")
                 cursor.execute(request)
+                print("execute la recherche")
                 data_recup = cursor.fetchall()  
-                print("temp 2",time.time() -temp)
             else:
                 print("no con")
                 raise noConnection("connection failed")
         except sql.Error as err:
-            print(e)
+            print(err)
 
             print("erreur")
-        except Exception as e:
-            print(e)
+        except:
+            pass
         finally:
             try:
                 if connection_principale.is_connected():
-                    connection_principale.close()
+                    pass
                 else:
                     raise noConnection("connection failed")
             except:
@@ -767,6 +764,10 @@ class Gerer_requete(User):
             document = Doc(path)
             document.start_now()
         
+        
+    @staticmethod
+    def message(text):
+        tkinter.messagebox.showinfo("Info",text)
         
     @staticmethod
     def fail_open(nom_fichier = ""):
