@@ -1,5 +1,4 @@
 
-from http.client import NO_CONTENT
 import time
 import pygame
 import tkinter.filedialog,tkinter.messagebox
@@ -508,6 +507,8 @@ class User:
             if not no_connection:
                 if notif:
                     Gerer_requete.processus_fini(temoin=temoin)
+                else:
+                    pass
             else:
                 raise noConnection("connection failed")
             

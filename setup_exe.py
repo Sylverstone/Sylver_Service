@@ -12,7 +12,7 @@ else:
     executables = [Executable("sylver_service.py", base="Win32GUI")] # le cmd ne s'ouvra pas
 
 build_options = {
-    "packages": ["pygame","os","datetime","sys","threading","keyboard","tkinter","mysql.connector","tkinter.filedialog","time","pyperclip"],
+    "packages": ["pygame","os","datetime","sys","threading","keyboard","tkinter","pymysql","tkinter.filedialog","time","pyperclip"],
     "include_files": [
         ("Image", "Image"),
         ("Sylver_class_import.py", "Sylver_class_import.py"),
