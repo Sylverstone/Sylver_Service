@@ -601,7 +601,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
     
     liste_indicey = [300+(haut_case+10)*i  for i in range(6)] *2 #on fait *2 car il est prévu 2 colonne
     liste_indicex = [w_origine/2 - long_case -5] * 6 + [w_origine/2 + 5] * 6 #on fait *6 car c'est 6 par colonne
-    surface_fleche = pygame.Surface((20,50))
+    surface_fleche = pygame.Surface((50,50))
     global page
     page = []
     font = pygame.font.SysFont(chivo_titre, 30)
@@ -647,16 +647,19 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                     page.append([])
                 decount_page = f"{zone_page+1}/{len(page)}"
                 longueur_decompte = font_40.size(decount_page)[0]
-                x1 = w_origine/2 + longueur_decompte + 10
-                x2 = w_origine/2 - longueur_decompte - 20            
+                x1 = w_origine/2 + longueur_decompte/2 + 10
+                x2 = w_origine/2  -longueur_decompte/2 - surface_fleche.get_width() - 10
                 use_list = page[zone_page]
                 rect_1 = pygame.Rect(x1,y_all,surface_fleche.get_width(),surface_fleche.get_height())
                 rect_2 = pygame.Rect(x2,y_all,surface_fleche.get_width(),surface_fleche.get_height())
                 dict_rect_fleche = [rect_1,rect_2]
+                flèche_droite = pygame.image.load(os.path.join("Image", "flèches_droites.png"))
+                flèche_droite = pygame.transform.smoothscale(flèche_droite,(surface_fleche.get_width(),surface_fleche.get_height()))
+                flèche_gauche = pygame.image.load(os.path.join("Image", "flèches_gauches.png"))
+                flèche_gauche = pygame.transform.smoothscale(flèche_gauche,(surface_fleche.get_width(),surface_fleche.get_height()))
                 add_fleche = [1,-1]
-                surface_fleche.fill((255,255,255))
-                screen.blit(surface_fleche,(x1,y_all))
-                screen.blit(surface_fleche,(x2,y_all))
+                screen.blit(flèche_droite,(x1,y_all))
+                screen.blit(flèche_gauche,(x2,y_all))
                 draw_text(decount_page,color = blanc,
                           x = w_origine/2 - longueur_decompte/2,
                           y = y_all,
@@ -838,6 +841,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
     global enter_pressed
     enter_pressed = False
     not_enter = False #sert juste a bloquer l'acces
+    
     while continuer:
         if id_ != 0 and not not_enter:
             th = threading.Thread(target = research, args=({"nom_auteur": auteur_rechercher,"nom_projet" : None},),daemon=True)
