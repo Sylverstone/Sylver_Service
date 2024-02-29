@@ -1,5 +1,5 @@
 import pygame,os,datetime,sys,threading,keyboard,time
-from Sylver_class_import import Color,Gerer_requete,User,noFileException, userNonCharger, noConnection,Animation,connection_principale
+from Sylver_class_import import Color,Gerer_requete,User,noFileException, userNonCharger, noConnection,Animation,status_connection
 from Resize_image import AnnuleCropPhoto, resizeImage
 
 
@@ -579,8 +579,6 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
             screen.blit(triple_bar_option,rect_triple_bar)
         pygame.display.flip()
         
-        
-
 def menu(id_ : int = 0,auteur_rechercher : str = None):
     """Fonction permettant de rechercher des tutos | elle sert également a afficher tout les tutos d'un utilisateur
 
@@ -2240,8 +2238,6 @@ def gestion_event():
                 continuer = False
         
         time.sleep(0.1)
-    if connection_principale != None:
-        connection_principale.close()
     print("bye")
 
 
@@ -2254,6 +2250,10 @@ rect_dispo = [pygame.Rect(pos[0][0],pos[0][1],size_box_grand_w,size_box_grand_h)
               pygame.Rect(pos[2][0],pos[2][1],size_box_w,size_box_h)
               ]
 clock = pygame.time.Clock()
+status_connection_started = False
+surface_status_co = pygame.Surface((50,50), pygame.SRCALPHA)
+surface_status_co.fill((0,0,0,0))
+pos_surface_status_co = (w_origine-10,h_origine-10)
 while continuer:
     screen.fill(fond_ecran)
     if connect:
@@ -2320,7 +2320,11 @@ while continuer:
     clock.tick(144)
     fps = clock.get_fps()
     draw_text(f"fps : {int(fps)}",x=10,y=100,color=(255,255,255))
-  
+    if not status_connection_started:
+        status_connection(surface_status_co,w_origine,h_origine)
+        status_connection_started = True
+    
+    screen.blit(surface_status_co,pos_surface_status_co)
     for index,elt in enumerate(proposition):
         if index != 0:
             rect = rect_choose

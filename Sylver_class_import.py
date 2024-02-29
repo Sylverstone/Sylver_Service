@@ -1,4 +1,5 @@
 
+from shutil import ExecError
 import time
 import pygame
 import tkinter.filedialog,tkinter.messagebox
@@ -39,7 +40,37 @@ def connect_to_database():
         print(f"Erreur de connexion : {e}")
         return None
 
+class status_connection:
+    def __init__(self,screen,w,h):
+        self.screen = screen
+        self.w = w
+        self.h = h
+        self.running = True
+        threading.Thread(target = self.affiche_status_connexion, daemon=True).start()
+          
+    def affiche_status_connexion(self):
+        global connection_principale
+        while self.running:            
+            r = 3
+            if connection_principale is None:
+                
+                connection_principale = connect_to_database()
+                if connection_principale is not None:
+                    rect = pygame.draw.rect(self.screen,(0,255,0),(0,0,5,5), 0,50)
+                else:
+                    rect = pygame.draw.rect(self.screen,(255,0,0),(0,0,5,5), 0,50)                    
+            else:    
+                print("verification connexion")                        
+                conn = connect_to_database()
+                if conn is not None:
+                    connection_principale = conn
+                    rect = pygame.draw.rect(self.screen,(0,255,0),(0,0,5,5), 0,50)
+                else:
+                    connection_principale = None
+                    rect = pygame.draw.rect(self.screen,(255,0,0),(0,0,5,5), 0,50)
+                        
 
+              
 print(connection_principale)
 
 def look_for_connection():
@@ -742,8 +773,7 @@ class Gerer_requete(User):
         no_connection = False
         try:
             data_recup = [None]
-            if look_for_connection():
-                  
+            if look_for_connection():                  
                 print("va prendre le cursor")
                 cursor = connection_principale.cursor()
                 print("a prit le cursor")
