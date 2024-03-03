@@ -11,7 +11,7 @@ else:
     executables = [Executable("sylver_service.py", base="Win32GUI",icon=os.path.join("Image", "Logo_app_2.ico"))] # le cmd ne s'ouvra pas
 
 build_options = {
-    "packages": ["pygame","os","datetime","sys","threading","keyboard","tkinter","pymysql","tkinter.filedialog","time","pyperclip"],
+    "packages": ["pygame","os","datetime","sys","threading","keyboard","tkinter","pymysql","tkinter.filedialog","time","pyperclip","math"],
     "include_files": [
         ("Image", "Image"),
         ("Sylver_class_import.py", "Sylver_class_import.py"),
@@ -21,13 +21,14 @@ build_options = {
         ("Ressource","Ressource"),
         ("Resize_image.py","Resize_image.py"),
         (".env", ".env"),
+        ("font_import.py","font_import.py")
     ],
 }
 
 # Set up the setup function
 setup(
     name="sylver_service",
-    version='v1.4',
+    version='v1.5',
     options={"build_exe": build_options},
     author = "by Sylvio PELAGE MAXIME | Elvann JOLIVEL | Deecleane CORALIE",
     executables=executables,

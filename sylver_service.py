@@ -686,7 +686,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                         text_date = f"posté le {date}"
                     text = data[3]
                     
-                    if len(use_list) <=6:
+                    if len(use_list) <=max_par_page/2:
                         #dans ce cas les tuto se positionne au milieu de la page
                         rect_case = pygame.Rect(w_origine/2 - long_case/2, liste_indicey[index],
                                                 long_case,
@@ -714,7 +714,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                               text = text_date, x = rect_case.w - font_30.size(text_date)[0] - 20,
                               y = 5, importer = True,
                               size = 30, font = font_paragraphe)
-                    if len(use_list) > 6:
+                    if len(use_list) > max_par_page/2:
                         screen.blit(surface,(liste_indicex[index],liste_indicey[index]))
                     else:
                         screen.blit(surface,(w_origine/2 - long_case/2, liste_indicey[index]))                
