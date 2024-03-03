@@ -1,10 +1,11 @@
 
+from multiprocessing import connection
 import time
-from turtle import title
 import pygame
 import tkinter.filedialog,tkinter.messagebox
 import pymysql as sql
 import os,datetime,threading,dotenv
+from font_import import *
 
 
 path = ".env"
@@ -21,11 +22,12 @@ try:
                     host = os.environ.get('HOST'),
                     user = os.environ.get('USER'),
                     password  = os.environ.get('SQL_MOT_DE_PASSE'),
-                    db=os.environ.get('DB_NAME'),
+                    database=os.environ.get('DB_NAME'),
+                    autocommit=True,collation="utf8mb4_unicode_ci"
                     )
     connection_principale.ping(False)
 except Exception as e:
-    print(e)
+    print("erreur", e)
     connection_principale = None
     
 def connect_to_database():
@@ -39,12 +41,12 @@ def connect_to_database():
             host=os.environ.get('HOST'),
             user=os.environ.get('USER'),
             password=os.environ.get('SQL_MOT_DE_PASSE'),
-            db=os.environ.get('DB_NAME'),
+            database=os.environ.get('DB_NAME'),
+            autocommit=True,collation="utf8mb4_unicode_ci"
             )
-        conn.ping()
+        conn.ping(False)
         return conn
     except Exception as e:
-        print(f"Erreur de connexion : {e}")
         return None
 
 class status_connection:
@@ -67,20 +69,21 @@ class status_connection:
         while self.running:            
             r = 3
             if connection_principale is None:
-                
+                pygame.draw.rect(self.screen,(255,0,0),(0,0,5,5), 0,50)
                 connection_principale = connect_to_database()
-                if connection_principale is not None:
-                    rect = pygame.draw.rect(self.screen,(0,255,0),(0,0,5,5), 0,50)
+                if connection_principale != None:
+                    pygame.draw.rect(self.screen,(0,255,0),(0,0,5,5), 0,50)
                 else:
-                    rect = pygame.draw.rect(self.screen,(255,0,0),(0,0,5,5), 0,50)                    
+                    pygame.draw.rect(self.screen,(255,0,0),(0,0,5,5), 0,50)                    
             else:    
                 conn = connect_to_database()
-                if conn is not None:
+                if conn != None:
                     connection_principale = conn
-                    rect = pygame.draw.rect(self.screen,(0,255,0),(0,0,5,5), 0,50)
+                    pygame.draw.rect(self.screen,(0,255,0),(0,0,5,5), 0,50)
                 else:
+                    print("rouge")
                     connection_principale = None
-                    rect = pygame.draw.rect(self.screen,(255,0,0),(0,0,5,5), 0,50)
+                    pygame.draw.rect(self.screen,(255,0,0),(0,0,5,5), 0,50)
                         
 
               
@@ -104,11 +107,11 @@ def look_for_connection():
                 return False
         else:
             try:
-                print("attemp reconnection")
+                print("verification connexion")
                 connection_principale.ping(reconnect=True)
                 return True
             except sql.Error as e:
-                print(e)
+                print("connection failed : ",e)
                 connection_principale = None
                 return False
 
@@ -143,14 +146,18 @@ class Animation:
             text_chargement (str, optional): Texte du chargement Defaults to "Chargement".
             id_ (int, optional): id representant si l'animation est situé dans un endroit bloquant ou non. Defaults to 1.
     """
-    def __init__(self,screen : pygame.Surface,text_chargement : str = "Chargement",id_ : int = 1, color = (0,0,0)):
+    def __init__(self,screen : pygame.Surface,text_chargement : str = "Chargement",id_ : int = 1, color = (0,0,0),ombre = False,font_name = pw_christmas_candies,size_text = 25,importer = True):
         self.screen = screen
         self.texte = text_chargement
         self.running = True
-        self.font = pygame.font.SysFont("Comic Sans Ms",20)
+        self.font = pygame.font.Font(font_name,size_text)
+        self.nom_font = font_name
+        self.size_text = size_text
         self.id_ = id_
         self.nb_point = 0
         self.color = color
+        self.importer = importer
+        self.ombre = ombre
         
     def start_anime(self,last_screen,fond_ecran,delay = 0):
         """Fonction démarrant une animation dans une situation bloquante
@@ -181,29 +188,40 @@ class Animation:
             rect_a_update = pygame.Rect(screen.get_rect()[2]/2 - self.font.size(self.texte)[0]/2,screen.get_rect()[3] - 80,200,
                                         50)                                            
             screen.fill(fond_ecran,rect_a_update)            
-            draw_text(self.texte + point +"\n"+ajout_decriture,center_multi_line=True, y = screen.get_rect()[3] - 80,contener=screen,color = self.color)
+            draw_text(self.texte + point +"\n"+ajout_decriture,center_multi_line=True,
+                      size = self.size_text,font = self.nom_font,
+                      y = screen.get_rect()[3] - 80,contener=screen,
+                      color = self.color,
+                      importer=self.importer, ombre = self.ombre)
         else:
             print("chargement started")
             
-            screen.blit(last_screen,(0,0))
+            
             pygame.display.update()
             debut = time.time()
             while self.running:
                 self.nb_point += 1
                 point = "."*((int(self.nb_point) %4))                                                
                 rect_a_update = pygame.Rect(screen.get_rect()[2]/2 - self.font.size(self.texte)[0]/2 - 200,screen.get_rect()[3] - 60,600,300)
-                screen.fill(fond_ecran,rect_a_update) 
+                screen.blit(last_screen,(0,0)) 
                 actu = time.time() - debut
                 if delay == 0:
                     if actu >= 6:
-                        ajout_texte = "Cela prend plus de temps que prévu :("
+                        ajout_texte = "Pardon pour l'attente"
+                        
                     else:
                         ajout_texte = ""
                 else:
                     ajout_texte = ""
                     if actu >= delay:
                         self.stop_anime()
-                draw_text(self.texte + point + "\n" + ajout_texte,center_multi_line= True, y = screen.get_rect()[3] - 60,contener=screen,color=self.color)
+                taille_second_texte = self.font.size(ajout_texte)[1]
+                taille_premier_texte = self.font.size(self.texte)[1]
+                draw_text(self.texte + point + "\n" + ajout_texte,
+                          center_multi_line= True,size = self.size_text,
+                          font= self.nom_font,y = screen.get_rect()[3]-taille_second_texte-taille_premier_texte - 5,
+                          contener=screen,color=self.color,
+                          importer=self.importer,ombre = self.ombre)
                 pygame.display.update(rect_a_update)
                 pygame.time.delay(250)
             print("chargement ended")
@@ -414,35 +432,7 @@ class User:
         """
         return text.split(",")[0]
     
-    def get_tuto(self) -> list:
-        """Fonction selectionnant tout les tuto de l'utilisateur
-
-        Raises:
-            noConnection: Renvoie noConnection quand aucune connection n'a pu être initalisé
-
-        Returns:
-            list: Tout les tuto de l'utilisateur
-        """
-        data = None
-        try:
-            cursor = connection_principale.cursor()
-            request = f"SELECT COUNT(*) FROM tuto WHERE auteur = '{self.auteur}';"
-            cursor.execute(request)
-            data = cursor.fetchone()[0]
-        except sql.Error as err:
-            print(err)
-        except:
-            pass
-        finally:
-            try:
-                if connection_principale.is_connected():
-                    pass
-                else:
-                    raise noConnection("connection faild") 
-            except:
-                raise noConnection("connection failed")
-            else:
-                return data
+    
          
     def signalement(self, id_tuto_signaler : int, pseudo_accuser : str,text_signalement : str):
         """Fonction gérant les soumissions de signalement par les utilisateurs
@@ -458,20 +448,22 @@ class User:
         """     
         no_connection = False   
         try:
-            if look_for_connection():
-                cursor = connection_principale.cursor()
+            connection_principale = connect_to_database()
+            connection_principale.begin()
+            with connection_principale.cursor() as cursor:
+                
                 current_date = datetime.datetime.now()
                 current_date = current_date.strftime("%Y-%m-%d")
-                request = """ INSERT INTO signalements (`id_tuto_signaler`, `signalement`, `pseudo_accuseur`, `date`, `pseudo_accuse`)
+                request = """ INSERT INTO `signalements` (`id_tuto_signaler`, `signalement`, `pseudo_accuseur`, `date`, `pseudo_accuse`)
                             VALUES (%s,%s,%s,%s,%s);"""
                 infos = (id_tuto_signaler, text_signalement, self.pseudo, current_date,  pseudo_accuser)
-                cursor.execute(request,infos)            
-                connection_principale.commit()
-            else:
-                no_connection = True
-                raise noConnection("connection failed")
+                
+                cursor.execute(request,infos)
+                print("finished")        
+            
         except sql.Error as err:
             print(err)
+            
             no_connection = True
         except Exception as e:
             print(e)
@@ -479,6 +471,9 @@ class User:
         finally:
             if no_connection:
                 raise noConnection("connection failed")
+            else:
+                connection_principale.commit()
+                connection_principale.close()
         
             
         
@@ -489,10 +484,11 @@ class User:
             noConnection: Renvoie noConnection quand aucune connection n'a pu être initialisation
         """
         no_connection = False        
-        try:   
-            if look_for_connection():         
-                cursor = connection_principale.cursor()
-                request = """ INSERT INTO utilisateur (`nom`, `prenom`, `tuto_transmis`,`photo_profil`, `age`,`pseudo`,`mot_de_passe`,`rect_photo_profil`)
+        try:
+            connection_principale = connect_to_database()
+            connection_principale.begin()       
+            with connection_principale.cursor() as cursor:
+                request = """ INSERT INTO `utilisateur` (`nom`, `prenom`, `tuto_transmis`,`photo_profil`, `age`,`pseudo`,`mot_de_passe`,`rect_photo_profil`)
                             VALUES (%s,%s,%s,%s,%s,%s,%s,%s);"""
                 if isinstance(self.rect_pp,pygame.Rect):
                     rect_pp = Gerer_requete.separe_rect(self.rect_pp)
@@ -500,9 +496,7 @@ class User:
                     rect_pp = None
                 infos = (self.nom,self.prenom,self.tuto_transmis,self.photo_profil,self.age,self.pseudo,self.mdp,rect_pp)
                 cursor.execute(request,infos)            
-                connection_principale.commit()
-            else:
-                no_connection = True
+          
         except sql.Error as err:
             print(err,"wesh")
             no_connection = True
@@ -511,6 +505,9 @@ class User:
         finally:
             if no_connection:
                 raise noConnection("connection failed")   
+            else:
+                connection_principale.commit()
+                connection_principale.close()
                       
     def change_element(self,nom = False, pseudo = False, prenom = False, photo_pp = False, tuto_transmi = False,rect_pp = False,Nouvelle_value = 0, notif = False,temoin = None)-> None:
         """Fonction permettant de mettre a jour les éléments du compte de l'utilisation
@@ -527,48 +524,64 @@ class User:
         Raises:
             noConnection: Renvoie noConnection quand aucune connection n'a pu être initialisé
         """
+        element=[]
         no_connection = False
         if nom:
-            element = "nom"
+            element += ["nom"]
             self.nom = Nouvelle_value
-        elif pseudo:
-            element = "pseudo"
+        if pseudo:
+            element += ["pseudo"]
             self.pseudo = Nouvelle_value
-        elif prenom:
-            element = "prenom"
+        if prenom:
+            element += ["prenom"]
             self.prenom = Nouvelle_value
-        elif photo_pp:
-            element = "photo_profil"
+        if photo_pp:
+            element += ["photo_profil"]
             self.photo_profil = Nouvelle_value
-        elif tuto_transmi:
-            element = "tuto_transmis"
+        if tuto_transmi:
+            element += ["tuto_transmis"]
             self.tuto_transmis = Nouvelle_value
-        elif rect_pp:
-            element = "rect_photo_profil"
-            self.rect_pp = Gerer_requete.separe_rect(Nouvelle_value)
-            Nouvelle_value = self.rect_pp
+        if rect_pp:
+            element += ["rect_photo_profil"]
+            i = 0
+            while not isinstance(Nouvelle_value[i], pygame.Rect):
+                i +=1
+            self.rect_pp = Gerer_requete.separe_rect(Nouvelle_value[i])
+            Nouvelle_value[i] = self.rect_pp
         try:
-            if look_for_connection():
-                cursor = connection_principale.cursor()
-                request = f"UPDATE utilisateur SET `{element}` = %s WHERE pseudo = %s;"
-                infos = (Nouvelle_value,self.pseudo)
-                cursor.execute(request,infos)
-                connection_principale.commit()
-            else:
-                no_connection = True 
-                raise noConnection("connection failed")
+            connection_principale = connect_to_database()
+            print(element)
+            print(len(element) == len(Nouvelle_value))
+            connection_principale.begin()
+            with connection_principale.cursor() as cursor:
+                for i in range(len(element)):
+                    print(element[i])
+                    print(Nouvelle_value[i][:10])
+                    request = f"UPDATE `utilisateur` SET `{element[i]}` = %s WHERE `pseudo` = %s;"
+                    infos = (Nouvelle_value[i],self.pseudo)
+                    cursor.execute(request,infos)
+     
         except sql.Error as err:
+            print(err)
+            connection_principale.rollback()
             no_connection = True
-        except:
+        except Exception as err:
+            print(err)
+            connection_principale.rollback()
             no_connection = True
         finally:
             if not no_connection:
+                connection_principale.commit()
+                connection_principale.close()
+                print(temoin)
                 if notif:
-                    Gerer_requete.processus_fini(temoin=temoin)
+                    Gerer_requete.processus_fini(temoin=temoin)    
                 else:
                     pass
             else:
-                raise noConnection("connection failed")
+                
+                temoin[0] = True
+                Gerer_requete.connection_failed()
             
         
     @staticmethod    
@@ -589,11 +602,11 @@ class User:
         no_connection = False
         try:
             if look_for_connection():
-                cursor = connection_principale.cursor()
-                request =f"SELECT * FROM utilisateur WHERE pseudo = '{pseudo}'"
-                cursor.execute(request)
-                data = cursor.fetchone()
-                connection_principale.commit()
+                with connection_principale.cursor() as cursor:
+                    cursor = connection_principale.cursor()
+                    request =f"SELECT * FROM `utilisateur` WHERE pseudo = '{pseudo}';"
+                    cursor.execute(request)
+                    data = cursor.fetchone()
             else:
                 no_connection = True
                 raise noConnection("connection failed")
@@ -641,13 +654,13 @@ class User:
         no_connection = False
         try:
             if look_for_connection():
-                cursor = connection_principale.cursor()
-                request = f"SELECT pseudo FROM utilisateur WHERE pseudo LIKE '{pseudo}%'"
-                cursor.execute(request)
-                all_pseudo = cursor.fetchall()
-                print("pseudo :",all_pseudo)
-                if (pseudo,) in all_pseudo:
-                    disponible = False
+                with connection_principale.cursor() as cursor:
+                    request = f"SELECT `pseudo` FROM `utilisateur` WHERE `pseudo` LIKE '{pseudo}%';"
+                    cursor.execute(request)
+                    all_pseudo = cursor.fetchall()
+                    print("pseudo :",all_pseudo)
+                    if (pseudo,) in all_pseudo:
+                        disponible = False
             else:
                 no_connection = True
                 raise noConnection("connection failed")
@@ -740,7 +753,7 @@ class Gerer_requete(User):
 
         Raises:
             noConnection: Renvoie noConnection quand la conenction n'a pu être établie
-        """   
+        """
         no_connection = False     
         current_date = datetime.datetime.now()
         current_date = current_date.strftime("%Y-%m-%d")
@@ -750,37 +763,36 @@ class Gerer_requete(User):
         auteur = f"{self.pseudo}, {self.nom} {self.prenom}"
         file = Doc(doc).get_extension()
         try:
-            if look_for_connection():
-                cursor = connection_principale.cursor()
+            connection_principale = connect_to_database()
+            print(connection_principale)
+            connection_principale.begin()
+            with connection_principale.cursor() as cursor:                    
+                print(doc)
                 if doc != None:
                     with open(doc,"rb") as fichier:
                         doc = fichier.read()
-                request = """ INSERT INTO tuto (`nom`,`date`,`doc`,`text_ctn`,`auteur`,`file`)
-                            VALUES (%s,%s,%s,%s,%s,%s);
-                            """
+                request = """ INSERT INTO `tuto` (`nom`,`date`,`doc`,`text_ctn`,`auteur`,`file`)
+                                VALUES (%s,%s,%s,%s,%s,%s) ;"""
                 infos = (nom,date,doc,Text,auteur,file)
                 cursor.execute(request,infos)
                 request = f"UPDATE utilisateur SET tuto_transmis = tuto_transmis + 1 WHERE pseudo = '{self.pseudo}'"
                 cursor.execute(request)
-                if not experiment:
-                    connection_principale.commit()
-            else:
-                raise noConnection("connection failed")
+                
+           
         except sql.Error as err:
-            print(err)
+            print("erreur :",err)
             no_connection = True
-        except:
+        except Exception as err:
+            print("erreur :",err)
             no_connection = True
         finally:
             if no_connection:
                 raise noConnection("connection failed")
-            """try:
-                if connection_principale.is_connected():
-                    pass
-                else:
-                    raise noConnection("connection failed")
-            except:
-                raise noConnection("connection failed")"""
+            else:
+                connection_principale.commit()
+                connection_principale.close()
+            
+            
                 
     @staticmethod  
     def rechercher_data(nom_tuto : str = None,nom_auteur : str = None)->list:
@@ -799,27 +811,18 @@ class Gerer_requete(User):
         """
         no_connection = False
         try:
+            connection_principale = connect_to_database()
             data_recup = [None]
-            if look_for_connection():                  
-                print("va prendre le cursor")
-                m = time.time()
-                cursor = connection_principale.cursor()
-                print(time.time() - m)
-                print("a prit le cursor")
+            with connection_principale.cursor() as cursor:
                 if nom_tuto != None:
-                    request = f" SELECT * FROM tuto WHERE nom LIKE '%{nom_tuto}%';"
+                    if nom_tuto != "*":
+                        request = f" SELECT * FROM `tuto` WHERE `nom` LIKE '%{nom_tuto}%' ORDER BY date DESC;"
+                    else:
+                        request = f" SELECT * FROM `tuto` ORDER BY date DESC;"
                 elif nom_auteur != None:
-                    request = f"SELECT * FROM tuto WHERE auteur LIKE '{nom_auteur}%' ORDER BY date DESC;"
-                print("va executer la recherche")
-                m = time.time()
+                    request = f"SELECT * FROM `tuto` WHERE `auteur` LIKE '{nom_auteur}%' ORDER BY date DESC;"
                 cursor.execute(request)
-                print(time.time() -m)
-                print("execute la recherche")
                 data_recup = cursor.fetchall()  
-            else:
-                print("no con")
-                no_connection = True
-                raise noConnection("connection failed")
         except sql.Error as err:
             print(err)
             no_connection = False
@@ -834,6 +837,8 @@ class Gerer_requete(User):
             print("raise")
         finally:
             if not no_connection:
+                connection_principale.commit()
+                connection_principale.close()
                 return data_recup
             raise noConnection("l")
 
@@ -868,7 +873,10 @@ class Gerer_requete(User):
         
     @staticmethod
     def message(text):
+        root = tkinter.Tk()
+        root.withdraw()
         tkinter.messagebox.showwarning("Info",text)
+        root.destroy()
         
     @staticmethod
     def fail_open(nom_fichier = ""):
@@ -877,25 +885,36 @@ class Gerer_requete(User):
         Args:
             nom_fichier (str, optional): Nom du fichier dont l'ouverture a echouer. Defaults to "".
         """
+        root = tkinter.Tk()
+        root.withdraw()
         tkinter.messagebox.showerror("Erreur",f"WOW ! L'ouverture a flop :( \n Il se peut que le fichier ({nom_fichier}) \nsoit déjà ouvert !")
-      
+        root.destroy()
       
     @staticmethod
     def processus_fini(message = "Votre photo de profil a été sauvegardée",temoin = [False,]):
         
         """Fonction permettant d'afficher un message sur un processus fini"""  
         temoin[0] = True
+        root = tkinter.Tk()
+        root.withdraw()
         tkinter.messagebox.showinfo("Fini",message)
+        root.destroy()
 
     @staticmethod
     def error_occured():
         """Fonction permettant d'afficher un message d'erreur"""
+        root = tkinter.Tk()
+        root.withdraw()
         tkinter.messagebox.showerror("Erreur","WOW ! Une erreur a eu lieu")
+        root.destroy()
     
     @staticmethod
     def connection_failed():
         """Fonction permettant d'afficher une erreur de connection"""
+        root = tkinter.Tk()
+        root.withdraw()
         tkinter.messagebox.showerror("Erreur","WOW ! La connection n'a pas pu être initialisé :(")
+        root.destroy()
         
     @staticmethod
     def est_bytes(doc):
@@ -913,6 +932,7 @@ class Gerer_requete(User):
     def open_dir(title = "Titre"):
         path = tkinter.filedialog.askdirectory(title = title)
         return path
+    
     @staticmethod
     def connecte_toi():
         """Fonction permettant de prévenir l'utilisateur qu'il doit se conecter pour signaler un tuto"""
