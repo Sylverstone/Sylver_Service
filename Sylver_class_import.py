@@ -1,10 +1,11 @@
 
-from shutil import ExecError
 import time
+from turtle import title
 import pygame
 import tkinter.filedialog,tkinter.messagebox
 import pymysql as sql
 import os,datetime,threading,dotenv
+
 
 path = ".env"
 dotenv.load_dotenv(path)
@@ -15,6 +16,7 @@ if not os.path.exists(chemin):
     with open(chemin, "w") as fichier:
         pass
 try:
+    #Initialisation de la connexion principale
     connection_principale = sql.connect(
                     host = os.environ.get('HOST'),
                     user = os.environ.get('USER'),
@@ -27,6 +29,11 @@ except Exception as e:
     connection_principale = None
     
 def connect_to_database():
+    """Fonction essayant d'établir une connecion avec la base
+
+    Returns:
+        retourne une connexion sql ou None si la connexion a échoué
+    """
     try:
         conn = sql.connect(
             host=os.environ.get('HOST'),
@@ -41,14 +48,21 @@ def connect_to_database():
         return None
 
 class status_connection:
-    def __init__(self,screen,w,h):
+    """Class permettant de gerer le status de la connection
+
+        Args:
+            screen (pygame.Surface): surface sur laquelle sera dessiné le rond indiquant la connection
+    """
+    def __init__(self,screen):
+        
         self.screen = screen
-        self.w = w
-        self.h = h
         self.running = True
         threading.Thread(target = self.affiche_status_connexion, daemon=True).start()
           
     def affiche_status_connexion(self):
+        """Fonction permettant de vérifier le status de la connetion, une bonne connexion est transcrite par le dessin d'un rond vert sur une 
+        surface, une connexion impossible est transcrite par un rond rouge. des tentatives de reconnexion seront faites si celle-ci échoue
+        """
         global connection_principale
         while self.running:            
             r = 3
@@ -60,7 +74,6 @@ class status_connection:
                 else:
                     rect = pygame.draw.rect(self.screen,(255,0,0),(0,0,5,5), 0,50)                    
             else:    
-                print("verification connexion")                        
                 conn = connect_to_database()
                 if conn is not None:
                     connection_principale = conn
@@ -74,8 +87,12 @@ class status_connection:
 print(connection_principale)
 
 def look_for_connection():
-    global connection_principale
+    """Fonction verifiant si la connexion est apte a être utilisé, si Non : return False, si Oui : return True
 
+    Returns:
+        bool: Return True quand la connexion est disponible, sinon False
+    """
+    global connection_principale
     with lock:
         if connection_principale is None:
             new_connection = connect_to_database()
@@ -117,13 +134,100 @@ class Color:
         self.fond_deux_login = (30,30,30)
         self.fond_contenaire_page_tuto = (142,142,142)
     
-class Doc:
-    """Class representant un fichier
+    
+class Animation:
+    """Class permettant de generer une animation de chargement
 
         Args:
-            chemin (str): chemin du fichier
+            screen (pygame.Surface): Surface sur laquelle l'animation est dessiner
+            text_chargement (str, optional): Texte du chargement Defaults to "Chargement".
+            id_ (int, optional): id representant si l'animation est situé dans un endroit bloquant ou non. Defaults to 1.
+    """
+    def __init__(self,screen : pygame.Surface,text_chargement : str = "Chargement",id_ : int = 1, color = (0,0,0)):
+        self.screen = screen
+        self.texte = text_chargement
+        self.running = True
+        self.font = pygame.font.SysFont("Comic Sans Ms",20)
+        self.id_ = id_
+        self.nb_point = 0
+        self.color = color
+        
+    def start_anime(self,last_screen,fond_ecran,delay = 0):
+        """Fonction démarrant une animation dans une situation bloquante
+            (situation bloquant : le chargement se fait en parallèle du code)
+        Args:
+            last_screen (pygame.Surface): Dernier écran a afficher
+            fond_ecran (list): Fond de l'ecran
+            delay(int,optional) : delay représente le temp qu'il faut attendre avant de forcer l'arret de l'animation
+        """
+        self.running = 1
+        self.id_ = 0
+        th = threading.Thread(target=self.animate, args=(fond_ecran,last_screen, "",delay),daemon=True)
+        th.start()
+        
+    def animate(self,fond_ecran : list,last_screen : pygame.Surface= None,ajout_decriture :str = None, delay = 0):
+        """Fonction permettant d'animer l'animation
+
+        Args:
+            fond_ecran (list): couleur du fond de l'ecran
+            last_screen (pygame.Surface, optional): Dernier ecran a afficher. Defaults to None.
+            ajout_decriture (str, optional): Ajout de texte . Defaults to None.
+            delay(int,optional) : delay représente le temp qu'il faut attendre avant de forcer l'arret de l'animation
+        """
+        screen = self.screen
+        if self.id_ == 1:
+            self.nb_point += 0.05
+            point = "."*((int(self.nb_point) %4))    
+            rect_a_update = pygame.Rect(screen.get_rect()[2]/2 - self.font.size(self.texte)[0]/2,screen.get_rect()[3] - 80,200,
+                                        50)                                            
+            screen.fill(fond_ecran,rect_a_update)            
+            draw_text(self.texte + point +"\n"+ajout_decriture,center_multi_line=True, y = screen.get_rect()[3] - 80,contener=screen,color = self.color)
+        else:
+            print("chargement started")
+            
+            screen.blit(last_screen,(0,0))
+            pygame.display.update()
+            debut = time.time()
+            while self.running:
+                self.nb_point += 1
+                point = "."*((int(self.nb_point) %4))                                                
+                rect_a_update = pygame.Rect(screen.get_rect()[2]/2 - self.font.size(self.texte)[0]/2 - 200,screen.get_rect()[3] - 60,600,300)
+                screen.fill(fond_ecran,rect_a_update) 
+                actu = time.time() - debut
+                if delay == 0:
+                    if actu >= 6:
+                        ajout_texte = "Cela prend plus de temps que prévu :("
+                    else:
+                        ajout_texte = ""
+                else:
+                    ajout_texte = ""
+                    if actu >= delay:
+                        self.stop_anime()
+                draw_text(self.texte + point + "\n" + ajout_texte,center_multi_line= True, y = screen.get_rect()[3] - 60,contener=screen,color=self.color)
+                pygame.display.update(rect_a_update)
+                pygame.time.delay(250)
+            print("chargement ended")
+            
+    def stop_anime(self):
+        """Fonction permettant d'arreter une animation qui a été démarrer dans une situation bloquante"""
+        self.running = False
+        self.id_ = 1
+class Doc:    
+    """Class représentant un fichier
+
+        Args:
+            chemin (str): Chemin d'accès au fichier
+            bytes_doc (bytes, optional): bytes présents dans le fichier. Defaults to None.
+            nom_tuto (str, optional): nom du fichier. Defaults to None.
+            auteur (str, optional): nom de l'auteur du fichier. Defaults to None.
+            ext (str, optional): extension du fichier. Defaults to None.
+        
+        Il y a 2 types de documents:
+            * Les documents déjà crée, dont il reste juste à accéder, composé seulement d'un chemin d'accès
+            * Ainsi que les documents a crée de toutes pièces, composé de bytes, du chemin d'accès, nom_tuto et de l'auteur
     """
     def __init__(self,chemin,bytes_doc = None,nom_tuto = None,auteur = None,ext = None):
+        
         self.nom_tuto = nom_tuto
         self.auteur = auteur
         self.ext = ext
@@ -244,83 +348,7 @@ def draw_text(text, font = "Comic Sans Ms", color = (0,0,0), x = 0, y = 0,conten
         contener.blit(text_, (x,y+(size + 2)*enum))     
         
 
-class Animation:
-    """Class permettant de generer une animation de chargement
 
-        Args:
-            screen (pygame.Surface): Surface sur laquelle l'animation est dessiner
-            text_chargement (str, optional): Texte du chargement Defaults to "Chargement".
-            id_ (int, optional): id representant si l'animation est situé dans un endroit bloquant ou non. Defaults to 1.
-    """
-    def __init__(self,screen : pygame.Surface,text_chargement : str = "Chargement",id_ : int = 1, color = (0,0,0)):
-        self.screen = screen
-        self.texte = text_chargement
-        self.running = True
-        self.font = pygame.font.SysFont("Comic Sans Ms",20)
-        self.id_ = id_
-        self.nb_point = 0
-        self.color = color
-        
-    def start_anime(self,last_screen,fond_ecran,delay = 0):
-        """Fonction démarrant une animation dans une situation bloquante
-            (situation bloquant : le chargement se fait en parallèle du code)
-        Args:
-            last_screen (pygame.Surface): Dernier écran a afficher
-            fond_ecran (list): Fond de l'ecran
-            delay(int,optional) : delay représente le temp qu'il faut attendre avant de forcer l'arret de l'animation
-        """
-        self.running = 1
-        self.id_ = 0
-        th = threading.Thread(target=self.animate, args=(fond_ecran,last_screen, "",delay),daemon=True)
-        th.start()
-        
-    def animate(self,fond_ecran : list,last_screen : pygame.Surface= None,ajout_decriture :str = None, delay = 0):
-        """Fonction permettant d'animer l'animation
-
-        Args:
-            fond_ecran (list): couleur du fond de l'ecran
-            last_screen (pygame.Surface, optional): Dernier ecran a afficher. Defaults to None.
-            ajout_decriture (str, optional): Ajout de texte . Defaults to None.
-            delay(int,optional) : delay représente le temp qu'il faut attendre avant de forcer l'arret de l'animation
-        """
-        screen = self.screen
-        if self.id_ == 1:
-            self.nb_point += 0.05
-            point = "."*((int(self.nb_point) %4))    
-            rect_a_update = pygame.Rect(screen.get_rect()[2]/2 - self.font.size(self.texte)[0]/2,screen.get_rect()[3] - 80,200,
-                                        50)                                            
-            screen.fill(fond_ecran,rect_a_update)            
-            draw_text(self.texte + point +"\n"+ajout_decriture,center_multi_line=True, y = screen.get_rect()[3] - 80,contener=screen,color = self.color)
-        else:
-            print("chargement started")
-            
-            screen.blit(last_screen,(0,0))
-            pygame.display.update()
-            debut = time.time()
-            while self.running:
-                self.nb_point += 1
-                point = "."*((int(self.nb_point) %4))                                                
-                rect_a_update = pygame.Rect(screen.get_rect()[2]/2 - self.font.size(self.texte)[0]/2 - 200,screen.get_rect()[3] - 60,600,300)
-                screen.fill(fond_ecran,rect_a_update) 
-                actu = time.time() - debut
-                if delay == 0:
-                    if actu >= 2:
-                        ajout_texte = "Cela prend plus de temps que prévu :("
-                    else:
-                        ajout_texte = ""
-                else:
-                    ajout_texte = ""
-                    if actu >= delay:
-                        self.stop_anime()
-                draw_text(self.texte + point + "\n" + ajout_texte,center_multi_line= True, y = screen.get_rect()[3] - 60,contener=screen,color=self.color)
-                pygame.display.update(rect_a_update)
-                pygame.time.delay(250)
-            print("chargement ended")
-            
-    def stop_anime(self):
-        """Fonction permettant d'arreter une animation qui a été démarrer dans une situation bloquante"""
-        self.running = False
-        self.id_ = 1
         
         
 class User:
@@ -356,10 +384,9 @@ class User:
             bool: Renvoie la réponse de l'utilisateur
         """
         root = tkinter.Tk()
-        root.withdraw()
-        ans = tkinter.messagebox.askyesno(title = "Exit", message = "Tu veux vraiment nous quitter :(")
-        if ans == None:
-            ans = False
+        root.wm_withdraw()
+        ans = tkinter.messagebox.askyesno(title = "Exit", parent = root,message = "Tu veux vraiment nous quitter :(",default = "no")
+        root.destroy()
         return ans
     
     @staticmethod
@@ -775,14 +802,18 @@ class Gerer_requete(User):
             data_recup = [None]
             if look_for_connection():                  
                 print("va prendre le cursor")
+                m = time.time()
                 cursor = connection_principale.cursor()
+                print(time.time() - m)
                 print("a prit le cursor")
                 if nom_tuto != None:
                     request = f" SELECT * FROM tuto WHERE nom LIKE '%{nom_tuto}%';"
                 elif nom_auteur != None:
                     request = f"SELECT * FROM tuto WHERE auteur LIKE '{nom_auteur}%' ORDER BY date DESC;"
                 print("va executer la recherche")
+                m = time.time()
                 cursor.execute(request)
+                print(time.time() -m)
                 print("execute la recherche")
                 data_recup = cursor.fetchall()  
             else:
@@ -807,7 +838,7 @@ class Gerer_requete(User):
             raise noConnection("l")
 
     @staticmethod
-    def demarrer_fichier(doc : bytes | str,ext,with_path = False,nom_tuto = "",auteur = "")->None:
+    def demarrer_fichier(doc : bytes | str,ext,with_path = False,nom_tuto = "",auteur = "",dir = None)->None:
         """Fonction permettant de démarrer un fichier
 
         Args:
@@ -819,13 +850,16 @@ class Gerer_requete(User):
         """
         if not with_path:
             #créé le fichier si il n'existe pas
-            dir = tkinter.filedialog.askdirectory(title = "Lieu du Telechargement")
+            root = tkinter.Tk()
+            root.wm_withdraw()
+            
+            print(dir)
             if dir:
                 path = os.path.join(dir,f"{nom_tuto} par {auteur}{ext}")
                 document = Doc(path,doc,nom_tuto,auteur,ext)
                 document.start()
             else:
-                return 
+                Gerer_requete.message("Plus jamais tu fais ça")
         else:
             path = doc
             document = Doc(path)
@@ -834,7 +868,7 @@ class Gerer_requete(User):
         
     @staticmethod
     def message(text):
-        tkinter.messagebox.showinfo("Info",text)
+        tkinter.messagebox.showwarning("Info",text)
         
     @staticmethod
     def fail_open(nom_fichier = ""):
@@ -876,9 +910,14 @@ class Gerer_requete(User):
         return isinstance(doc,bytes) and doc != b"0"
     
     @staticmethod
+    def open_dir(title = "Titre"):
+        path = tkinter.filedialog.askdirectory(title = title)
+        return path
+    @staticmethod
     def connecte_toi():
         """Fonction permettant de prévenir l'utilisateur qu'il doit se conecter pour signaler un tuto"""
         tkinter.messagebox.showerror("Erreur","Vous ne pouvez pas signaler sans être connecté !")
           
 if __name__ == "__main__":
-    pass
+    User.confirm_close()
+    print("fini")

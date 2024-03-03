@@ -34,7 +34,6 @@ def verification_size(contenaire : pygame.Rect, nom_font : pygame.font, size : i
         texte (str): texte a afficher
     """
     if id == 0:
-        print("taille",font(nom_font,size,importer).size(texte)[0])
         if contenaire.w <= font(nom_font,size,importer).size(texte)[0]:
             size -= 2
             return verification_size(contenaire,nom_font,size,texte,importer)
@@ -595,10 +594,17 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
     global zone_page
     zone_page = 0
     long_case = w_origine/2 - 20
+    depart_tuto = 300
+    separation_tuto = 10
+    max_par_page = 12
+    taille_reference = h_origine - depart_tuto  - 100
     haut_case = 60
-    
-    liste_indicey = [300+(haut_case+10)*i  for i in range(6)] *2 #on fait *2 car il est prévu 2 colonne
-    liste_indicex = [w_origine/2 - long_case -5] * 6 + [w_origine/2 + 5] * 6 #on fait *6 car c'est 6 par colonne
+    max_par_page = int(taille_reference/(haut_case+separation_tuto)) * 2 #pour ne pas toucher la flèche
+    if max_par_page % 2 == 1:
+        max_par_page -= 1
+    print("max_par_page : ", max_par_page)
+    liste_indicey = [depart_tuto+(haut_case+separation_tuto)*i  for i in range(int(max_par_page/2))] *2 #on fait *2 car il est prévu 2 colonne
+    liste_indicex = [w_origine/2 - long_case -5] * int(max_par_page/2) + [w_origine/2 + 5] * int(max_par_page/2) #on fait *max_par_page/2 car il y a max_par_page/2  element par colonne
     surface_fleche = pygame.Surface((50,50))
     global page
     page = []
@@ -615,7 +621,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
         Args:
             num (int): nombres de résultats obtenu
         """
-        global access,zone_page,all_case_data,dict_rect_fleche,add_fleche,can_add,have_supprime
+        global access,zone_page,all_case_data,dict_rect_fleche,add_fleche,can_add,have_supprime,flop_de_recherche
         #pygame.event.clear()        
         text = f"{num} résultat.s pour cette recherche !" if not flop_de_recherche else "Une erreur est survenue ! la recherche n'a pas aboutie"
         text = "Faites une recherche :)" if have_supprime else text
@@ -627,7 +633,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
         
         if access:
             try:
-                max_par_page = 12
+                
                 global page
                 page = []
                 count = 0
@@ -696,10 +702,12 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                         ecrit_auteur = auteur[:5] + "..."
                     else:
                         ecrit_auteur = auteur
+                    rect_no_depasse = pygame.Rect(0,0,long_case-10-font_30.size(text_date)[0],0)
+                    size_ = verification_size(rect_no_depasse,font_paragraphe,30,f"{nom_projet} par {ecrit_auteur}",True)
                     draw_text(color = color_auteur,contener = surface,
                               text = f"{nom_projet} par {ecrit_auteur}", x = 10,
                               y = 0, font = font_paragraphe,
-                              size = 30, importer = True)
+                              size = size_, importer = True)
                     draw_text(color = blanc,contener = surface,
                               text = text_date, x = rect_case.w - font_30.size(text_date)[0] - 20,
                               y = 5, importer = True,
@@ -714,7 +722,10 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                         pygame.display.flip()
                         all_case_data.append(case_data)
                 can_add = False
-            except:
+            except Exception as e:
+                print(e)
+                access = False
+                flop_de_recherche = True
                 Gerer_requete.error_occured()
     
     def start_tuto(data):
@@ -734,9 +745,10 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
         if not Gerer_requete.est_bytes(doc):
             page_info(2,text,nom_projet,auteur,date,id_)
         else:
-            animation_ouverture.start_anime(last_screen,fond_ecran)
-            Gerer_requete.demarrer_fichier(doc = doc, ext = file,auteur = auteur, nom_tuto=nom_projet)
-            animation_ouverture.stop_anime()
+            dir = Gerer_requete.open_dir(title = "Lieu du téléchargement")
+            if dir:
+                Gerer_requete.demarrer_fichier(dir = dir,doc = doc, ext = file,auteur = auteur, nom_tuto=nom_projet,last_screen = last_screen, fond_ecran = fond_ecran)
+            
         
             
     def research(data):
@@ -782,7 +794,6 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
     global continuer
     global finish
     global have_supprime
-        
     have_supprime = False
     finish = False
     rect_goback = pygame.Rect(5,15,50,50)
@@ -893,8 +904,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                 if data_recup["rect"].collidepoint(mouse) and data_recup["zone"] == zone_page:
                     text_on = data_recup["id"]
                     if event.type == pygame.MOUSEBUTTONDOWN and event.button ==1:
-                        start_tuto(data_recup)
-                        
+                        start_tuto(data_recup)                        
             for index,values in enumerate(dict_rect_fleche):
                 if values.collidepoint(mouse):
                     if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -933,6 +943,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                     all_case_data = {}
                     display = True
                     have_supprime = True
+                    input_host = ""
         rect_surf_rechercher = pygame.Rect(100,150,surface_rechercher.get_width(),surface_rechercher.get_height())
  
         pygame.draw.rect(surface_rechercher,(255,255,255),(0,0,rect_surf_rechercher[2],rect_surf_rechercher[3]),0,20)
@@ -1078,13 +1089,15 @@ def compte():
     text_edit = "Clickez pour editer"
     text_creer_compte = "Bienvenue parmis nous ! Creez votre compte :)"
     text_con_compte = "Bon retour parmis nous ! Connectez vous :)"
-    global continuer
+    rect_pas_depasser = rect_screen.copy()
+    rect_pas_depasser.w -= (20+ 50)
+    size_titre = verification_size(rect_pas_depasser,chivo_titre,60,text_creer_compte,True)
+    global continuer,size_grand
     rect_goback = pygame.Rect(5,5,50,50)
     barre_type = pygame.Surface((2,20))
     go_back = False
     creer_compte = True if not connect else False
-    size = (125,125)
-    size_grand = (200,200)
+    size = (h_origine*19/100,)*2
     font_paragraphe = apple_titre
     font_40 = pygame.font.Font(font_paragraphe, 40)
     font_60 = pygame.font.Font(font_paragraphe, 60)
@@ -1110,9 +1123,10 @@ def compte():
     surf3 = pygame.Surface(size, pygame.SRCALPHA)
     surf2g = pygame.Surface(size_grand,pygame.SRCALPHA)
     surf3g = pygame.Surface(size_grand,pygame.SRCALPHA)
-    rect_host = pygame.Rect(0,0,w_origine/3,h_origine - 400)
+    rect_host = pygame.Rect(0,0,w_origine/3,h_origine * (1-30/100))
     rect_ctn_host = pygame.Rect(0,0,rect_host.w + 300,rect_host.h + 40)
-    rect_host.y = h_origine/2 - rect_host.h/2
+    
+    rect_host.y = (h_origine + fond_nav.get_height())/2 - rect_host.h/2 #+fond_nav.get_height() pour le centrer dans la partie entre le nav et le bas de l'ecran
     rect_host.x = w_origine/2 - rect_host.w/2
     rect_ctn_host.x = rect_host.x - 20
     rect_ctn_host.y = rect_host.y - 20
@@ -1121,18 +1135,33 @@ def compte():
     y_photo2 = 50
     x_photo2 = w_origine/2 - size_grand[0]/2
     rect_editer_photo.x = rect_host.x +rect_host.w/2 - rect_editer_photo.w/2
-    rect_editer_photo.y = y_photo + 130
+    rect_editer_photo.y = y_photo + size[0] + 5
     Surface_host = pygame.Surface((rect_host.w,rect_host.h),pygame.SRCALPHA)
     #rect des inputs
     
-    rect_input_nom = pygame.Rect(rect_host.x + 10, rect_editer_photo.y + 30,rect_host.w/2 +50,30)
+    btn_submit = pygame.Rect(0,0,100,50)
+    btn_submit.x = rect_host.x + rect_host.w/2 - btn_submit.w/2
+    btn_submit.y = rect_host.y + rect_host.h - btn_submit.h - 30
+    hauteur_input = 30
+
+    taille_ref = btn_submit.y - rect_editer_photo.y - 30
+    taille_ref -= 30
+
+    ecart_entre_input = (taille_ref-4*hauteur_input)/3
+    ec = ecart_entre_input
+    
+    print(taille_ref,ec,4*(ec+hauteur_input))
+    
+    ec += hauteur_input #l'ecart est calculé depuis le haut de l'input et non le bas, donc on fait +30
+    rect_input_nom = pygame.Rect(rect_host.x + 10, rect_editer_photo.y + 30,rect_host.w/2 +50,hauteur_input)
+    rect_test = pygame.Rect(rect_input_nom.x,rect_input_nom.y,rect_host.w,taille_ref)
     rect_input_age = pygame.Rect(rect_input_nom.x + rect_input_nom.w + 50 - 20,
                                     rect_input_nom.y,
                                     rect_host.w - rect_input_nom.w - 60,
                                     rect_input_nom.h)
-    rect_input_prenom = pygame.Rect(rect_input_nom.x,rect_input_nom.y + 70, rect_input_nom.w,rect_input_nom.h)
-    rect_input_pseudo = pygame.Rect(rect_input_nom.x, rect_input_prenom.y + 70,rect_input_nom.w, rect_input_nom.h)
-    rect_input_mdp = pygame.Rect(rect_host.x + rect_host.w - 205, rect_input_pseudo.y +70, 200,rect_input_nom.h)
+    rect_input_prenom = pygame.Rect(rect_input_nom.x,rect_input_nom.y + ec, rect_input_nom.w,rect_input_nom.h)
+    rect_input_pseudo = pygame.Rect(rect_input_nom.x, rect_input_prenom.y + ec,rect_input_nom.w, rect_input_nom.h)
+    rect_input_mdp = pygame.Rect(rect_host.x + rect_host.w - 205, rect_input_pseudo.y +ec, 200,rect_input_nom.h)
     rect_input_pseudo2 = pygame.Rect(0, rect_input_nom.y,rect_input_nom.w, rect_input_nom.h)
     rect_input_mdp2 = pygame.Rect(0, rect_input_prenom.y, 200,rect_input_nom.h)
     #dictionnaire qui gère toute les inputs
@@ -1165,9 +1194,7 @@ def compte():
             [rect_input_pseudo2,rect_input_mdp2]
         ]
     color_edit = (0,0,200)
-    btn_submit = pygame.Rect(0,0,100,50)
-    btn_submit.x = rect_host.x + rect_host.w/2 - btn_submit.w/2
-    btn_submit.y = rect_host.y + rect_host.h - btn_submit.h - 30
+    
     invalid_champ = False
     check_save_con_data =  False
     take = False
@@ -1211,7 +1238,7 @@ def compte():
             "rect_host_x" : w_origine/2 - rect_host.w/2,
             "rect_ctn_host_x" : rect_host.x - 20,
             "rect_editer_photo_x" : rect_host.w/2 - rect_editer_photo.w/2,
-            "rect_editer_photo_y" : y_photo + 130,
+            "rect_editer_photo_y" : y_photo + size[0] +5,
             "top_right" : 20,
             "top_left" : 0,
             "bottom_right" : 20,
@@ -1236,7 +1263,7 @@ def compte():
             "rect_ctn_host_x" : rect_host.x - marge_cote_droit_contenaire_fond,
             "rect_host_x" : w_origine/2 - rect_host.w/2,
             "rect_editer_photo_x" : rect_host.w/2 - rect_editer_photo.w/2,
-            "rect_editer_photo_y" : y_photo + 130,
+            "rect_editer_photo_y" : y_photo + size[0] + 5,
             "top_right" : 0,
             "top_left" : 20,
             "bottom_right" : 0,
@@ -1257,7 +1284,7 @@ def compte():
     #btn en attendant la fin
     btn_disconnect = pygame.Rect(0,0,200,80)
     btn_disconnect.x = w_origine/2 - btn_disconnect.w/2
-    btn_disconnect.y = h_origine - 200
+    
     btn_postimg = pygame.Surface((210,100),pygame.SRCALPHA)
     rect_postimg = pygame.Rect(w_origine/2 - 20 - btn_postimg.get_width(),
                      y_photo2 + size_grand[1] + 150,
@@ -1609,11 +1636,9 @@ def compte():
                                                     pass
                                             else:
                                                 if event.unicode.isprintable() and event.unicode != "":
-                                                    print(cursor_position)
                                                     separation_1 = value["input"][:len(value["input"]) + cursor_position]
                                                     separation_2 = value["input"][len(value["input"]) + cursor_position:]
                                                     value["input"] = separation_1 + event.unicode + separation_2
-                                                    print(value["input"])
                                                     if value["depasse"]:
                                                         value["coupage"] += 1                                        
                                     else:
@@ -1628,6 +1653,7 @@ def compte():
         if (creer_compte or not creer_compte) and not connect:
             fond_nav.fill(palette_couleur.fond_bar_de_navigation)
             screen.blit(fond_nav, (0,0))
+            
             rect_host.x = disposition[zone]["rect_host_x"]
             rect_ctn_host.x = disposition[zone]["rect_ctn_host_x"] #rpresente le 2e fond de connection et aussi creer compte
             rect_valider.x = disposition[zone]["rect_valider_x"] + rect_ctn_host.x
@@ -1685,7 +1711,7 @@ def compte():
                     take = False
             
            
-            title(text_bienvenu,size = 60)
+            title(text_bienvenu,size = size_titre)
             Surface_host.fill((255,255,255,0))
             couleur_save_user_data = (255,0,0) if not check_save_con_data else (0,255,0)
             pygame.draw.rect(Surface_host,palette_couleur.fond_un_login,(0,0,rect_host.w,rect_host.h),0,20)
@@ -1697,7 +1723,6 @@ def compte():
             pygame.draw.rect(screen,palette_couleur.fond_deux_login,(rect_ctn_host),0,20) #rpresente le 2e fond de connection et aussi creer compte
             pygame.draw.rect(screen,(0,0,0),(rect_ctn_host),2,20)
             screen.blit(Surface_host,(rect_host.x,rect_host.y))  #represente la surface principal grise         
-            
             if pseudo_ndispo:
                 if not take:
                     time_start = pygame.time.get_ticks()
@@ -1729,7 +1754,6 @@ def compte():
                       font = font_paragraphe, importer = True, color = blanc)
             
             #mettre ma ptn de pp merde
-            print(pp_choisi,creer_compte)
             if not pp_choisi or not creer_compte:
                 pygame.draw.ellipse(surf2, (255, 255, 255), (0,0,*size))
                 surf3.blit(surf2, (0, 0))
@@ -1803,17 +1827,18 @@ def compte():
                     barre_type.fill((0,0,0))
                     rect_bt = (x + font_20.size(input_[value["coupage"]:][:len(input_) + cursor_position])[0] ,y)
                     screen.blit(barre_type,rect_bt)
-                i += 1       
+                i += 1      
+            
             screen.blit(Surface_edit_photo,(rect_editer_photo.x,rect_editer_photo.y))
         else:
             if not element_page_user:
-                y_photo2 += 20
                 font_25a = pygame.font.SysFont(arial, 25, bold=False, italic=True)
                 btn_postimg = pygame.Surface((210,100),pygame.SRCALPHA)
                 btn_maketuto = btn_postimg.copy()
-                surface_fond_user_co = pygame.Surface((btn_postimg.get_width() + 40 + btn_postimg.get_width() + 200, h_origine-100), pygame.SRCALPHA)
+                surface_fond_user_co = pygame.Surface((btn_postimg.get_width() + 40 + btn_postimg.get_width() + 200, h_origine * (1-10/100)), pygame.SRCALPHA)
                 #si cette surface est plus grande de 20pixel sur longueur et largeur, dcp sont x et y devra etre reculé de 10pixel pour les deux
                 taille_en_plus = 30
+                btn_disconnect.y = surface_fond_user_co.get_height() + y_photo2 - 20 - btn_disconnect.h - 10
                 surface_fond_user_co_back = pygame.Surface((surface_fond_user_co.get_width() + taille_en_plus,
                                                             surface_fond_user_co.get_height() + taille_en_plus), pygame.SRCALPHA)
 
@@ -1836,9 +1861,9 @@ def compte():
                                                                                    surface_fond_user_co_back.get_height()),0,20)
             pygame.draw.rect(surface_fond_user_co, palette_couleur.fond_un_login, (0,0,surface_fond_user_co.get_width(),surface_fond_user_co.get_height()),0,20)
             screen.blit(surface_fond_user_co_back,
-                        ((w_origine/2 - 20 - btn_postimg.get_width()) - 100 -taille_en_plus/2, y_photo2 - 20 - taille_en_plus/2))
+                        ((w_origine/2 - surface_fond_user_co_back.get_width()/2, h_origine/2 - (surface_fond_user_co.get_height() + taille_en_plus)/2)))
             screen.blit(surface_fond_user_co,
-                        ((w_origine/2 - 20 - btn_postimg.get_width()) - 100, y_photo2 - 20))
+                        ((w_origine/2 - surface_fond_user_co.get_width()/2, h_origine/2 - surface_fond_user_co.get_height()/2)))
             #Informer l'utilisateur qu'il ne doit pas quitter
             if message_photo_profil:
                 draw_text(message_photo_profil,font = font_paragraphe,importer = True,center_multi_line=True,color = (255,255,255))
@@ -2104,7 +2129,7 @@ pygame.display.update()
 
 with open(os.path.join("img_base","photo_profil_user.png"),"rb") as fichier:
         pp_base = fichier.read()
-  
+size_grand = (h_origine * 29/100,)*2 #31% de la taille originel
 #processus de verification de si l'utilisateur est connecter, si oui, connexion au compte
 with open(os.path.join("Ressource", "compte_connecter.txt"), "r+") as fichier:
     contenu = fichier.read().splitlines()
@@ -2136,7 +2161,7 @@ with open(os.path.join("Ressource", "compte_connecter.txt"), "r+") as fichier:
             
             if user.photo_profil == pp_base:
                 image_pp = pygame.image.load(chemin_pp)
-                image_pp = pygame.transform.smoothscale(image_pp,(200,200))
+                image_pp = pygame.transform.smoothscale(image_pp,size_grand)
             else:
                 #processus de reconstruction de la pdp car sinon si on aggrandi juste la surface surf_image elle est flou
                 animation_demarrage_application.texte = "Reconstruction de votre photo de profil"
@@ -2155,13 +2180,13 @@ with open(os.path.join("Ressource", "compte_connecter.txt"), "r+") as fichier:
                 # Redimensionner l'image
                 img_ = pygame.transform.smoothscale(img_, (new_width,new_height))
                 surf_image2 = resizeImage.rendre_transparent(img_,rect_pp,0)
-                surf_image2 = pygame.transform.smoothscale(surf_image2, (200,200))
+                surf_image2 = pygame.transform.smoothscale(surf_image2, size_grand)
                 #pygame.time.delay(2000)
             creer_compte = False
             zone = 1
     else:
         animation_demarrage_application.start_anime(last_screen,fondd_ecran,3) 
-        pygame.time.wait(3000)
+        pygame.time.wait(1500)
 animation_demarrage_application.stop_anime()   
 comic_sans_ms = pygame.font.SysFont("Comic Sans Ms", 20)
 csm = "Comic Sans Ms"
@@ -2225,12 +2250,13 @@ def gestion_event():
     """
         Gère l'évènement pour quitter l'app
     """
-    global continuer,connection_principale
+    global continuer,connection_principale,in_event
     while continuer:
         try:
             if keyboard.is_pressed("Escape"):
                 print(threading.current_thread())
                 continuer = not User.confirm_close()
+            
         except:
             pass
         for event in pygame.event.get():
@@ -2321,7 +2347,7 @@ while continuer:
     fps = clock.get_fps()
     draw_text(f"fps : {int(fps)}",x=10,y=100,color=(255,255,255))
     if not status_connection_started:
-        status_connection(surface_status_co,w_origine,h_origine)
+        status_connection(surface_status_co)
         status_connection_started = True
     
     screen.blit(surface_status_co,pos_surface_status_co)
