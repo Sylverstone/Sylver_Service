@@ -1,7 +1,8 @@
 import pygame,os,datetime,sys,threading,keyboard,time
 from Sylver_class_import import Color,Gerer_requete,User,noFileException, userNonCharger, noConnection,Animation,status_connection
 from Resize_image import AnnuleCropPhoto, resizeImage
-
+from font_import import *
+import math
 
 #reglage de l'ecran
 os.environ['SDL_VIDEO_CENTERED'] = '1'
@@ -15,16 +16,17 @@ width = resolution.current_w
 height = resolution.current_h
 screen = pygame.display.set_mode((width, height), pygame.FULLSCREEN | pygame.SCALED | pygame.HWSURFACE | pygame.DOUBLEBUF)
 rect_screen = screen.get_rect()
-#class animation qui servira a declencher des chargement de deux maniere, soit a des periodes bloquante ou nonj
-animation_chargement = Animation(screen)
-animation_mise_en_ligne = Animation(screen, text_chargement="Mise en ligne")
-animation_connection = Animation(screen, text_chargement = "Connection")
+palette_couleur = Color()
+#class animation qui servira a declencher des chargement de deux maniere, soit a des periodes bloquante ou non
+animation_chargement = Animation(screen,color = (255,)*3,ombre = True)
+animation_mise_en_ligne = Animation(screen, text_chargement="Mise en ligne",color = (255,)*3,ombre=True)
+animation_connection = Animation(screen, text_chargement = "Connection",color = palette_couleur.fond_case_login,ombre = True)
 animation_ouverture = Animation(screen, text_chargement = "Ouverture")
 animation_demarrage_application = Animation(screen,color = (255,255,255), text_chargement="Sylver.service")
 #palette de couleur qui regroupe toute les couleurs de l'app
-palette_couleur = Color()
 
-def verification_size(contenaire : pygame.Rect, nom_font : pygame.font, size : int, texte : str,importer : bool = True, id = 0, all_texte = None):
+
+def verification_size(contenaire : pygame.Rect, nom_font : pygame.font, size : int, texte : str,importer : bool = True, id = 0):
     """Fonction récursive permettant de reduire la taille d'un texte si il est trop grand
 
     Args:
@@ -207,7 +209,7 @@ def ecrire_tuto(user : User | None):
     rect_valider = surf_valider.get_rect(x=w_origine - s_width - 30,
                                          y = h_origine - s_height - 20)    
     surf_ecrit = pygame.Surface((w_origine - 40, h_origine - 300 ), pygame.SRCALPHA)
-    rect_titre = pygame.Rect(20,120,200,50)
+    rect_titre = pygame.Rect(20,120,surf_titre.get_width(),surf_titre.get_height())
     rect_surf_ecrit = pygame.Rect(20,200,surf_ecrit.get_width(),surf_ecrit.get_height())
     dict_input = {
         "input_titre" : { "max" : 25,"x" : 10,"y" : rect_titre.h/2 - font(font_paragraphe,30,True).size("m")[1]/2,"surf" : surf_titre,"input" : ["Titre",],
@@ -368,7 +370,6 @@ def ecrire_tuto(user : User | None):
         color_valider = (0,255,0) if  rect_valider.collidepoint(mouse) else (0,0,0)
         pygame.draw.rect(surf_valider,color_valider,(0,0,*rect_valider[2:4]),1)
         draw_text(text = "Valider", contener = surf_valider,x= s_width/2 - font40.size("valider")[0]/2, font = font_paragraphe, importer=True, size = 40)       
-        print(dict_input["input_text"]["all_size"])
         for keys,elt in dict_input.items():
             for enum,i in enumerate(elt["input"]):
                 #ecrire tout les lignes dans all_input
@@ -520,6 +521,7 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
                 if connect:
                     try:
                         text_signalement, titre = ecrire_tuto(None)
+                        
                         signalement_final = titre + " | " + text_signalement
                         user.signalement(id_tuto, auteur, signalement_final)
                         animation_mise_en_ligne.stop_anime()
@@ -870,7 +872,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
         if processing:
             actu = time.time()
             if actu - debut >= 2:
-                ajout_text = "Cela prend plus de temps que prévu :("
+                ajout_text = "Pardon pour l'attente.."
             else:
                 ajout_text = ""
             animation_chargement.animate(fond_ecran,ajout_decriture=ajout_text)
@@ -1006,6 +1008,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                     size = 30)
         if go_back:
             break
+        screen.blit(surface_status_co,pos_surface_status_co)
         last_screen = screen.copy()
         pygame.display.update(rect_surf_rechercher)
         pygame.display.flip()
@@ -1357,15 +1360,18 @@ def compte():
                                     fichier.write(nv_pp)
                                 if connect:
                                     message_photo_profil = "Votre photo de profil est cours de traitement, si vous quittez/vous déconnectez maintenant elle ne sera pas sauvegardée"
-                                    th_pp = threading.Thread(target = user.change_element, args=(False,False,False,True,False,False,nv_pp))
+                                    """th_pp = threading.Thread(target = user.change_element, args=(False,False,False,True,False,False,nv_pp,False,temoin_processus_fini_pp))
                                     th_pp.start()
                                     th_rect_pp = threading.Thread(target = user.change_element, args=(False,False,False,False,False,True,rect_ellipse,True,temoin_processus_fini_pp))
-                                    th_rect_pp.start()
+                                    th_rect_pp.start()"""
+                                    thread_changement = threading.Thread(target=user.change_element, args=(False,False,False,True,False,True,
+                                        [nv_pp,rect_ellipse],True,temoin_processus_fini_pp))
+                                    thread_changement.start()
                                 pp_choisi = True
                             except OSError:
                                 Gerer_requete.fail_open() 
                                 print("err")   
-                                                                
+                                                 
                             except Exception:
                                 print("err")
                                 Gerer_requete.error_occured()
@@ -1408,8 +1414,10 @@ def compte():
                                 break
                         except noConnection:
                             Gerer_requete.connection_failed()   
+                            animation_mise_en_ligne.stop_anime()
                         except:
                             Gerer_requete.error_occured()  
+                            animation_mise_en_ligne.stop_anime()
                             
                 elif rect_maketuto.collidepoint(mouse):
                     if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -1836,6 +1844,8 @@ def compte():
                 btn_postimg = pygame.Surface((210,100),pygame.SRCALPHA)
                 btn_maketuto = btn_postimg.copy()
                 surface_fond_user_co = pygame.Surface((btn_postimg.get_width() + 40 + btn_postimg.get_width() + 200, h_origine * (1-10/100)), pygame.SRCALPHA)
+                y_fond_surf_user_co = h_origine/2 - surface_fond_user_co.get_height()/2
+                y_photo2 = y_fond_surf_user_co + 10
                 #si cette surface est plus grande de 20pixel sur longueur et largeur, dcp sont x et y devra etre reculé de 10pixel pour les deux
                 taille_en_plus = 30
                 btn_disconnect.y = surface_fond_user_co.get_height() + y_photo2 - 20 - btn_disconnect.h - 10
@@ -1957,16 +1967,32 @@ def compte():
                 #blit pp
                 screen.blit(surf_image2,(x_photo2,y_photo2))
             #masque fait pour detecter la collision très précisément
-            mask = pygame.mask.from_surface(surf2g)
-            ellipse_dessiner = pygame.draw.circle(screen,color_bordure_image,(x_photo2 + size_grand[0]/2 ,y_photo2+size_grand[0]/2 +1),size_grand[0]/2 +1,1)
-            fake_screen  =  pygame.Surface((screen.get_width(),screen.get_height()), pygame.SRCALPHA)
+            mask = pygame.mask.from_surface(surf_image2)
+            ellipse_dessiner = pygame.draw.circle(screen,color_bordure_image,(x_photo2 + size_grand[0]/2 ,y_photo2+size_grand[0]/2 +1.4),size_grand[0]/2 +1.4,1)
+            
+            fake_screen  =  screen.copy()
             #pour eviter l'erreur que les mask_x et mask_y deborde du mask car l'ellipse dessiner est aggrandi intentionnellement a cause du
             #dessin d'un rond merdique de pygame
             ellipse = pygame.draw.circle(fake_screen,(0,0,0,0),(x_photo2 + size_grand[0]/2 ,y_photo2+size_grand[0]/2),size_grand[0]/2,1)
+            x1,y1 = x_photo2 + size_grand[0]/2,y_photo2+size_grand[0]/2
+            radius = size_grand[0]/2
+            
             if ellipse.collidepoint(mouse):
+                draw_text("collide")
                 mask_x = mouse[0] - ellipse.left
-                mask_y = mouse[1] - ellipse.top                
-                if mask.get_at((mask_x, mask_y)):
+                mask_y = mouse[1] - ellipse.top   
+                draw_text(f"({mask_x},{mask_y})", x= 200)  
+                x2,y2 = mouse[0],mouse[1]
+                X = x2 - x1
+                Y = y2 - y1
+                
+                distance_to_mouse = math.sqrt(X**2+Y**2)
+                print(distance_to_mouse,radius)
+                if distance_to_mouse <= radius:
+                    draw_text("collide rond", x= 700)
+                    print("in rond",distance_to_mouse)
+                    print("mouse:",x2,y2)
+                    draw_text(x = 500, text = "collide_rond")
                     collide_image = True
                     color_bordure_image = palette_couleur.contour_input_login
                 else:
@@ -1978,7 +2004,7 @@ def compte():
             text_nom_prenom =  user.nom + " " + user.prenom
             text_pseudo = user.pseudo
             tuto_poster = user.tuto_transmis
-            color_edit = (0,0,0) if not rect_editer_photo.collidepoint(mouse) else (200,0,0)
+            color_edit = (0,0,0) if not rect_editer_photo.collidepoint(mouse) else palette_couleur.contour_input_login
             draw_text(text_edit,
                       color = color_edit, 
                       x = x_photo2 + size_grand[0]/2 - font_20.size(text_edit)[0]/2
@@ -2000,7 +2026,7 @@ def compte():
                       ,y = y_photo2 + size_grand[1] + 100, size = 30,
                       importer = True, font = font_paragraphe)            
         screen.blit(image_retour,rect_goback)
-        
+        screen.blit(surface_status_co,pos_surface_status_co)
         pygame.display.flip()
         last_screen = screen.copy()
         if go_back:
@@ -2170,6 +2196,7 @@ with open(os.path.join("Ressource", "compte_connecter.txt"), "r+") as fichier:
                     rect_pp = Gerer_requete.separe_rect(user.rect_pp)
                 rect_pp = rect_pp.split(",")
                 rect_pp = [int(i) for i in rect_pp]
+                print(rect_pp)
                 rect_pp = pygame.Rect(rect_pp)
                 img_ = pygame.image.load(chemin_pp).convert_alpha()
                 old_width, old_height = img_.get_size()
@@ -2191,9 +2218,7 @@ animation_demarrage_application.stop_anime()
 comic_sans_ms = pygame.font.SysFont("Comic Sans Ms", 20)
 csm = "Comic Sans Ms"
 arial = "Arial"
-chivo_titre = r"font\chivo\Chivo-Black.otf"
-dream_orphans = r"font\dream_orphans\Dream Orphans.otf"
-apple_titre = r"font\apple_garamond\AppleGaramond-Light.ttf"
+
 input_apple = pygame.font.Font(apple_titre,40)
 beackman = r"font\Beckman.otf"
 TNN = r"font\TNN.ttf"
@@ -2255,17 +2280,14 @@ def gestion_event():
         try:
             if keyboard.is_pressed("Escape"):
                 print(threading.current_thread())
-                continuer = not User.confirm_close()
-            
+                continuer = not User.confirm_close()      
         except:
-            pass
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                continuer = False
+            continue
         
         time.sleep(0.1)
+    
     print("bye")
-
+    
 
 t1 = threading.Thread(target=gestion_event,daemon=True)
 t1.start()
