@@ -1,11 +1,9 @@
-import sys
-import tkinter
+
 from cx_Freeze import setup, Executable
 import platform,os
 
 # Obtenez le nom du système d'exploitation
 system_name = platform.system()
-fen = tkinter.Tk()
 # Define the executables
 if system_name != "Windows":
     executables = [Executable("sylver_service.py", base=None, icon=os.path.join("Image", "Logo_app_2.ico"))]
