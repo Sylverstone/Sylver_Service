@@ -1978,10 +1978,8 @@ def compte():
             radius = size_grand[0]/2
             
             if ellipse.collidepoint(mouse):
-                draw_text("collide")
                 mask_x = mouse[0] - ellipse.left
                 mask_y = mouse[1] - ellipse.top   
-                draw_text(f"({mask_x},{mask_y})", x= 200)  
                 x2,y2 = mouse[0],mouse[1]
                 X = x2 - x1
                 Y = y2 - y1
@@ -1989,10 +1987,6 @@ def compte():
                 distance_to_mouse = math.sqrt(X**2+Y**2)
                 print(distance_to_mouse,radius)
                 if distance_to_mouse <= radius:
-                    draw_text("collide rond", x= 700)
-                    print("in rond",distance_to_mouse)
-                    print("mouse:",x2,y2)
-                    draw_text(x = 500, text = "collide_rond")
                     collide_image = True
                     color_bordure_image = palette_couleur.contour_input_login
                 else:

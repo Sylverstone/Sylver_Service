@@ -811,18 +811,21 @@ class Gerer_requete(User):
         """
         no_connection = False
         try:
-            connection_principale = connect_to_database()
+            
             data_recup = [None]
-            with connection_principale.cursor() as cursor:
-                if nom_tuto != None:
-                    if nom_tuto != "*":
-                        request = f" SELECT * FROM `tuto` WHERE `nom` LIKE '%{nom_tuto}%' ORDER BY date DESC;"
-                    else:
-                        request = f" SELECT * FROM `tuto` ORDER BY date DESC;"
-                elif nom_auteur != None:
-                    request = f"SELECT * FROM `tuto` WHERE `auteur` LIKE '{nom_auteur}%' ORDER BY date DESC;"
-                cursor.execute(request)
-                data_recup = cursor.fetchall()  
+            if look_for_connection():
+                with connection_principale.cursor() as cursor:
+                    if nom_tuto != None:
+                        if nom_tuto != "*":
+                            request = f" SELECT * FROM `tuto` WHERE `nom` LIKE '%{nom_tuto}%' ORDER BY date DESC;"
+                        else:
+                            request = f" SELECT * FROM `tuto` ORDER BY date DESC;"
+                    elif nom_auteur != None:
+                        request = f"SELECT * FROM `tuto` WHERE `auteur` LIKE '{nom_auteur}%' ORDER BY date DESC;"
+                    cursor.execute(request)
+                    data_recup = cursor.fetchall()  
+            else:
+                no_connection = True
         except sql.Error as err:
             print(err)
             no_connection = False
@@ -837,8 +840,6 @@ class Gerer_requete(User):
             print("raise")
         finally:
             if not no_connection:
-                connection_principale.commit()
-                connection_principale.close()
                 return data_recup
             raise noConnection("l")
 
