@@ -708,7 +708,7 @@ class User:
         """
         if idd == 1:
             #si c'est pour poster un tuto
-            ext_dispo = [("*","*.png"),("*","*.jpg"),("*","*.pdf"),("*","*.docx"),("*","*.odt")]
+            ext_dispo = [("*","*.png"),("*","*.jpg"),("*","*.pdf"),("*","*.docx"),("*","*.odt"),("*","*.xlsx")]
         else:
             #si c'est pour choisir une pp
             ext_dispo = [("*","*.png"),("*","*.jpg")]

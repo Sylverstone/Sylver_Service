@@ -749,7 +749,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
         else:
             dir = Gerer_requete.open_dir(title = "Lieu du téléchargement")
             if dir:
-                Gerer_requete.demarrer_fichier(dir = dir,doc = doc, ext = file,auteur = auteur, nom_tuto=nom_projet,last_screen = last_screen, fond_ecran = fond_ecran)
+                Gerer_requete.demarrer_fichier(dir = dir,doc = doc, ext = file,auteur = auteur, nom_tuto=nom_projet)
             
         
             
