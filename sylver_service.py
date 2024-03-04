@@ -729,7 +729,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                 access = False
                 flop_de_recherche = True
                 Gerer_requete.error_occured()
-    
+    print("n")
     def start_tuto(data):
         """Fonction permettant de lancer le tuto
 
