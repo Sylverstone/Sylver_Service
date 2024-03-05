@@ -1,3 +1,4 @@
+from tkinter import NONE
 import pygame,os,datetime,sys,threading,keyboard,time
 from Sylver_class_import import Color,Gerer_requete,User,noFileException, userNonCharger, noConnection,Animation,status_connection
 from Resize_image import AnnuleCropPhoto, resizeImage
@@ -212,7 +213,7 @@ def ecrire_tuto(user : User | None):
     rect_titre = pygame.Rect(20,120,surf_titre.get_width(),surf_titre.get_height())
     rect_surf_ecrit = pygame.Rect(20,200,surf_ecrit.get_width(),surf_ecrit.get_height())
     dict_input = {
-        "input_titre" : { "max" : 25,"x" : 10,"y" : rect_titre.h/2 - font(font_paragraphe,30,True).size("m")[1]/2,"surf" : surf_titre,"input" : ["Titre",],
+        "input_titre" : { "max" : 50,"x" : 10,"y" : rect_titre.h/2 - font(font_paragraphe,30,True).size("m")[1]/2,"surf" : surf_titre,"input" : ["Titre",],
                          "zone_ecrit" : 0,"can_do_multiple_lines" : False, "base" : "Titre", "active" : False,"rect" : rect_titre, "time": 0, "take_time" : False,
                          "coupage" : 0,"all_size" : 0,"can_write" : True},
         
@@ -253,7 +254,7 @@ def ecrire_tuto(user : User | None):
                         titre = ''.join(dict_input["input_titre"]["input"])
                         titre = titre.strip()
                         try:
-                            animation_mise_en_ligne.start_anime(last_screen,(100,100,100))
+                            animation_mise_en_ligne.start_anime(last_screen)
                             Gerer_requete(user).save_tuto(None,text_pour_tuto,titre)
                             animation_mise_en_ligne.stop_anime()
                             go_back = True 
@@ -269,7 +270,7 @@ def ecrire_tuto(user : User | None):
                         text_pour_tuto = text_pour_tuto.strip()
                         titre = ''.join(dict_input["input_titre"]["input"])
                         titre = titre.strip()
-                        animation_mise_en_ligne.start_anime(last_screen,(100,100,100))
+                        animation_mise_en_ligne.start_anime(last_screen)
                         return text_pour_tuto, titre
                         
             ################################### Logique de l'input #################################      
@@ -346,8 +347,25 @@ def ecrire_tuto(user : User | None):
                         if len(elt["input"][elt["zone_ecrit"]]) > 0 and not menos and elt["can_do_multiple_lines"]:
                             if font(font_paragraphe,30,True).size(elt["input"][elt["zone_ecrit"]])[0] >= surf_ecrit.get_width() - 40:
                                 if elt["y"] * len(elt["input"]) + 40 < surf_ecrit.get_height():
+                                    """elt["input"].append("")
+                                    elt["zone_ecrit"] +=1"""
+                                    dernier_mot = ""
+                                    cursor = -1 
+                                    while abs(cursor) <= len(elt["input"][elt["zone_ecrit"]]) and elt["input"][elt["zone_ecrit"]][cursor] != " " :
+                                        cursor -= 1
+                                    if abs(cursor) > len(elt["input"][elt["zone_ecrit"]]):
+                                        dernier_mot = elt["input"][elt["zone_ecrit"]][-1]
+                                        cursor =  -1
+                                    else:
+                                        dernier_mot = elt["input"][elt["zone_ecrit"]][cursor:].strip()
+
+                                    print(dernier_mot.strip())
+                                    elt["input"][elt["zone_ecrit"]] = elt["input"][elt["zone_ecrit"]][:cursor]
+                                    
                                     elt["input"].append("")
-                                    elt["zone_ecrit"] +=1
+                                    elt["zone_ecrit"] += 1
+                                    elt["input"][elt["zone_ecrit"]] += dernier_mot
+                                    
                                 else:
                                     elt["can_write"] = False
                                 
@@ -407,7 +425,7 @@ def trait(x : float,y : float ,longueur : float ,surf : pygame.Surface,epaisseur
     """
     pygame.draw.rect(surf,(0,0,0),(x,y,longueur,epaisseur))      
     
-def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.datetime = None, id_tuto : int = None):
+def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.datetime = None, id_tuto : int = None,image_photo_profil : pygame.Surface= None):
     """Fonction permettant d'afficher un texte au sujet de Sylver_Service, cette fonction sert aussi a afficher un tuto
 
     Args:
@@ -429,6 +447,9 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
     surface_ecriture = pygame.Surface((width, height), pygame.SRCALPHA)
     rect_surface_ecriture = surface_ecriture.get_rect()
     text_title = "A quoi sert Sylver_Service ?"
+    font_paragraphe = apple_titre
+    rect_a_ne_pas_depasser = rect_screen.copy()
+    rect_a_ne_pas_depasser.w -= 5 + image_retour.get_width()
     if id_ > 1:
         date = date.strftime("%d/%m/%Y")
         date_save = date
@@ -436,18 +457,20 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
         date_actuelle = datetime.datetime.now()
         date_actuelle = date_actuelle.strftime("%d/%m/%Y")
         if date_actuelle == date_save:
-            date = "posté aujourd'hui"        
+            date = "posté aujourd'hui"   
+        rect_a_ne_pas_depasser.w -= font(font_paragraphe,20,True).size(date)[0] + 100     
         text_title = f"{nom_projet.upper()} | par  {auteur}"
+        
         text_info = text
     if id_ == 0:
-        with open("./Ressource/fichier_info.txt", "r+") as fichier:
+        with open("./Ressource/fichier_info.txt", "r+",encoding="utf-8") as fichier:
             text_info = fichier.read().replace("\n", " ")
-        text_info = text_info.replace("Ã©","é")
+        """text_info = text_info.replace("Ã©","é")
         text_info = text_info.replace("Ã¨","è")
-        text_info = text_info.replace("Ãª","ê")
+        text_info = text_info.replace("Ãª","ê")"""
+    size_title = verification_size(rect_a_ne_pas_depasser,chivo_titre,40,text_title,True)
     size_max = width
     i = 0
-    font_paragraphe = apple_titre
     font_40 = pygame.font.Font(font_paragraphe, 40)
     font_20 = pygame.font.Font(font_paragraphe, 20)
     taille_ecriture = 30
@@ -494,6 +517,7 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
     position_de_fin = 40
     afficher_option = False
     retirez_option = False
+    animation_ouverture.stop_anime()
     while continuer:
         
         mouse = pygame.mouse.get_pos()
@@ -543,7 +567,7 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
         surface_popup.fill((255,255,255))                      
         screen.blit(fond_nav,(0,0))  
         screen.blit(image_retour,rect_goback)
-        title(text_title, size = 40)
+        title(text_title, size = size_title)
         if id_ > 1:
             pygame.draw.rect(surface_popup,(0,0,0),surface_popup.get_rect(),1)
             taille_case = surface_popup.get_height() - rect_icone_signalement.y - 10
@@ -560,13 +584,18 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
             surface_popup.blit(icone_signalement,(rect_icone_signalement.x,rect_icone_signalement.y))
             trait(surf = surface_popup, x = 0, y = rect_icone_tuto_utilisateur.y -10,longueur = surface_popup.get_width(),epaisseur = 1)
             surface_popup.blit(icone_tuto_utilisateur,rect_icone_tuto_utilisateur)
-            #début de la concecption du signalement, utilisation d'une surface et de draw.rect pour le design
             draw_text(date, x = w_origine - font_20.size(str(date))[0] - 10,y = 10, font = font_paragraphe, color = (255,255,255),importer = True)
-           
+            
         if go_back:
+            if id_ > 1:
+                try:
+                    os.remove(os.path.join("Depot","depot.png"))
+                except:
+                    pass
             break
         screen.blit(surface_ecriture, (25,150))
         if id_ >1:
+            screen.blit(image_photo_profil,(w_origine - image_photo_profil.get_width() - 10, fond_nav.get_height() - image_photo_profil.get_height() - 10))
             if afficher_option:
                 position_popup += 20
                 if position_popup >= position_de_fin:
@@ -578,6 +607,8 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
                     position_popup = -surface_popup.get_height()            
                 screen.blit(surface_popup,(rect_popup_btn.x,position_popup))
             screen.blit(triple_bar_option,rect_triple_bar)
+            #afficher pp_user
+            
         pygame.display.flip()
         
 def menu(id_ : int = 0,auteur_rechercher : str = None):
@@ -704,7 +735,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                         ecrit_auteur = auteur[:5] + "..."
                     else:
                         ecrit_auteur = auteur
-                    rect_no_depasse = pygame.Rect(0,0,long_case-10-font_30.size(text_date)[0],0)
+                    rect_no_depasse = pygame.Rect(0,0,long_case-30-font_30.size(text_date)[0],0)
                     size_ = verification_size(rect_no_depasse,font_paragraphe,30,f"{nom_projet} par {ecrit_auteur}",True)
                     draw_text(color = color_auteur,contener = surface,
                               text = f"{nom_projet} par {ecrit_auteur}", x = 10,
@@ -745,13 +776,36 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
         doc = data["doc"]
         file = data["extension"]
         if not Gerer_requete.est_bytes(doc):
-            page_info(2,text,nom_projet,auteur,date,id_)
+            if connect:
+                if user.pseudo ==auteur.split(",")[0]:
+                    #si c'est un tuto de l'utilisateur connectez, on va simplement prendre sa pp qu'on avait déjà charger
+                    page_info(2,text,nom_projet,auteur,date,id_,pygame.transform.smoothscale(image_pp_user,(50,50)))
+                    return 
+            #recuperation de la pp de l'user qui a fait le tuto
+            bin_pp,rect_pp = Gerer_requete.look_for_user_pp(auteur.split(",")[0])
+            rect_pp = [int(i) for i in rect_pp.split(",")]
+            print(rect_pp)
+            rect_pp = pygame.Rect(rect_pp)
+            with open("Depot\\depot.png",'wb') as f:
+                f.write(bin_pp)
+            img_ = pygame.image.load("Depot\\depot.png").convert_alpha()
+            old_width, old_height = img_.get_size()
+            # Définir la nouvelle largeur (ou hauteur)
+            new_width = 500
+            # Calculer la nouvelle hauteur (ou largeur) pour conserver le rapport d'aspect (produit en croix)
+            new_height = int(old_height * new_width / old_width)
+            # Redimensionner l'image
+            img_ = pygame.transform.smoothscale(img_, (new_width,new_height))
+            image_pp = resizeImage.rendre_transparent(img_,rect_pp,0)
+            image_pp = pygame.transform.smoothscale(image_pp,(50,50))
+            page_info(2,text,nom_projet,auteur,date,id_,image_pp)
         else:
             dir = Gerer_requete.open_dir(title = "Lieu du téléchargement")
-            if dir:
+            print("path : ",dir,",")
+            if dir != "":
                 Gerer_requete.demarrer_fichier(dir = dir,doc = doc, ext = file,auteur = auteur, nom_tuto=nom_projet)
-            
-        
+            else:
+                animation_ouverture.stop_anime()        
             
     def research(data):
         """Fonction effectuant la recherche
@@ -861,7 +915,6 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                 th.start()
                 print("thread started")
                 not_enter = True
-            
         clock.tick(120)
         dict_recherche = {"nom_projet" : None,"nom_auteur" : None}
         mouse = pygame.mouse.get_pos()
@@ -906,6 +959,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                 if data_recup["rect"].collidepoint(mouse) and data_recup["zone"] == zone_page:
                     text_on = data_recup["id"]
                     if event.type == pygame.MOUSEBUTTONDOWN and event.button ==1:
+                        animation_ouverture.start_anime(last_screen)
                         start_tuto(data_recup)                        
             for index,values in enumerate(dict_rect_fleche):
                 if values.collidepoint(mouse):
@@ -924,7 +978,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     reponse = User.confirm_open()
                     if reponse:
-                        animation_ouverture.start_anime(last_screen,fond_ecran)
+                        animation_ouverture.start_anime(last_screen)
                         Gerer_requete.demarrer_fichier(doc = os.path.join("Ressource","SYLVER.docx"),with_path=True,ext = None)
                         animation_ouverture.stop_anime()
             if event.type == pygame.QUIT:
@@ -1407,7 +1461,7 @@ def compte():
                             if nom_tuto != False:
                                 path = User.get_file(1)[0]
                                 if path != " ":
-                                    animation_mise_en_ligne.start_anime(last_screen,fond_ecran)
+                                    animation_mise_en_ligne.start_anime(last_screen)
                                     Gerer_requete(user).save_tuto(path,"",nom_tuto)
                                     animation_mise_en_ligne.stop_anime()
                             else:
@@ -1436,7 +1490,7 @@ def compte():
                     color_edit = (0,0,200)
                 if btn_submit.collidepoint(mouse):                    
                     if (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1):                        
-                        animation_connection.start_anime(last_screen,fond_ecran)                    
+                        animation_connection.start_anime(last_screen)                    
                         if look_valid(zone):
                             if look_mdp(zone):
                                 try:
@@ -1880,10 +1934,10 @@ def compte():
                 if temoin_processus_fini_pp[0] == True:
                     message_photo_profil = ""
                     temoin_processus_fini_pp[0] = False
-            color_btn1 = (185,185,185) if not rect_postimg.collidepoint(mouse) else (255,255,255)
-            color_btn2 = (185,185,185) if not rect_maketuto.collidepoint(mouse) else (255,255,255)
-            pygame.draw.rect(btn_postimg,color_btn1,(0,0,btn_postimg.get_width(),btn_postimg.get_height()),0,20)
-            pygame.draw.rect(btn_maketuto,color_btn2,(0,0,btn_maketuto.get_width(),btn_maketuto.get_height()),0,20)
+            color_btn1 =  (255,255,255) if not rect_postimg.collidepoint(mouse) else palette_couleur.fond_deux_login
+            color_btn2 =  (255,255,255) if not rect_maketuto.collidepoint(mouse) else  palette_couleur.fond_deux_login
+            pygame.draw.rect(btn_postimg,palette_couleur.fond_case_login,(0,0,btn_postimg.get_width(),btn_postimg.get_height()),0,20)
+            pygame.draw.rect(btn_maketuto,palette_couleur.fond_case_login,(0,0,btn_maketuto.get_width(),btn_maketuto.get_height()),0,20)
             surface_ombre = pygame.Surface((btn_postimg.get_width() + 10, btn_postimg.get_height() + 10), pygame.SRCALPHA)
             surface_ombre.fill((0,0,0,0))
             surface_ombre2 = surface_ombre.copy()
@@ -1902,17 +1956,17 @@ def compte():
                       contener = btn_maketuto,importer = False)
             """
             draw_text(contener = btn_postimg,font = font_paragraphe, size = 30, importer = True, center_multi_line_y=True, center_multi_line=True,
-                      text = text_postimg)
+                      text = text_postimg, color = (255,255,255))
             draw_text(contener = btn_maketuto,font = font_paragraphe, size = 30, importer = True, center_multi_line_y=True, center_multi_line=True,
-                      text = text_maketuto)
-            pygame.draw.rect(btn_postimg,(255,255,255),(0,0,btn_postimg.get_width(),btn_postimg.get_height()),1,20)
-            pygame.draw.rect(btn_maketuto,(255,255,255),(0,0,btn_maketuto.get_width(),btn_maketuto.get_height()),1,20)
-            #rep; continuez lanimation pour le 2e btn, continuer detoffer linterface user design
-            if rect_postimg.collidepoint(mouse):                
+                      text = text_maketuto, color = (255,255,255))
+            pygame.draw.rect(btn_postimg,color_btn1,(0,0,btn_postimg.get_width(),btn_postimg.get_height()),1,20)
+            pygame.draw.rect(btn_maketuto,color_btn2,(0,0,btn_maketuto.get_width(),btn_maketuto.get_height()),1,20)
+            #animation pour le survol de post_img ou make_tuto. J'hesite a la supp
+            """if rect_postimg.collidepoint(mouse):                
                 x_effet1 += 1 if x_effet1 < 4 else 0
                 y_effet1 += 1 if y_effet1 < 4 else 0
                 intensiter_effet += 255/4 if intensiter_effet < 255 else 0
-                pygame.draw.rect(surface_ombre,(0,0,0,intensiter_effet),(x_effet1,y_effet1,btn_postimg.get_width(),btn_postimg.get_height()),0,20)
+                pygame.draw.rect(surface_ombre,(0,0,200,intensiter_effet),(x_effet1,y_effet1,btn_postimg.get_width(),btn_postimg.get_height()),0,20)
                 screen.blit(surface_ombre,(
                     w_origine/2 - 20 - btn_postimg.get_width(), y_photo2 + size_grand[1] + 150
                 ))
@@ -1920,7 +1974,7 @@ def compte():
                 x_effet1 -= 2 if x_effet1  > 0 else 0
                 y_effet1 -= 2 if y_effet1 > 0 else 0
                 intensiter_effet -= 255/5 if intensiter_effet < 0 else 0
-                pygame.draw.rect(surface_ombre,(0,0,0,intensiter_effet),(x_effet1,y_effet1,btn_postimg.get_width(),btn_postimg.get_height()),0,20)
+                pygame.draw.rect(surface_ombre,(0,0,200,intensiter_effet),(x_effet1,y_effet1,btn_postimg.get_width(),btn_postimg.get_height()),0,20)
                 if x_effet1 > 0:
                     screen.blit(surface_ombre,(
                         w_origine/2 - 20 - btn_postimg.get_width(), y_photo2 + size_grand[1] + 150
@@ -1929,7 +1983,7 @@ def compte():
                 x_effet2 += 1 if x_effet2 < 4 else 0
                 y_effet2 += 1 if y_effet2 < 4 else 0
                 intensiter_effet += 255/4 if intensiter_effet < 255 else 0
-                pygame.draw.rect(surface_ombre2,(0,0,0,intensiter_effet),(x_effet2,y_effet2,btn_postimg.get_width(),btn_postimg.get_height()),0,20)
+                pygame.draw.rect(surface_ombre2,(0,0,200,intensiter_effet),(x_effet2,y_effet2,btn_postimg.get_width(),btn_postimg.get_height()),0,20)
                 screen.blit(surface_ombre2,(
                    w_origine/2 + 20, y_photo2 + size_grand[1] + 150
                 ))                
@@ -1937,16 +1991,16 @@ def compte():
                 x_effet2 -= 2 if x_effet2  > 0 else 0
                 y_effet2 -= 2 if y_effet2 > 0 else 0
                 intensiter_effet -= 255/5 if intensiter_effet < 0 else 0
-                pygame.draw.rect(surface_ombre2,(0,0,0,intensiter_effet),(x_effet2,y_effet2,btn_postimg.get_width(),btn_postimg.get_height()),0,20)
+                pygame.draw.rect(surface_ombre2,(0,0,200,intensiter_effet),(x_effet2,y_effet2,btn_postimg.get_width(),btn_postimg.get_height()),0,20)
                 if x_effet2 > 0:
                     screen.blit(surface_ombre2,(
                         w_origine/2 + 20, y_photo2 + size_grand[1] + 150
-                    ))            
+                    ))    """        
             screen.blit(btn_postimg,(
-                w_origine/2 - 20 - btn_postimg.get_width(), y_photo2 + size_grand[1] + 150
+                w_origine/2 - 20 - btn_postimg.get_width(), y_photo2 + size_grand[1] + 160
             ))
             screen.blit(btn_maketuto,(
-                w_origine/2 + 20, y_photo2 + size_grand[1] + 150
+                w_origine/2 + 20, y_photo2 + size_grand[1] + 160
             ))
             #image_pp = pygame.transform.smoothscale(image_pp,size_grand)
             rect_editer_photo.x = x_photo2 + size_grand[0]/2 - font_20.size(text_edit)[0]/2
@@ -1954,15 +2008,13 @@ def compte():
             pygame.draw.rect(screen,palette_couleur.fond_case_login,btn_disconnect,0,20)
             couleur_contour_disconnect = (255,255,255) if not btn_disconnect.collidepoint(mouse) else (0,0,0)
             pygame.draw.rect(screen,couleur_contour_disconnect,btn_disconnect,1,20)
-
             draw_text("Déconnexion", x = btn_disconnect.x + btn_disconnect.w/2 - font(font_paragraphe,40,True).size("Déconnexion")[0]/2, y = btn_disconnect.y + btn_disconnect.h/2 - font(font_paragraphe,40,True).size("Déconnexion")[1]/2,
                       font = font_paragraphe, importer = True, color = blanc, size = 40)
             if user.rect_pp == None:
                 pygame.draw.ellipse(surf2g, (255, 255, 255), (0,0,*size_grand))            
                 surf3g.blit(surf2g, (0, 0))
                 surf3g.blit(image_pp, (0, 0), special_flags=pygame.BLEND_RGBA_MIN)
-                screen.blit(surf3g, (x_photo2, y_photo2))
-                
+                screen.blit(surf3g, (x_photo2, y_photo2))                
             else:
                 #blit pp
                 screen.blit(surf_image2,(x_photo2,y_photo2))
@@ -1998,26 +2050,27 @@ def compte():
             text_nom_prenom =  user.nom + " " + user.prenom
             text_pseudo = user.pseudo
             tuto_poster = user.tuto_transmis
-            color_edit = (0,0,0) if not rect_editer_photo.collidepoint(mouse) else palette_couleur.contour_input_login
+            color_edit = (255,255,255) if not rect_editer_photo.collidepoint(mouse) else palette_couleur.contour_input_login
             draw_text(text_edit,
                       color = color_edit, 
                       x = x_photo2 + size_grand[0]/2 - font_20.size(text_edit)[0]/2
                       ,y = y_photo2 + size_grand[1] + 5, size = 20,
                       importer = True, font = font_paragraphe)
             draw_text(text_nom_prenom,
-                      color = (0,0,0), 
+                      color = (255,255,255), 
                       x = x_photo2 + size_grand[0]/2 - font_30.size(text_nom_prenom)[0]/2
-                      ,y = y_photo2 + size_grand[1] + 40, size = 30,
+                      ,y = y_photo2 + size_grand[1] + 5 + font_20.size(text_edit)[1], size = 30,
                       importer = True, font = font_paragraphe)
-            draw_text(text_pseudo,
-                      color = (0,0,0), 
-                      x = x_photo2 + size_grand[0]/2 - font_30.size(text_pseudo)[0]/2
-                      ,y = y_photo2 + size_grand[1] + 70, size = 30,
+            draw_text("~ " + text_pseudo + " ~",
+                      color = palette_couleur.bleu_pal, 
+                      x = x_photo2 + size_grand[0]/2 - font(font_paragraphe,40,True).size("~ " + text_pseudo + " ~")[0]/2
+                      ,y = y_photo2 + size_grand[1] + 5 + font_20.size(text_edit)[1] + font_30.size(text_nom_prenom)[1], size = 40,
                       importer = True, font = font_paragraphe)
-            draw_text(f"-Vous avez postez {tuto_poster} tutoriel.s-",
-                      color = (0,0,0), 
-                      x = x_photo2 + size_grand[0]/2 - font_30.size(f"-Vous avez postez {tuto_poster} tutoriel.s-")[0]/2
-                      ,y = y_photo2 + size_grand[1] + 100, size = 30,
+            draw_text(f"Vous avez postez {tuto_poster} tutoriel.s",
+                      color = (255,255,255), 
+                      x = x_photo2 + size_grand[0]/2 - font_30.size(f"Vous avez postez {tuto_poster} tutoriel.s")[0]/2
+                      ,y = y_photo2 + size_grand[1] + 5 + font_20.size(text_edit)[1] + font_30.size(text_nom_prenom)[1] + font(font_paragraphe,40,True).size("~ " + text_pseudo + " ~")[1],
+                      size = 30,
                       importer = True, font = font_paragraphe)            
         screen.blit(image_retour,rect_goback)
         screen.blit(surface_status_co,pos_surface_status_co)
@@ -2156,7 +2209,7 @@ with open(os.path.join("Ressource", "compte_connecter.txt"), "r+") as fichier:
     last_screen = screen.copy()
     fondd_ecran = (0,0,0)
     if contenu:
-        animation_demarrage_application.start_anime(last_screen,fondd_ecran,20)  
+        animation_demarrage_application.start_anime(last_screen,20)  
         pseudo = contenu[0]
         mdp = contenu[1]
         try:
@@ -2206,7 +2259,7 @@ with open(os.path.join("Ressource", "compte_connecter.txt"), "r+") as fichier:
             creer_compte = False
             zone = 1
     else:
-        animation_demarrage_application.start_anime(last_screen,fondd_ecran,3) 
+        animation_demarrage_application.start_anime(last_screen,3) 
         pygame.time.wait(1500)
 animation_demarrage_application.stop_anime()   
 comic_sans_ms = pygame.font.SysFont("Comic Sans Ms", 20)
@@ -2279,7 +2332,10 @@ def gestion_event():
             continue
         
         time.sleep(0.1)
-    
+    try:
+        os.remove(os.path.join("Depot","depot.png"))
+    except:
+        pass
     print("bye")
     
 
@@ -2326,6 +2382,8 @@ while continuer:
         else:
             image_pp_user = pygame.transform.smoothscale(surf_image2,size_pp_user)
             screen.blit(image_pp_user,(x_pp,y_pp))
+        draw_text(user.pseudo, x = x_pp + size_pp_user[0] + 5, y = y_pp + size_pp_user[0]/2 - font(TNN,25,True).size(user.pseudo)[1]/2,
+                  color = (255,255,255),font = TNN, importer=True,size = 25)
     draw_text(accueil_complement, size = 14, color=blanc, x = w_origine/2 - font_chivo_14.size(accueil_complement)[0]/2,
               y = 5, importer= True, font=chivo_titre)
     title(accueil)

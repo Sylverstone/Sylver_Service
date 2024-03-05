@@ -136,6 +136,7 @@ class Color:
         self.fond_un_login = (142,142,142)
         self.fond_deux_login = (30,30,30)
         self.fond_contenaire_page_tuto = (142,142,142)
+        self.bleu_pal = (158,155,255)
     
     
 class Animation:
@@ -146,7 +147,7 @@ class Animation:
             text_chargement (str, optional): Texte du chargement Defaults to "Chargement".
             id_ (int, optional): id representant si l'animation est situé dans un endroit bloquant ou non. Defaults to 1.
     """
-    def __init__(self,screen : pygame.Surface,text_chargement : str = "Chargement",id_ : int = 1, color = (0,0,0),ombre = False,font_name = pw_christmas_candies,size_text = 25,importer = True):
+    def __init__(self,screen : pygame.Surface,text_chargement : str = "Chargement",id_ : int = 1, color = (0,0,0),ombre = False,font_name = apple_titre,size_text = 18,importer = True):
         self.screen = screen
         self.texte = text_chargement
         self.running = True
@@ -159,7 +160,7 @@ class Animation:
         self.importer = importer
         self.ombre = ombre
         
-    def start_anime(self,last_screen,fond_ecran,delay = 0):
+    def start_anime(self,last_screen,delay = 0):
         """Fonction démarrant une animation dans une situation bloquante
             (situation bloquant : le chargement se fait en parallèle du code)
         Args:
@@ -169,7 +170,7 @@ class Animation:
         """
         self.running = 1
         self.id_ = 0
-        th = threading.Thread(target=self.animate, args=(fond_ecran,last_screen, "",delay),daemon=True)
+        th = threading.Thread(target=self.animate, args=(None,last_screen, "",delay),daemon=True)
         th.start()
         
     def animate(self,fond_ecran : list,last_screen : pygame.Surface= None,ajout_decriture :str = None, delay = 0):
@@ -190,7 +191,7 @@ class Animation:
             screen.fill(fond_ecran,rect_a_update)            
             draw_text(self.texte + point +"\n"+ajout_decriture,center_multi_line=True,
                       size = self.size_text,font = self.nom_font,
-                      y = screen.get_rect()[3] - 80,contener=screen,
+                      y = screen.get_rect()[3] - 2*self.font.size(self.texte + point)[1],contener=screen,
                       color = self.color,
                       importer=self.importer, ombre = self.ombre)
         else:
@@ -864,8 +865,6 @@ class Gerer_requete(User):
                 path = os.path.join(dir,f"{nom_tuto} par {auteur}{ext}")
                 document = Doc(path,doc,nom_tuto,auteur,ext)
                 document.start()
-            else:
-                Gerer_requete.message("Plus jamais tu fais ça")
         else:
             path = doc
             document = Doc(path)
@@ -908,7 +907,36 @@ class Gerer_requete(User):
         root.withdraw()
         tkinter.messagebox.showerror("Erreur","WOW ! Une erreur a eu lieu")
         root.destroy()
-    
+        
+    @staticmethod
+    def look_for_user_pp(pseudo):
+        no_connection = False
+        try:
+            data_recup = [None]
+            if look_for_connection():
+               with connection_principale.cursor() as cursor:
+                   request = f"SELECT photo_profil,rect_photo_profil FROM utilisateur WHERE pseudo = '{pseudo}'"
+                   cursor.execute(request)
+                   data_recup = cursor.fetchone()
+            else:
+                no_connection = True
+        except sql.Error as err:
+            print(err)
+            no_connection = False
+            print("erreur")
+        except noConnection as e:
+            print(e)
+            no_connection = True
+            
+        except Exception as e:
+            print(e)
+            no_connection = True
+            print("raise")
+        finally:
+            if not no_connection:
+                return data_recup
+            raise noConnection("l")
+        
     @staticmethod
     def connection_failed():
         """Fonction permettant d'afficher une erreur de connection"""
