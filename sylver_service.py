@@ -1,9 +1,10 @@
-from tkinter import NONE
-import pygame,os,datetime,sys,threading,keyboard,time
-from Sylver_class_import import Color,Gerer_requete,User,noFileException, userNonCharger, noConnection,Animation,status_connection
+import pygame,os,datetime,sys,threading,keyboard,time,math,ctypes
+from Sylver_class_import import Gerer_requete,User,noFileException, userNonCharger, noConnection,status_connection
+from Animation import Animation
+from Color import Color
 from Resize_image import AnnuleCropPhoto, resizeImage
 from font_import import *
-import math
+
 
 #reglage de l'ecran
 os.environ['SDL_VIDEO_CENTERED'] = '1'
@@ -26,6 +27,10 @@ animation_ouverture = Animation(screen, text_chargement = "Ouverture")
 animation_demarrage_application = Animation(screen,color = (255,255,255), text_chargement="Sylver.service")
 #palette de couleur qui regroupe toute les couleurs de l'app
 
+#preparation imag
+rect_goback = pygame.Rect(5,5,50,50)
+image_retour = pygame.image.load(os.path.join("Image","Icone_retour.png"))
+image_retour = pygame.transform.smoothscale(image_retour,(rect_goback.w,rect_goback.h))
 
 def verification_size(contenaire : pygame.Rect, nom_font : pygame.font, size : int, texte : str,importer : bool = True, id = 0):
     """Fonction récursive permettant de reduire la taille d'un texte si il est trop grand
@@ -42,8 +47,6 @@ def verification_size(contenaire : pygame.Rect, nom_font : pygame.font, size : i
             return verification_size(contenaire,nom_font,size,texte,importer)
         else:
             return size
-    
-        
     
 def draw_text(text, font = "Comic Sans Ms", color = (0,0,0), x = 0, y = 0,reference_center_x = None,contener = screen,size = 20,importer = False, center_multi_line_y = False, ombre = False,center_multi_line = False):
     """Fonction affichant un texte a l'écran
@@ -221,9 +224,8 @@ def ecrire_tuto(user : User | None):
                         "can_do_multiple_lines" : True,"can_write" : True, "base" : "Contenu", "all_size" : 0,"active" : False,"rect" : rect_surf_ecrit,"time": 0, "take_time" : False}
     }
     menos = False #indique si le dernier effacement a supprimer uneligne
-    rect_goback = pygame.Rect(5,5,50,50)
-    image_retour = pygame.image.load("Image/Icone_retour.png")
-    image_retour = pygame.transform.smoothscale(image_retour,(rect_goback.w,rect_goback.h))
+    
+    
     go_back = False
     rect_a_ne_pas_depasser = rect_screen
     rect_a_ne_pas_depasser.w -= (image_retour.get_width() * 2)
@@ -438,9 +440,6 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
     """
     global continuer
     global fond_nav
-    rect_goback = pygame.Rect(5,5,50,50)
-    image_retour = pygame.image.load("Image/Icone_retour.png")
-    image_retour = pygame.transform.smoothscale(image_retour,(rect_goback.w,rect_goback.h))
     go_back = False
     width = w_origine - 50
     height = h_origine - 200
@@ -465,9 +464,6 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
     if id_ == 0:
         with open("./Ressource/fichier_info.txt", "r+",encoding="utf-8") as fichier:
             text_info = fichier.read().replace("\n", " ")
-        """text_info = text_info.replace("Ã©","é")
-        text_info = text_info.replace("Ã¨","è")
-        text_info = text_info.replace("Ãª","ê")"""
     size_title = verification_size(rect_a_ne_pas_depasser,chivo_titre,40,text_title,True)
     size_max = width
     i = 0
@@ -738,7 +734,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                     rect_no_depasse = pygame.Rect(0,0,long_case-30-font_30.size(text_date)[0],0)
                     size_ = verification_size(rect_no_depasse,font_paragraphe,30,f"{nom_projet} par {ecrit_auteur}",True)
                     draw_text(color = color_auteur,contener = surface,
-                              text = f"{nom_projet} par {ecrit_auteur}", x = 10,
+                              text = f"{nom_projet} - par {ecrit_auteur}", x = 10,
                               y = 0, font = font_paragraphe,
                               size = size_, importer = True)
                     draw_text(color = blanc,contener = surface,
@@ -760,7 +756,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                 access = False
                 flop_de_recherche = True
                 Gerer_requete.error_occured()
-    print("n")
+                
     def start_tuto(data):
         """Fonction permettant de lancer le tuto
 
@@ -852,9 +848,6 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
     global have_supprime
     have_supprime = False
     finish = False
-    rect_goback = pygame.Rect(5,15,50,50)
-    image_retour = pygame.image.load("Image/Icone_retour.png")
-    image_retour = pygame.transform.smoothscale(image_retour,(rect_goback.w,rect_goback.h))
     go_back = False
     font_paragraphe = apple_titre
     font_40 = pygame.font.Font(font_paragraphe, 40)
@@ -890,7 +883,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
     surface_type_recherche = pygame.Surface((100,60), pygame.SRCALPHA)
     indice_type = 0
     text_rechercher = "Recherche par"
-    rect_aide = pygame.Rect(w_origine - 50 - 5, 15, 50,50)
+    rect_aide = pygame.Rect(w_origine - 50 - 5, 5, 50,50)
     image_aide = pygame.image.load(os.path.join("Image","icone_interrogation.png"))
     image_aide = pygame.transform.smoothscale(image_aide,(rect_aide.w,rect_aide.h))
     #boucle principale
@@ -979,8 +972,17 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                     reponse = User.confirm_open()
                     if reponse:
                         animation_ouverture.start_anime(last_screen)
-                        Gerer_requete.demarrer_fichier(doc = os.path.join("Ressource","SYLVER.docx"),with_path=True,ext = None)
-                        animation_ouverture.stop_anime()
+                        try:
+                            Gerer_requete.demarrer_fichier(doc = os.path.join("Ressource","SYLVER.docx"),with_path=True,ext = None)
+                        except OSError as e:
+                            print(e)
+                            Gerer_requete.fail_open()
+                        except Exception as e:
+                            print(e)
+                            Gerer_requete.error_occured()
+                        finally:
+                            animation_ouverture.stop_anime()
+
             if event.type == pygame.QUIT:
                 continuer = False
                 break
@@ -1143,6 +1145,10 @@ def compte():
         with open("Ressource/compte_connecter.txt", "r") as fichier:
             return len(fichier.read().splitlines()) != 0
         
+    def desactiver_les_autres_input(key,value):
+        pass
+        
+                        
     text_edit = "Clickez pour editer"
     text_creer_compte = "Bienvenue parmis nous ! Creez votre compte :)"
     text_con_compte = "Bon retour parmis nous ! Connectez vous :)"
@@ -1150,7 +1156,6 @@ def compte():
     rect_pas_depasser.w -= (20+ 50)
     size_titre = verification_size(rect_pas_depasser,chivo_titre,60,text_creer_compte,True)
     global continuer,size_grand
-    rect_goback = pygame.Rect(5,5,50,50)
     barre_type = pygame.Surface((2,20))
     go_back = False
     creer_compte = True if not connect else False
@@ -1236,6 +1241,8 @@ def compte():
                 }
                 ]
     
+    schema_input = [["input_nom","input_age","input_pseudo","input_mdp"],
+                    "input_pseudo","input_mdp"]
     if look_for_connection_tools():
         with open("./Ressource/compte_connecter.txt","r") as fichier:
             li = fichier.read().splitlines()
@@ -1365,8 +1372,6 @@ def compte():
                             pygame.transform.scale(pygame.image.load(os.path.join("image","icone_restez_co_actif.png")),(rect_save_user_data.w,rect_save_user_data.h))]
     icone_restez_co = liste_image_restez_co[0]
     changement_image = 0
-    image_retour = pygame.image.load("Image/Icone_retour.png")
-    image_retour = pygame.transform.smoothscale(image_retour,(rect_goback.w,rect_goback.h))
     zone = 0 if creer_compte else 1 #permet une logique par rapport a creer_compte
     cursor_position = 0 
     message_photo_profil = ""
@@ -1376,7 +1381,9 @@ def compte():
         mouse_click = pygame.mouse.get_pressed()[0]
         screen.fill(fond_ecran)
         
-        for event in pygame.event.get():            
+        for event in pygame.event.get():  
+            if event.type == pygame.QUIT:
+                continuer = False          
             if rect_valider.collidepoint(mouse):
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     creer_compte = not creer_compte
@@ -1434,6 +1441,7 @@ def compte():
                             print(err)    
                         except Exception as e:
                             print(e)     
+                            Gerer_requete.error_occured()
                                            
                     except noFileException:
                         pass
@@ -1468,11 +1476,11 @@ def compte():
                                 break
                         except noConnection:
                             Gerer_requete.connection_failed()   
-                            animation_mise_en_ligne.stop_anime()
                         except:
                             Gerer_requete.error_occured()  
+                        finally:
                             animation_mise_en_ligne.stop_anime()
-                            
+
                 elif rect_maketuto.collidepoint(mouse):
                     if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                         ecrire_tuto(user)
@@ -1645,9 +1653,33 @@ def compte():
                                         for key2,value in dict_input[zone].items():
                                             if key2 != key:
                                                 value["active"] = False
-                                                value["input"] = value["default"] if value["input"] == "" else value["input"]                     
+                                                value["input"] = value["default"] if value["input"] == "" else value["input"]
+                                                     
                         if value["active"]:
                             if event.type == pygame.KEYDOWN:
+                                if event.key == pygame.K_TAB:
+                                    position = schema_input[zone].index(key)
+                                    print("key",key)
+                                    if position == len(schema_input[zone]) - 1:
+                                        next_input = 0
+                                    else:
+                                        next_input = position + 1
+                                    key_ = schema_input[zone][next_input]
+                                    dict_input[zone][key_]["active"] = True
+                                    if key_ == "input_mdp":
+                                        for key2,value_ in dict_input[zone].items():
+                                            if key2 != key_:
+                                                value_["active"] = False
+                                                value_["input"] = value_["default"] if value_["input"] == "" else value_["input"]
+                                    else:
+                                        for key2,value_ in dict_input[zone].items():
+                                            if key2 != key_:
+                                                value_["active"] = False
+                                                if key2 != "input_mdp":
+                                                    value_["input"] = value_["default"] if value_["input"] == "" else value_["input"]
+                                                else:
+                                                    value_["input_visible"] = value_["default"] if value_["input_visible"] == "" else value_["input_visible"]
+                                                    value_["input_cache"] = value_["default"] if value_["input_cache"] == "" else value_["input_cache"]
                                 if event.key == pygame.K_LEFT:
                                     cursor_position -= 1
                                     print("right")
@@ -2082,9 +2114,6 @@ def compte():
         
 def request():
     global continuer
-    rect_goback = pygame.Rect(5,5,50,50)
-    image_retour = pygame.image.load("image/Icone_retour.png")
-    image_retour = pygame.transform.smoothscale(image_retour,(rect_goback.w,rect_goback.h))
     go_back = False
     while continuer:
         mouse = pygame.mouse.get_pos()
@@ -2093,8 +2122,7 @@ def request():
             if event.type == pygame.QUIT:
                 continuer = False
             if rect_goback.collidepoint(mouse) and (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1):
-                go_back = True        
-        
+                go_back = True              
         text = "Alors déjà bien jouer !\nMais y'a rien ici sauf un gris bizarre\nCette partie de l'application devrait être faite bientot !\n Ou pas !\n \
             si elle est effectivement faite, ce sera une page qui regrouperait toute les annonces de tuto laissez par des utilisateurs ! :)"
         draw_text(text,color = (255,255,255), center_multi_line=True,x = 0,y = 0, center_multi_line_y= True,ombre = True)
@@ -2192,14 +2220,13 @@ continuer = True
 #variable qui va permettre de savoir si l'utilisateur est connecté
 connect = False
 ##proeccessus de verification si l'uti
-chemin_image_logo_app = os.path.join("Image","Logo_app.png")
+chemin_image_logo_app = os.path.join("Image","Icone_accueil.png")
 image_logo_app = pygame.image.load(chemin_image_logo_app)
 width_logo,height_logo = image_logo_app.get_width(),image_logo_app.get_height()
 r = 1.5 #ration d'aggrandissement
 image_logo_app = pygame.transform.smoothscale(image_logo_app,(width_logo * r,height_logo*r))
 screen.blit(image_logo_app,(w_origine/2 - (width_logo*r)/2,h_origine/2 - (height_logo*r)/2))
 pygame.display.update()
-
 with open(os.path.join("img_base","photo_profil_user.png"),"rb") as fichier:
         pp_base = fichier.read()
 size_grand = (h_origine * 29/100,)*2 #31% de la taille originel
@@ -2229,9 +2256,7 @@ with open(os.path.join("Ressource", "compte_connecter.txt"), "r+") as fichier:
                     fichier.write(user.photo_profil)
                 else:
                     fichier.write(pp_base)
-                    
             #pygame.time.delay(2000)
-            
             if user.photo_profil == pp_base:
                 image_pp = pygame.image.load(chemin_pp)
                 image_pp = pygame.transform.smoothscale(image_pp,size_grand)
@@ -2267,19 +2292,18 @@ csm = "Comic Sans Ms"
 arial = "Arial"
 
 input_apple = pygame.font.Font(apple_titre,40)
-beackman = r"font\Beckman.otf"
-TNN = r"font\TNN.ttf"
+
 blanc = (255,255,255)
 noir = (0,0,0)
 proposition = ["MENU","COMPTE","ANNONCE"]
 etat = ["alpha","alpha","beta"]
-size_box_grand_w = 270
-size_box_grand_h = 100
-size_box_w = 200
-size_box_h = 80
+size_box_grand_w = w_origine/5.5
+size_box_grand_h = h_origine/8
+size_box_w = size_box_grand_w * (1-30/100)
+size_box_h = size_box_grand_h * (1-20/100)
 millieu_w = (w_origine/2) - size_box_w/2
 millieu_h = (h_origine/2) - size_box_h/2
-pos = [[w_origine/2 - size_box_grand_w/2, h_origine/2 - size_box_grand_h/2 - size_box_h - 20],
+pos = [[w_origine/2 - size_box_grand_w/2, h_origine/2 - size_box_grand_h/2 - size_box_h - 30],
        [w_origine/2 - size_box_w/2, h_origine/2 - size_box_h/2],
        [w_origine/2 - size_box_w/2, h_origine/2 - size_box_h/2 + size_box_h +20]]
 for liste in pos:
