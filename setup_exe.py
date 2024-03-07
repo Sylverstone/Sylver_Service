@@ -22,7 +22,8 @@ build_options = {
         ("Resize_image.py","Resize_image.py"),
         (".env", ".env"),
         ("font_import.py","font_import.py"),
-        ("Depot","Depot")
+        ("Depot","Depot"),
+        ("Exception.py","Exception.py")
     ],
 }
 

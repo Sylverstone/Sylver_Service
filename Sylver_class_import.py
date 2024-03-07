@@ -1,11 +1,12 @@
 
-from multiprocessing import connection
 import time
 import pygame
 import tkinter.filedialog,tkinter.messagebox
 import pymysql as sql
 import os,datetime,threading,dotenv
 from font_import import *
+from Exception import *
+
 
 
 path = ".env"
@@ -85,10 +86,6 @@ class status_connection:
                     connection_principale = None
                     pygame.draw.rect(self.screen,(255,0,0),(0,0,5,5), 0,50)
                         
-
-              
-print(connection_principale)
-
 def look_for_connection():
     """Fonction verifiant si la connexion est apte a être utilisé, si Non : return False, si Oui : return True
 
@@ -114,6 +111,7 @@ def look_for_connection():
                 print("connection failed : ",e)
                 connection_principale = None
                 return False
+            
 class Doc:    
     """Class représentant un fichier
 
@@ -179,88 +177,8 @@ class Doc:
             Gerer_requete.fail_open()
         else:
             #no erreur
-            print("document started")           
-   
-            
-class noFileException(Exception):
-    """Class reprensentant aucun fichier choisi
-
-        Args:
-            what (str): Message d'erreur
-    """   
-    def __init__(self, what : str) -> None:
-        self.what = what
-        super().__init__(self.what)
-  
-  
-
-class UserNotExist(Exception):
-    """Class reprensentant que aucun Utilisateur n'a été trouvé
-
-        Args:
-            what (str): Message d'erreur
-    """   
-    def __init__(self, what : str) -> None:
-        self.what = what
-        super().__init__(self.what) 
-        
-class userNonCharger(Exception):
-    """Classe representant un utilisateur non chargé
-
-        Args:
-            what (str): Message d'erreur
-    """
-    def __init__(self, what) -> None:        
-        self.what = what
-        super().__init__(self.what)
-    
-
-class noConnection(Exception):
-    """Class representant une erreur de connection
-
-        Args:
-            what (str): Message d'erreur
-    """
-    def __init__(self, what) -> None:
-        
-        self.what = what
-        super().__init__(self.what)
-
-def draw_text(text, font = "Comic Sans Ms", color = (0,0,0), x = 0, y = 0,contener : pygame.Surface = None,size = 20,importer = False, center_multi_line_y = False, ombre = False,center_multi_line = False):
-    """Fonction affichant un texte a l'écran
-
-    Args:
-        text (str): texte a afficher
-        font (str, optional): nom de la police a afficher. Defaults to "Comic Sans Ms".
-        color (tuple, optional): couleur du texte a afficher. Defaults to (0,0,0).
-        x (int, optional): position en x du texte a afficher. Defaults to 0.
-        y (int, optional): position en y du texte a afficher. Defaults to 0.
-        reference_center_x (pygame.Surface, optional): Surface sur laquelle le texte doit être centré en x. Defaults to None.
-        contener (pygame.Surface, optional): Surface sur laquelle le texte doit être afficher. Defaults to screen.
-        size (int, optional): taille du texte a afficher. Defaults to 20.
-        importer (bool, optional): Variable indiquant si la varible n'est pas native a pygame ou non. Defaults to False.
-        center_multi_line_y (bool, optional): Variable indiquant si le texte est centrer en y (pour les textes avec \\n). Defaults to False.
-        ombre (bool, optional): Variable indiquant si le texte doit comporter une ombre. Defaults to False.
-        center_multi_line (bool, optional): Variable indiquant si le texte est centrer en x (pour les textes avec \\n). Defaults to False.
-    """
-    w_origine = contener.get_rect()[2]
-    text = str(text) #transformer le texte en str 
-    all_text = text.split("\n")
-    if not importer:
-        font_ = pygame.font.SysFont(font, size)
-    else:
-        font_ = pygame.font.Font(font,size)
-    #boucle pour afficher tout les textes de all_text
-    for enum,text in enumerate(all_text):
-        if center_multi_line:
-            x = w_origine/2 - font_.size(text)[0]/2
-        if ombre:
-            text_ = font_.render(str(text), True, (0,0,0))            
-            contener.blit(text_, (x+2,y+(size+2)*enum))
-        text_ = font_.render(str(text), True, color)
-        contener.blit(text_, (x,y+(size + 2)*enum))     
-        
-  
+            print("document started")      
+                 
 class User:
     """Class Representant le compte de l'utilisateur
 
@@ -309,7 +227,7 @@ class User:
         Returns:
             boolean: Renvoie la reponse de l'utilisateur (True or False)
         """
-        ans = tkinter.messagebox.askyesno(title = "Word", message = f"Es-tu pour l'ouverture de {open} ?")
+        ans = tkinter.messagebox.askyesno(title = open, message = f"Ouvrir {open} ?")
         return ans
     
     @staticmethod
@@ -501,8 +419,7 @@ class User:
                     cursor.execute(request)
                     data = cursor.fetchone()
                     if data == None:
-                        user_do_not_exist = True
-                    
+                        user_do_not_exist = True                    
             else:
                 no_connection = True
                 raise noConnection("connection failed")
@@ -524,17 +441,6 @@ class User:
                     raise UserNotExist("Auncun utilisateur trouvée")
             else:
                 raise noConnection("connection failed")
-            """try:
-                connection_principale.ping(False)
-                if mdp != data[7]:
-                    raise userNonCharger("mauvais mdp") 
-            except userNonCharger:
-                raise userNonCharger("mauvais mdp")
-            except:
-                raise noConnection("connection failed")
-            else:
-                return User(data[1],data[2],data[5],data[6],data[7],data[4],data[3],data[8])"""
-            
             
     @staticmethod
     def verifier_pseudo(pseudo)->bool:
