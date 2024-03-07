@@ -1,5 +1,6 @@
 import os
-
+csm = "Comic Sans Ms"
+arial = "Arial"
 chivo_titre = r"font\chivo\Chivo-Black.otf" #refaire le path
 dream_orphans = r"font\dream_orphans\Dream Orphans.otf" #refaire le path
 apple_titre = r"font\apple_garamond\AppleGaramond-Light.ttf" #refaire le path

@@ -191,7 +191,18 @@ class noFileException(Exception):
     def __init__(self, what : str) -> None:
         self.what = what
         super().__init__(self.what)
-   
+  
+  
+
+class UserNotExist(Exception):
+    """Class reprensentant que aucun Utilisateur n'a été trouvé
+
+        Args:
+            what (str): Message d'erreur
+    """   
+    def __init__(self, what : str) -> None:
+        self.what = what
+        super().__init__(self.what) 
         
 class userNonCharger(Exception):
     """Classe representant un utilisateur non chargé
@@ -481,6 +492,7 @@ class User:
             User: Renvoie la classe User du compte
         """
         no_connection = False
+        user_do_not_exist = False
         try:
             if look_for_connection():
                 with connection_principale.cursor() as cursor:
@@ -488,6 +500,9 @@ class User:
                     request =f"SELECT * FROM `utilisateur` WHERE pseudo = '{pseudo}';"
                     cursor.execute(request)
                     data = cursor.fetchone()
+                    if data == None:
+                        user_do_not_exist = True
+                    
             else:
                 no_connection = True
                 raise noConnection("connection failed")
@@ -500,10 +515,13 @@ class User:
             
         finally:
             if not no_connection:
-                if mdp != data[7]:
-                    raise userNonCharger("mauvais mdp")
+                if user_do_not_exist == False:
+                    if mdp != data[7]:
+                        raise userNonCharger("mauvais mdp")
+                    else:
+                        return User(data[1],data[2],data[5],data[6],data[7],data[4],data[3],data[8])
                 else:
-                    return User(data[1],data[2],data[5],data[6],data[7],data[4],data[3],data[8])
+                    raise UserNotExist("Auncun utilisateur trouvée")
             else:
                 raise noConnection("connection failed")
             """try:
@@ -848,5 +866,4 @@ class Gerer_requete(User):
         tkinter.messagebox.showerror("Erreur","Vous ne pouvez pas signaler sans être connecté !")
           
 if __name__ == "__main__":
-    User.confirm_close()
-    print("fini")
+    Gerer_requete.log_user("Fake user","None")
