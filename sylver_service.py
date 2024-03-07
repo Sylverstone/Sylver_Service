@@ -1,11 +1,10 @@
-from enum import verify
-from re import X
-import pygame,os,datetime,sys,threading,keyboard,time,math,ctypes
-from Sylver_class_import import Gerer_requete,User, UserNotExist,noFileException, userNonCharger, noConnection,status_connection
+import pygame,os,datetime,sys,threading,keyboard,time,math
+from Sylver_class_import import Gerer_requete,User,status_connection
 from Animation import Animation
 from Color import Color
 from Resize_image import AnnuleCropPhoto, resizeImage
 from font_import import *
+from Exception import *
 
 
 
@@ -20,18 +19,19 @@ resolution = pygame.display.Info()
 width = resolution.current_w
 height = resolution.current_h
 screen = pygame.display.set_mode((width, height), pygame.FULLSCREEN | pygame.SCALED | pygame.HWSURFACE | pygame.DOUBLEBUF)
-rect_screen = screen.get_rect()
-palette_couleur = Color()
-#class animation qui servira a declencher des chargement de deux maniere, soit a des periodes bloquante ou non
-animation_chargement = Animation(screen,color = (255,)*3,ombre = True)
-animation_mise_en_ligne = Animation(screen, text_chargement="Mise en ligne",color = (255,)*3,ombre=True)
-animation_connection = Animation(screen, text_chargement = "Connection",color = palette_couleur.fond_case_login,ombre = True)
-animation_ouverture = Animation(screen, text_chargement = "Ouverture")
-animation_demarrage_application = Animation(screen,color = (255,255,255), text_chargement="Sylver.service")
-#palette de couleur qui regroupe toute les couleurs de l'app
 taille_origine = pygame.display.Info()
 w_origine = taille_origine.current_w
 h_origine = taille_origine.current_h
+rect_screen = screen.get_rect()
+palette_couleur = Color()
+#class animation qui servira a declencher des chargement de deux maniere, soit a des periodes bloquante ou non
+animation_chargement = Animation(screen,color = (255,)*3,ombre = True, W = w_origine)
+animation_mise_en_ligne = Animation(screen, text_chargement="Mise en ligne",color = (255,)*3,ombre=True,W = w_origine)
+animation_connection = Animation(screen, text_chargement = "Connection",color = palette_couleur.fond_case_login,ombre = True,W = w_origine)
+animation_ouverture = Animation(screen, text_chargement = "Ouverture", color = (255,)*3,ombre=True,W = w_origine)
+animation_demarrage_application = Animation(screen,color = (255,255,255), text_chargement="Sylver.service",W = w_origine)
+#palette de couleur qui regroupe toute les couleurs de l'app
+
 taille_icone = (50,50)
 #preparation imag
 rect_goback = pygame.Rect(5,5,*taille_icone)
@@ -627,9 +627,12 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
     processing = False             
     display = False
     global zone_page
+    longueur_recherche = w_origine -400
+    surface_rechercher = pygame.Surface((longueur_recherche, 70), pygame.SRCALPHA)
+    rect_surf_rechercher = pygame.Rect(100,fond_nav.get_height() + 50,surface_rechercher.get_width(),surface_rechercher.get_height())
     zone_page = 0
     long_case = w_origine/2 - 20
-    depart_tuto = 350
+    depart_tuto = rect_surf_rechercher.bottom + 60
     separation_tuto = 10
     max_par_page = 12
     taille_reference = h_origine - depart_tuto  - 100
@@ -664,7 +667,6 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                   x = w_origine/2 - font(chivo_titre,30,False).size(text)[0]/2,y = rect_surf_rechercher.y + rect_surf_rechercher.h + 10,
                   font = chivo_titre,size = 30
                   ,ombre = True)
-        
         if access:
             try:
                 
@@ -858,8 +860,8 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
     font_40 = pygame.font.Font(font_paragraphe, 40)
     font_30 = pygame.font.Font(font_paragraphe,30)
     font_20 = pygame.font.Font(font_paragraphe,20)
-    longueur_recherche = w_origine - 400
-    surface_rechercher = pygame.Surface((longueur_recherche, 70), pygame.SRCALPHA)
+    
+
     #represente le btn qui efface la recherche
     rect_btn = pygame.Rect(0,0,50,40)
     rect_rechearch = pygame.Rect(100,fond_nav.get_height() + 50,longueur_recherche,70)
@@ -904,7 +906,6 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
     global enter_pressed
     enter_pressed = False
     not_enter = False #sert juste a bloquer l'acces
-    rect_surf_rechercher = pygame.Rect(100,fond_nav.get_height() + 50,surface_rechercher.get_width(),surface_rechercher.get_height())
 
     while continuer:
         if id_ != 0 and not not_enter:
@@ -1960,7 +1961,6 @@ def compte():
                 btn_disconnect.y = surface_fond_user_co.get_height() + y_photo2 - 20 - btn_disconnect.h - 10
                 surface_fond_user_co_back = pygame.Surface((surface_fond_user_co.get_width() + taille_en_plus,
                                                             surface_fond_user_co.get_height() + taille_en_plus), pygame.SRCALPHA)
-
                 text_postimg = "POSTEZ UN\n TUTO VISUEL !"
                 text_maketuto = "CREEZ UN\n TUTO EN TEXTE !"
                 coupage, line, size_y = make_line(text=text_postimg,font = font_25a, size_max = btn_postimg.get_width())
@@ -2407,16 +2407,17 @@ surface_status_co = pygame.Surface((50,50), pygame.SRCALPHA)
 surface_status_co.fill((0,0,0,0))
 pos_surface_status_co = (w_origine-10,h_origine-10)
 size_for_accueil = verification_size(pygame.Rect(0,0,w_origine * (1-60/100),0),chivo_titre,125,accueil,True)
+#Boucle principale de l'accueil
 while continuer:
     screen.fill(fond_ecran)
     if connect:
         text_user_co = f"Salut {user.pseudo} ravis de te voir :)"
         draw_text(text_user_co, x = w_origine/2 - font(chivo_titre,36,True).size(text_user_co)[0]/2,
-                  y = fond_nav.get_height() + 20, font = chivo_titre, color = blanc,
+                  y = fond_nav.get_height() + 10, font = chivo_titre, color = blanc,
                   size = 36, importer = True)
     else:
         draw_text(text_user_pas_co, x = w_origine/2 - font(chivo_titre,36,True).size(text_user_pas_co)[0]/2,
-                  y = fond_nav.get_height() + 20, font = chivo_titre, color = blanc,
+                  y = fond_nav.get_height() + 10, font = chivo_titre, color = blanc,
                   size = 36, importer = True)
     mouse = pygame.mouse.get_pos()    
     fond_nav.fill(palette_couleur.fond_bar_de_navigation)
@@ -2440,7 +2441,7 @@ while continuer:
                   color = (255,255,255),font = TNN, importer=True,size = 25)
     draw_text(accueil_complement, size = 14, color=blanc, x = w_origine/2 - font(chivo_titre,14,True).size(accueil_complement)[0]/2,
               y = 5, importer= True, font=chivo_titre)
-    title(accueil, size = size_for_accueil, y = fond_nav.get_height() - font(chivo_titre, size_for_accueil,True).size(accueil)[1] + 10)
+    title(accueil, size = size_for_accueil, y = fond_nav.get_height()/2 - font(chivo_titre, size_for_accueil,True).size(accueil)[1]/2)
     for event in pygame.event.get():        
         if event.type == pygame.KEYDOWN:
             pass

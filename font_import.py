@@ -1,4 +1,5 @@
 import os
+
 csm = "Comic Sans Ms"
 arial = "Arial"
 chivo_titre = r"font\chivo\Chivo-Black.otf" #refaire le path
