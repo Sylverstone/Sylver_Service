@@ -1,6 +1,5 @@
 import pygame,threading,time
 from font_import import *
-from Sylver_class_import import draw_text
 
 
 def font(font_name,size,importer = False):
@@ -24,6 +23,45 @@ def verification_size(contenaire : pygame.Rect, nom_font : pygame.font, size : i
         else:
             return size
 
+def draw_text(text, font = "Comic Sans Ms", color = (0,0,0), x = 0, y = 0,reference_center_x = None,contener = None,size = 20,importer = False, center_multi_line_y = False, ombre = False,center_multi_line = False):
+    """Fonction affichant un texte a l'écran
+
+    Args:
+        text (str): texte a afficher
+        font (str, optional): nom de la police a afficher. Defaults to "Comic Sans Ms".
+        color (tuple, optional): couleur du texte a afficher. Defaults to (0,0,0).
+        x (int, optional): position en x du texte a afficher. Defaults to 0.
+        y (int, optional): position en y du texte a afficher. Defaults to 0.
+        reference_center_x (pygame.Surface, optional): Surface sur laquelle le texte doit être centré en x. Defaults to None.
+        contener (pygame.Surface, optional): Surface sur laquelle le texte doit être afficher. Defaults to screen.
+        size (int, optional): taille du texte a afficher. Defaults to 20.
+        importer (bool, optional): Variable indiquant si la varible n'est pas native a pygame ou non. Defaults to False.
+        center_multi_line_y (bool, optional): Variable indiquant si le texte est centrer en y (pour les textes avec \\n). Defaults to False.
+        ombre (bool, optional): Variable indiquant si le texte doit comporter une ombre. Defaults to False.
+        center_multi_line (bool, optional): Variable indiquant si le texte est centrer en x (pour les textes avec \\n). Defaults to False.
+    """
+    
+    text = str(text) #transformer le texte en str 
+    all_text = text.split("\n")
+    if not importer:
+        font_ = pygame.font.SysFont(font, size)
+    else:
+        font_ = pygame.font.Font(font,size)
+    #boucle pour afficher tout les textes de all_text
+    
+    for enum,text in enumerate(all_text):
+        if center_multi_line:
+            if reference_center_x==None:
+                x = contener.get_rect()[2]/2 - font_.size(text)[0]/2
+            else:
+                x = reference_center_x.get_rect()[2]/2 - font_.size(text)[0]/2
+        if center_multi_line_y:
+            y = contener.get_rect()[3]/2 - font_.size(text)[1] * len(all_text)/2
+        if ombre:
+            text_ = font_.render(str(text), True, (0,0,0))            
+            contener.blit(text_, (x+1,y+(size+2)*enum))
+        text_ = font_.render(str(text), True, color)
+        contener.blit(text_, (x,y+(size + 2)*enum))
 class Animation:
     
     """Class permettant de generer une animation de chargement
@@ -37,7 +75,7 @@ class Animation:
         self.screen = screen
         self.texte = text_chargement
         self.running = True
-        self.size_text = verification_size(pygame.Rect(0,0,W/17,0),font_name,40,self.texte,True)
+        self.size_text = verification_size(pygame.Rect(0,0,W/16,0),font_name,22,self.texte,True)
         self.font = pygame.font.Font(font_name,self.size_text)
         self.nom_font = font_name        
         self.id_ = id_

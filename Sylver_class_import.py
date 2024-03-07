@@ -1,5 +1,4 @@
 
-import time
 import pygame
 import tkinter.filedialog,tkinter.messagebox
 import pymysql as sql

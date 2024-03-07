@@ -1950,29 +1950,40 @@ def compte():
             screen.blit(Surface_edit_photo,(rect_editer_photo.x,rect_editer_photo.y))
         else:
             if not element_page_user:
-                font_25a = pygame.font.SysFont(arial, 25, bold=False, italic=True)
-                btn_postimg = pygame.Surface((210,100),pygame.SRCALPHA)
+                size_for_case = verification_size(pygame.Rect(0,0,w_origine/7,0),arial,100,"TUTO EN TEXTE !",False)
+                font_for_case = font(arial,size_for_case,False)
+                btn_postimg = pygame.Surface((font_for_case.size("TUTO EN TEXTE !")[0] + 20,font_for_case.size("TUTO EN TEXTE !")[1] * 2 +30),pygame.SRCALPHA)
                 btn_maketuto = btn_postimg.copy()
-                surface_fond_user_co = pygame.Surface((btn_postimg.get_width() + 40 + btn_postimg.get_width() + 200, h_origine * (1-10/100)), pygame.SRCALPHA)
-                y_fond_surf_user_co = h_origine/2 - surface_fond_user_co.get_height()/2
-                y_photo2 = y_fond_surf_user_co + 10
-                #si cette surface est plus grande de 20pixel sur longueur et largeur, dcp sont x et y devra etre reculé de 10pixel pour les deux
-                taille_en_plus = 30
-                btn_disconnect.y = surface_fond_user_co.get_height() + y_photo2 - 20 - btn_disconnect.h - 10
-                surface_fond_user_co_back = pygame.Surface((surface_fond_user_co.get_width() + taille_en_plus,
-                                                            surface_fond_user_co.get_height() + taille_en_plus), pygame.SRCALPHA)
+                btn_disconnect.w = btn_postimg.get_width()
+                btn_disconnect.h = btn_postimg.get_height()
+                btn_disconnect.x = w_origine/2 - btn_disconnect.w/2
+                size_deconnexion = verification_size(pygame.Rect(0,0,btn_disconnect.w - 40,0),font_paragraphe,100,"Déconnexion",True)
+                
+
                 text_postimg = "POSTEZ UN\n TUTO VISUEL !"
                 text_maketuto = "CREEZ UN\n TUTO EN TEXTE !"
-                coupage, line, size_y = make_line(text=text_postimg,font = font_25a, size_max = btn_postimg.get_width())
-                coupage2, line2, size_y2 = make_line(text=text_maketuto,font = font_25a, size_max = btn_postimg.get_width())
+                coupage, line, size_y = make_line(text=text_postimg,font = font_for_case, size_max = btn_postimg.get_width())
+                coupage2, line2, size_y2 = make_line(text=text_maketuto,font = font_for_case, size_max = btn_postimg.get_width())
+                taille_texte_approximate = 160
+                hauteur_font_surf_co = (10 + size_grand[1] + taille_texte_approximate + btn_postimg.get_height() +60 + btn_disconnect.h + 10)
+                y_fond_surf_user_co = h_origine/2 - hauteur_font_surf_co/2
+                y_photo2 = y_fond_surf_user_co + 10
                 rect_postimg = pygame.Rect(w_origine/2 - 20 - btn_postimg.get_width(),
-                        y_photo2 + size_grand[1] + 150,
+                        y_photo2 + size_grand[1] + 160,
                         btn_postimg.get_width(),
                         btn_postimg.get_height())
                 rect_maketuto = pygame.Rect(w_origine/2 + 20,
-                        y_photo2 + size_grand[1] + 150,
+                        y_photo2 + size_grand[1] + 160,
                         btn_postimg.get_width(),
                         btn_postimg.get_height())
+                surface_fond_user_co = pygame.Surface((btn_postimg.get_width() + 40 + btn_postimg.get_width() + 200,hauteur_font_surf_co), pygame.SRCALPHA)
+                taille_en_plus = 30
+                surface_fond_user_co_back = pygame.Surface((surface_fond_user_co.get_width() + taille_en_plus,
+                                                            surface_fond_user_co.get_height() + taille_en_plus), pygame.SRCALPHA)
+                
+                rect_postimg.y = y_photo2 + size_grand[1] + 160
+                rect_maketuto.y = rect_postimg.y
+                btn_disconnect.y = rect_maketuto.bottom +60
                 element_page_user = True
             surface_fond_user_co.fill((0,0,0,0))
             surface_fond_user_co_back.fill((0,0,0,0))
@@ -2010,9 +2021,9 @@ def compte():
                       font = arial,fontz = font_25a,
                       contener = btn_maketuto,importer = False)
             """
-            draw_text(contener = btn_postimg,font = font_paragraphe, size = 30, importer = True, center_multi_line_y=True, center_multi_line=True,
+            draw_text(contener = btn_postimg,font = font_paragraphe, size = size_for_case, importer = True, center_multi_line_y=True, center_multi_line=True,
                       text = text_postimg, color = (255,255,255))
-            draw_text(contener = btn_maketuto,font = font_paragraphe, size = 30, importer = True, center_multi_line_y=True, center_multi_line=True,
+            draw_text(contener = btn_maketuto,font = font_paragraphe, size = size_for_case, importer = True, center_multi_line_y=True, center_multi_line=True,
                       text = text_maketuto, color = (255,255,255))
             pygame.draw.rect(btn_postimg,color_btn1,(0,0,btn_postimg.get_width(),btn_postimg.get_height()),1,20)
             pygame.draw.rect(btn_maketuto,color_btn2,(0,0,btn_maketuto.get_width(),btn_maketuto.get_height()),1,20)
@@ -2051,20 +2062,16 @@ def compte():
                     screen.blit(surface_ombre2,(
                         w_origine/2 + 20, y_photo2 + size_grand[1] + 150
                     ))    """        
-            screen.blit(btn_postimg,(
-                w_origine/2 - 20 - btn_postimg.get_width(), y_photo2 + size_grand[1] + 160
-            ))
-            screen.blit(btn_maketuto,(
-                w_origine/2 + 20, y_photo2 + size_grand[1] + 160
-            ))
+            screen.blit(btn_postimg,rect_postimg)
+            screen.blit(btn_maketuto,rect_maketuto)
             #image_pp = pygame.transform.smoothscale(image_pp,size_grand)
             rect_editer_photo.x = x_photo2 + size_grand[0]/2 - font_20.size(text_edit)[0]/2
             rect_editer_photo.y = y_photo2 + size_grand[1] + 5
             pygame.draw.rect(screen,palette_couleur.fond_case_login,btn_disconnect,0,20)
             couleur_contour_disconnect = (255,255,255) if not btn_disconnect.collidepoint(mouse) else (0,0,0)
             pygame.draw.rect(screen,couleur_contour_disconnect,btn_disconnect,1,20)
-            draw_text("Déconnexion", x = btn_disconnect.x + btn_disconnect.w/2 - font(font_paragraphe,40,True).size("Déconnexion")[0]/2, y = btn_disconnect.y + btn_disconnect.h/2 - font(font_paragraphe,40,True).size("Déconnexion")[1]/2,
-                      font = font_paragraphe, importer = True, color = blanc, size = 40)
+            draw_text("Déconnexion", x = btn_disconnect.x + btn_disconnect.w/2 - font(font_paragraphe,size_deconnexion,True).size("Déconnexion")[0]/2, y = btn_disconnect.y + btn_disconnect.h/2 - font(font_paragraphe,size_deconnexion,True).size("Déconnexion")[1]/2,
+                      font = font_paragraphe, importer = True, color = blanc, size = size_deconnexion)
             if user.rect_pp == None:
                 pygame.draw.ellipse(surf2g, (255, 255, 255), (0,0,*size_grand))            
                 surf3g.blit(surf2g, (0, 0))
@@ -2250,7 +2257,7 @@ screen.blit(image_logo_app,(w_origine/2 - (width_logo*r)/2,h_origine/2 - (height
 pygame.display.update()
 with open(os.path.join("img_base","photo_profil_user.png"),"rb") as fichier:
         pp_base = fichier.read()
-size_grand = (h_origine * 29/100,)*2 #31% de la taille originel
+size_grand = (h_origine * (1-75/100),)*2 #diminution de 75% de la taille originel
 #processus de verification de si l'utilisateur est connecter, si oui, connexion au compte
 with open(os.path.join("Ressource", "compte_connecter.txt"), "r+") as fichier:
     contenu = fichier.read().splitlines()
