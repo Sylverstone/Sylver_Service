@@ -2,6 +2,28 @@ import pygame,threading,time
 from font_import import *
 from Sylver_class_import import draw_text
 
+
+def font(font_name,size,importer = False):
+    if not importer:
+        return pygame.font.SysFont(font_name,size)
+    return pygame.font.Font(font_name,size)
+
+def verification_size(contenaire : pygame.Rect, nom_font : pygame.font, size : int, texte : str,importer : bool = True, id = 0):
+    """Fonction récursive permettant de reduire la taille d'un texte si il est trop grand
+
+    Args:
+        contenaire (pygame.Rect): Rect que le texte ne doit pas dépasser
+        nom_font (pygame.font): nom de la police utilisée
+        size (int): taille du texte original
+        texte (str): texte a afficher
+    """
+    if id == 0:
+        if contenaire.w <= font(nom_font,size,importer).size(texte)[0]:
+            size -= 2
+            return verification_size(contenaire,nom_font,size,texte,importer)
+        else:
+            return size
+
 class Animation:
     
     """Class permettant de generer une animation de chargement
@@ -11,13 +33,13 @@ class Animation:
             text_chargement (str, optional): Texte du chargement Defaults to "Chargement".
             id_ (int, optional): id representant si l'animation est situé dans un endroit bloquant ou non. Defaults to 1.
     """
-    def __init__(self,screen : pygame.Surface,text_chargement : str = "Chargement",id_ : int = 1, color = (0,0,0),ombre = False,font_name = apple_titre,size_text = 18,importer = True):
+    def __init__(self,screen : pygame.Surface,text_chargement : str = "Chargement",id_ : int = 1, color = (0,0,0),ombre = False,font_name = apple_titre,size_text = 18,importer = True,W = None):
         self.screen = screen
         self.texte = text_chargement
         self.running = True
-        self.font = pygame.font.Font(font_name,size_text)
-        self.nom_font = font_name
-        self.size_text = size_text
+        self.size_text = verification_size(pygame.Rect(0,0,W/17,0),font_name,40,self.texte,True)
+        self.font = pygame.font.Font(font_name,self.size_text)
+        self.nom_font = font_name        
         self.id_ = id_
         self.nb_point = 0
         self.color = color
