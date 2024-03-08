@@ -29,6 +29,7 @@ animation_chargement = Animation(screen,color = (255,)*3,ombre = True, W = w_ori
 animation_mise_en_ligne = Animation(screen, text_chargement="Mise en ligne",color = (255,)*3,ombre=True,W = w_origine)
 animation_connection = Animation(screen, text_chargement = "Connection",color = palette_couleur.fond_case_login,ombre = True,W = w_origine)
 animation_ouverture = Animation(screen, text_chargement = "Ouverture", color = (255,)*3,ombre=True,W = w_origine)
+animation_update = Animation(screen, text_chargement="Mise à jour",color = (255,)*3,ombre=True,W = w_origine)
 animation_demarrage_application = Animation(screen,color = (255,255,255), text_chargement="Sylver.service",W = w_origine)
 #palette de couleur qui regroupe toute les couleurs de l'app
 
@@ -113,7 +114,6 @@ def make_line(text : str,font : pygame.font,size_max : int):
     line = 1
     start = 0
     i = 0
-    print(text)
     while i < len(text):
         size = font.size(text[start:i])[0]
         if size + 5 > size_max:
@@ -367,7 +367,6 @@ def ecrire_tuto(user : User | None):
                                     else:
                                         dernier_mot = elt["input"][elt["zone_ecrit"]][cursor:].strip()
 
-                                    print(dernier_mot.strip())
                                     elt["input"][elt["zone_ecrit"]] = elt["input"][elt["zone_ecrit"]][:cursor]
                                     
                                     elt["input"].append("")
@@ -432,7 +431,122 @@ def trait(x : float,y : float ,longueur : float ,surf : pygame.Surface,epaisseur
         epaisseur (int, optional): epaisseur du trait. Defaults to 3.
     """
     pygame.draw.rect(surf,(0,0,0),(x,y,longueur,epaisseur))      
+   
+def interface_deroullante_categorie(last_screen):
+    rect_go_back = pygame.Rect(5,5,30,30)
+    texte = "Choississez votre catégorie de compte"
+    texte_infos_categorie = "Choissir une catégorie de compte vous permettra d'avoir une recherche par défaut sur cette catégorie dans le menu" 
+    recup_categorie = Gerer_requete.take_categorie()
+    recup_categorie = recup_categorie
+    liste_categorie = {}
     
+    for i in range(len(recup_categorie)):
+        liste_categorie[recup_categorie[i][0]] = recup_categorie[i][1].replace("\r","").replace("\n","")
+    nom_categorie = [nom for nom in liste_categorie.keys()]
+    surface_categorie = pygame.Surface((w_origine/3,h_origine/2), pygame.SRCALPHA)
+    surface_ecriture_categorie = pygame.Surface((surface_categorie.get_width() - 200,h_origine/2),pygame.SRCALPHA)
+    height = h_origine/2
+    taille_totale = surface_ecriture_categorie.get_width() + 20 + surface_categorie.get_width()
+    rect_surf_categorie = pygame.Rect(w_origine/2 - taille_totale/2,h_origine/2 - height/2,surface_categorie.get_width(),surface_categorie.get_height())
+    x_base = w_origine/2 -taille_totale/2
+    y_base = h_origine/2 -height/2
+    ecart = 20
+    font_paragraphe = apple_titre
+    rect_case_categorie = pygame.Rect(0,0,surface_categorie.get_width(),20)
+    rect_case_categorie.h = 75
+    case_max_visu = surface_categorie.get_height()/(75 + ecart)
+    surface_glissante = pygame.Surface((surface_categorie.get_width(),(rect_case_categorie.h + ecart)*len(recup_categorie)), pygame.SRCALPHA)
+    all_rect_case_rel = []
+    all_rect_case_abs = []
+    all_coupage_line_y= {}
+    size_text = [30,]* len(recup_categorie)
+
+    i = 0
+    for key, value in liste_categorie.items():
+        coupage,line,y = make_line(value,font(font_paragraphe,size_text[i],True),surface_ecriture_categorie.get_width())
+        while y >= surface_categorie.get_height() - 40:
+            size_text[i] -= 2
+            coupage,line,y = make_line(value,font(font_paragraphe,size_text[i],True),surface_ecriture_categorie.get_width())
+        all_text = decoupe_text(coupage,line,value)
+        all_coupage_line_y[key] = {"coupage":coupage, "line":line,"y":y,"liste_texte" : all_text}
+        i+=1
+    for i in range(len(liste_categorie)):
+            pos_x = rect_case_categorie.x
+            pos_y = rect_case_categorie.y + (rect_case_categorie.h +ecart) *i
+            rect = pygame.Rect(x_base + pos_x,y_base+pos_y,rect_case_categorie.w,rect_case_categorie.h)
+            print("rect",rect)
+            all_rect_case_abs.append(rect.copy())
+            rect.x -= x_base
+            rect.y -= y_base
+            all_rect_case_rel.append(rect)
+   
+    Categorie_choisi = None
+    go_back = False
+    pos_y_surf_glissante = 0
+
+    while continuer:
+        screen.blit(last_screen,(0,0))
+        draw_text(texte, color = blanc, x = w_origine/2 -  font(font_paragraphe,20,True).size(texte)[0]/2, y = h_origine-  font(font_paragraphe,20,True).size(texte)[1],
+                  font = font_paragraphe, importer = True)
+        surface_categorie.fill((0,0,0,0))
+        #pygame.draw.rect(surface_categorie,palette_couleur.fond_bar_de_navigation,(0,0,*surface_categorie.get_size()),0,20)
+        surface_ecriture_categorie.fill((0,0,0,0))
+        pygame.draw.rect(surface_ecriture_categorie,palette_couleur.fond_bar_de_navigation,(0,0,*surface_ecriture_categorie.get_size()),0,20)
+
+        mouse = pygame.mouse.get_pos()
+        for event in pygame.event.get():
+            i = 0
+            for rect in all_rect_case_abs:
+                if rect.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    Categorie_choisi = nom_categorie[i]
+                    go_back = True
+                i += 1
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                go_back = True
+            if rect_surf_categorie.collidepoint(mouse):
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 5:
+                    pos_y_surf_glissante -= 20
+                    add = -20
+               
+                    if abs(pos_y_surf_glissante) >= surface_glissante.get_height() - (rect_case_categorie.h + ecart)*(case_max_visu):
+                        pos_y_surf_glissante += 20
+                        add  = 0
+                    i = 0
+                    for rect in all_rect_case_abs:
+                        rect.y += add
+                        i+=1
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 4:
+                    if pos_y_surf_glissante < 0:
+                        pos_y_surf_glissante += 20
+                        for rect in all_rect_case_abs:
+                            rect.y += 20
+                        
+        for i in range(len(liste_categorie)):
+            pos_x = rect_case_categorie.w/2 - font(TNN,40,True).size(nom_categorie[i])[0]/2
+            pos_y = rect_case_categorie.y + (rect_case_categorie.h +ecart) *i
+            pygame.draw.rect(surface_glissante,palette_couleur.fond_deux_login,all_rect_case_rel[i])
+            draw_text(nom_categorie[i], x = pos_x, y = pos_y + 10, color = palette_couleur.fond_case_login, contener = surface_glissante,
+                      font = TNN, importer = True, size = 40,ombre = True  )
+            
+        for z,rect in enumerate(all_rect_case_abs):
+            if rect.collidepoint(mouse):
+                size = verification_size(pygame.Rect(0,0,surface_ecriture_categorie.get_width(),0),TNN,30,nom_categorie[z],True)
+                draw_text(nom_categorie[z],ombre = True,size = size, x = surface_ecriture_categorie.get_width()/2 - font(TNN,size,True).size(nom_categorie[z])[0]/2, y = 10, color = palette_couleur.bleu_pal, contener = surface_ecriture_categorie, font = TNN, importer = True)
+                categorie = nom_categorie[z]
+                """draw_line(all_coupage_line_y[categorie]["line"],all_coupage_line_y[categorie]["coupage"],liste_categorie[categorie],20,contener = surface_ecriture_categorie,
+                          font = font_paragraphe, fontz = font(font_paragraphe,20,True),importer = True,y = 30)"""
+                for i in range(len(all_coupage_line_y[categorie]["liste_texte"])):
+                    all_texte = all_coupage_line_y[categorie]["liste_texte"]
+                    draw_text(all_texte[i],font_paragraphe,blanc,y = 40 + ((size_text[z]+5)*i),contener = surface_ecriture_categorie,
+                                importer = True,size = size_text[z], x = 5)
+        surface_categorie.blit(surface_glissante,(0,pos_y_surf_glissante))
+        screen.blit(surface_categorie,(w_origine/2 - taille_totale/2,h_origine/2 - height/2))
+        screen.blit(surface_ecriture_categorie,(w_origine/2  - taille_totale/2 +surface_categorie.get_width() + 20 ,h_origine/2 - height/2))
+        pygame.display.update()
+        if go_back:
+            break
+    return Categorie_choisi
+        
 def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.datetime = None, id_tuto : int = None,image_photo_profil : pygame.Surface= None):
     """Fonction permettant d'afficher un texte au sujet de Sylver_Service, cette fonction sert aussi a afficher un tuto
 
@@ -543,17 +657,19 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
                 if afficher_option == False:
                     retirez_option = True
             if id_ > 1 and rect_case_icone_signalement.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and afficher_option:
-                print("collide")
                 if connect:
                     try:
-                        text_signalement, titre = ecrire_tuto(None)
-                        signalement_final = titre + " | " + text_signalement
-                        user.signalement(id_tuto, auteur, signalement_final)
-                        animation_mise_en_ligne.stop_anime()
+                        if user.can_signal(id_tuto):
+                            text_signalement, titre = ecrire_tuto(None)
+                            signalement_final = titre + " | " + text_signalement
+                            user.signalement(id_tuto, auteur, signalement_final)
+                            animation_mise_en_ligne.stop_anime()
+                        else:
+                            Gerer_requete.message("Vous avez déjà signalé ce tuto !")
                     except noConnection:
                         Gerer_requete.connection_failed()
-                    except Exception:
-                        print("Quitte le signalement sans rien y faire")
+                    except Exception as e:
+                        
                         pass
                 else:
                     Gerer_requete.connecte_toi()
@@ -640,7 +756,6 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
     max_par_page = int(taille_reference/(haut_case+separation_tuto)) * 2 #pour ne pas toucher la flèche
     if max_par_page % 2 == 1:
         max_par_page -= 1
-    print("max_par_page : ", max_par_page)
     liste_indicey = [depart_tuto+(haut_case+separation_tuto)*i  for i in range(int(max_par_page/2))] *2 #on fait *2 car il est prévu 2 colonne
     liste_indicex = [w_origine/2 - long_case -5] * int(max_par_page/2) + [w_origine/2 + 5] * int(max_par_page/2) #on fait *max_par_page/2 car il y a max_par_page/2  element par colonne
     surface_fleche = pygame.Surface(taille_icone)
@@ -663,10 +778,14 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
         #pygame.event.clear()        
         text = f"{num} résultat.s pour cette recherche !" if not flop_de_recherche else "Une erreur est survenue ! la recherche n'a pas aboutie"
         text = "Faites une recherche :)" if have_supprime else text
+        if user.categorie != None and dict_recherche["nom_categorie"] != None and num == 0:
+            text = "Cette catégorie est malheureusement vide :("
         draw_text(text,color = (255,255,255),
                   x = w_origine/2 - font(chivo_titre,30,False).size(text)[0]/2,y = rect_surf_rechercher.y + rect_surf_rechercher.h + 10,
                   font = chivo_titre,size = 30
                   ,ombre = True)
+        print(dict_recherche)
+        
         if access:
             try:
                 
@@ -759,7 +878,6 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                         all_case_data.append(case_data)
                 can_add = False
             except Exception as e:
-                print(e)
                 access = False
                 flop_de_recherche = True
                 Gerer_requete.error_occured()
@@ -787,7 +905,6 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
             #recuperation de la pp de l'user qui a fait le tuto
             bin_pp,rect_pp = Gerer_requete.look_for_user_pp(auteur.split(",")[0])
             rect_pp = [int(i) for i in rect_pp.split(",")]
-            print(rect_pp)
             rect_pp = pygame.Rect(rect_pp)
             with open("Depot\\depot.png",'wb') as f:
                 f.write(bin_pp)
@@ -830,7 +947,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
         try:      
             flop_de_recherche = False   
             print("commence la recherche") 
-            detail = Gerer_requete.rechercher_data(nom_auteur = data["nom_auteur"], nom_tuto = data["nom_projet"])
+            detail = Gerer_requete.rechercher_data(nom_auteur = data["nom_auteur"], nom_tuto = data["nom_projet"], nom_categorie = data["nom_categorie"])
             processing = False
             num_resultat = len(detail)
             access = True
@@ -842,12 +959,14 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
             Gerer_requete.connection_failed()
             
         except Exception as e:
-            print(e)
+            print("erreur : ",e)
+            print("flop")
             enter_pressed = False
             flop_de_recherche = True
             processing = False
             access = False
             display = True
+            Gerer_requete.error_occured()
         
        
     global continuer
@@ -885,7 +1004,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
     global dict_rect_fleche
     dict_rect_fleche = {}
     recherche_type = "nom_auteur"
-    liste_rech = ["Auteur","Nom","nom_auteur","nom_projet"]
+    liste_rech = ["Auteur","Nom", "Catégorie","nom_auteur","nom_projet","nom_categorie"]
     rect_type_recherche = pygame.Rect(100 + longueur_recherche + 100, fond_nav.get_height() + 55, 100,60)
     surface_type_recherche = pygame.Surface((100,60), pygame.SRCALPHA)
     indice_type = 0
@@ -906,7 +1025,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
     global enter_pressed
     enter_pressed = False
     not_enter = False #sert juste a bloquer l'acces
-
+    dict_recherche = {"nom_projet" : None,"nom_auteur" : None,"nom_categorie" : None}
     while continuer:
         if id_ != 0 and not not_enter:
             th = threading.Thread(target = research, args=({"nom_auteur": auteur_rechercher,"nom_projet" : None},),daemon=True)
@@ -915,8 +1034,19 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                 th.start()
                 print("thread started")
                 not_enter = True
+                
+        if id_ == 0 and user.categorie != None and not not_enter:
+            #faire la recherche par défaut de l'utilisateur
+            dict_recherche = {"nom_auteur": None,"nom_projet" : None,"nom_categorie" : user.categorie}
+            th = threading.Thread(target = research, args=(dict_recherche,),daemon=True)
+            input_host = user.categorie
+            if not th.is_alive():
+                debut = time.time()
+                th.start()
+                print("thread started")
+                not_enter = True
         clock.tick(120)
-        dict_recherche = {"nom_projet" : None,"nom_auteur" : None}
+        
         mouse = pygame.mouse.get_pos()
         screen.fill(fond_ecran)            
         surface_rechercher.fill((0,0,0,0))
@@ -940,7 +1070,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                         all_case_data = {}
                         display = False
                         enter_pressed = True
-                        recherche_type = liste_rech[indice_type+2]
+                        recherche_type = liste_rech[indice_type+3]
                         dict_recherche[recherche_type] = input_host
                         thread_recherche = threading.Thread(target=research, args=(dict_recherche,), daemon=True)                       
                         if not thread_recherche.is_alive():
@@ -1164,18 +1294,15 @@ def compte():
     barre_type = pygame.Surface((2,20))
     go_back = False
     creer_compte = True if not connect else False
-    size = (h_origine*19/100,)*2
+    size = (h_origine*(1-80/100),)*2
     font_paragraphe = apple_titre
     font_40 = pygame.font.Font(font_paragraphe, 40)
-    font_60 = pygame.font.Font(font_paragraphe, 60)
     font_30 = pygame.font.Font(font_paragraphe,30)
     font_20 = pygame.font.Font(font_paragraphe,20)
     rect_editer_photo = pygame.Rect(0,0,0,0)
     rect_editer_photo.w = font_20.size(text_edit)[0]
     rect_editer_photo.h = font_20.size(text_edit)[1]
     chemin_pp = os.path.join("img_center","photo_profil_user.png")
-    
-        
     with open(chemin_pp,"wb") as fichier:
         fichier.write(pp_base)
     global image_pp
@@ -1384,6 +1511,7 @@ def compte():
     message_photo_profil = ""
     temoin_processus_fini_pp = [False,]
     press_tab = False
+    rect_icone_reglage = pygame.Rect(-1500,2522,1,1)
     while continuer:
         mouse = pygame.mouse.get_pos()
         mouse_click = pygame.mouse.get_pressed()[0]
@@ -1492,6 +1620,26 @@ def compte():
                 elif rect_maketuto.collidepoint(mouse):
                     if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                         ecrire_tuto(user)
+                        
+                if element_page_user: 
+                    if rect_icone_reglage.collidepoint(mouse):
+                        
+                        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                            categorie = interface_deroullante_categorie(last_screen)
+                            print(user.pseudo)
+                            if categorie != None:
+                                animation_update.start_anime(last_screen)
+                                try:
+                                    user.change_categorie_compte(categorie)
+                                except noConnection:
+                                    animation_update.stop_anime()
+                                    Gerer_requete.connection_failed()
+                                except Exception as e:
+                                    animation_update.stop_anime()
+                                    Gerer_requete.error_occured()
+                                else:
+                                    animation_update.stop_anime()
+                                    Gerer_requete.processus_fini(message = "La catégorie de votre compte a bien été changé !")
                     
             elif creer_compte or not creer_compte:
                 if rect_visible.collidepoint(mouse):
@@ -1958,8 +2106,22 @@ def compte():
                 btn_disconnect.h = btn_postimg.get_height()
                 btn_disconnect.x = w_origine/2 - btn_disconnect.w/2
                 size_deconnexion = verification_size(pygame.Rect(0,0,btn_disconnect.w - 40,0),font_paragraphe,100,"Déconnexion",True)
+                surface_message_info = pygame.Surface((h_origine/3,h_origine/3), pygame.SRCALPHA)
                 
-
+                message = f"Actuellement votre catégorie est : {user.categorie}. Avoir une catégorie de compte permettra a l'application de vous mettre par défaut des tutos dans l'espace menu"
+                size = 30
+                coupage,line,y = make_line(message,font(TNN,size,True),surface_message_info.get_width() -5)
+                while y > surface_message_info.get_height():
+                    size -= 2
+                    coupage,line,y = make_line(message,font(TNN,size,True),surface_message_info.get_width() -5)
+                surface_message_info = pygame.Surface((surface_message_info.get_width(),y + 5),pygame.SRCALPHA)
+                surface_message_info.fill((0,0,0,0))
+                pygame.draw.rect(surface_message_info,palette_couleur.fond_deux_login,(0,0,*surface_message_info.get_size()),0,20)
+                all_text = decoupe_text(coupage,line,message)
+                for i in range(len(all_text)):
+                    draw_text(all_text[i], font = TNN, size = size ,color = blanc, center_multi_line= True,contener = surface_message_info,importer = True, y = 5 + (size*i))
+                icone_reglage = pygame.image.load(os.path.join("Image","icone_reglage.png"))
+                icone_reglage = pygame.transform.scale(icone_reglage,(taille_icone))
                 text_postimg = "POSTEZ UN\n TUTO VISUEL !"
                 text_maketuto = "CREEZ UN\n TUTO EN TEXTE !"
                 coupage, line, size_y = make_line(text=text_postimg,font = font_for_case, size_max = btn_postimg.get_width())
@@ -1981,19 +2143,26 @@ def compte():
                 surface_fond_user_co_back = pygame.Surface((surface_fond_user_co.get_width() + taille_en_plus,
                                                             surface_fond_user_co.get_height() + taille_en_plus), pygame.SRCALPHA)
                 
+                pos_icone_reglage = (w_origine/2 - surface_fond_user_co.get_width()/2 + surface_fond_user_co.get_width() - taille_icone[0] - 5,h_origine/2 - surface_fond_user_co.get_height()/2 + 5)
+                rect_icone_reglage = pygame.Rect(*pos_icone_reglage,*icone_reglage.get_size())
                 rect_postimg.y = y_photo2 + size_grand[1] + 160
                 rect_maketuto.y = rect_postimg.y
                 btn_disconnect.y = rect_maketuto.bottom +60
                 element_page_user = True
+                x_fond_2 = w_origine/2 - surface_fond_user_co_back.get_width()/2
+                x_fond_1 = w_origine/2 - surface_fond_user_co.get_width()/2
+                y_fond_2 = h_origine/2 - surface_fond_user_co_back.get_height()/2
+                y_fond_1 = h_origine/2 - surface_fond_user_co.get_height()/2
             surface_fond_user_co.fill((0,0,0,0))
             surface_fond_user_co_back.fill((0,0,0,0))
             pygame.draw.rect(surface_fond_user_co_back, palette_couleur.fond_deux_login, (0,0,surface_fond_user_co_back.get_width(),
                                                                                    surface_fond_user_co_back.get_height()),0,20)
             pygame.draw.rect(surface_fond_user_co, palette_couleur.fond_un_login, (0,0,surface_fond_user_co.get_width(),surface_fond_user_co.get_height()),0,20)
+            
             screen.blit(surface_fond_user_co_back,
-                        ((w_origine/2 - surface_fond_user_co_back.get_width()/2, h_origine/2 - (surface_fond_user_co.get_height() + taille_en_plus)/2)))
+                        (x_fond_2, y_fond_2))
             screen.blit(surface_fond_user_co,
-                        ((w_origine/2 - surface_fond_user_co.get_width()/2, h_origine/2 - surface_fond_user_co.get_height()/2)))
+                        (x_fond_1, y_fond_1))
             #Informer l'utilisateur qu'il ne doit pas quitter
             if message_photo_profil:
                 draw_text(message_photo_profil,font = font_paragraphe,importer = True,center_multi_line=True,color = (255,255,255))
@@ -2133,7 +2302,22 @@ def compte():
                       x = x_photo2 + size_grand[0]/2 - font_30.size(f"Vous avez postez {tuto_poster} tutoriel.s")[0]/2
                       ,y = y_photo2 + size_grand[1] + 5 + font_20.size(text_edit)[1] + font_30.size(text_nom_prenom)[1] + font(font_paragraphe,40,True).size("~ " + text_pseudo + " ~")[1],
                       size = 30,
-                      importer = True, font = font_paragraphe)            
+                      importer = True, font = font_paragraphe)    
+            screen.blit(icone_reglage,pos_icone_reglage)
+            if rect_icone_reglage.collidepoint(mouse):
+                if user.categorie not in  message:
+                    print("recréation message")
+                    message = f"Actuellement votre catégorie est : {user.categorie}. Avoir une catégorie de compte permettra a l'application de vous mettre par défaut des tutos dans l'espace menu"
+                    size = 30
+                    coupage,line,y = make_line(message,font(TNN,size,True),surface_message_info.get_width() -5)
+                    while y > surface_message_info.get_height():
+                        size -= 2
+                        coupage,line,y = make_line(message,font(TNN,size,True),surface_message_info.get_width() -5)
+                    pygame.draw.rect(surface_message_info,palette_couleur.fond_deux_login,(0,0,*surface_message_info.get_size()),0,20)
+                    all_text = decoupe_text(coupage,line,message)
+                    for i in range(len(all_text)):
+                        draw_text(all_text[i], font = TNN, size = size ,color = blanc, center_multi_line= True,contener = surface_message_info,importer = True, y = 5 + (size*i))
+                screen.blit(surface_message_info,(x_fond_2 + surface_fond_user_co_back.get_width() + 20,y_fond_2))
         screen.blit(image_retour,rect_goback)
         screen.blit(surface_status_co,pos_surface_status_co)
         pygame.display.flip()
@@ -2257,7 +2441,7 @@ screen.blit(image_logo_app,(w_origine/2 - (width_logo*r)/2,h_origine/2 - (height
 pygame.display.update()
 with open(os.path.join("img_base","photo_profil_user.png"),"rb") as fichier:
         pp_base = fichier.read()
-size_grand = (h_origine * (1-75/100),)*2 #diminution de 75% de la taille originel
+size_grand = (h_origine * (1-72/100),)*2 #diminution de 75% de la taille originel
 #processus de verification de si l'utilisateur est connecter, si oui, connexion au compte
 with open(os.path.join("Ressource", "compte_connecter.txt"), "r+") as fichier:
     contenu = fichier.read().splitlines()
@@ -2301,7 +2485,6 @@ with open(os.path.join("Ressource", "compte_connecter.txt"), "r+") as fichier:
                     rect_pp = Gerer_requete.separe_rect(user.rect_pp)
                 rect_pp = rect_pp.split(",")
                 rect_pp = [int(i) for i in rect_pp]
-                print(rect_pp)
                 rect_pp = pygame.Rect(rect_pp)
                 img_ = pygame.image.load(chemin_pp).convert_alpha()
                 old_width, old_height = img_.get_size()
@@ -2415,7 +2598,9 @@ surface_status_co.fill((0,0,0,0))
 pos_surface_status_co = (w_origine-10,h_origine-10)
 size_for_accueil = verification_size(pygame.Rect(0,0,w_origine * (1-60/100),0),chivo_titre,125,accueil,True)
 #Boucle principale de l'accueil
+choix_cate = False
 while continuer:
+    
     screen.fill(fond_ecran)
     if connect:
         text_user_co = f"Salut {user.pseudo} ravis de te voir :)"
@@ -2451,12 +2636,13 @@ while continuer:
     title(accueil, size = size_for_accueil, y = fond_nav.get_height()/2 - font(chivo_titre, size_for_accueil,True).size(accueil)[1]/2)
     for event in pygame.event.get():        
         if event.type == pygame.KEYDOWN:
-            pass
+            if event.key == pygame.K_l:
+                categorie = interface_deroullante_categorie(last_screen)
+                choix_cate = True
         elif event.type == pygame.QUIT:
             continuer = False
         elif info.collidepoint(mouse):
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                print("click")
                 page_info()
         if len(rect_dispo) > 0:
             for index, rect in enumerate(rect_dispo):
@@ -2482,6 +2668,8 @@ while continuer:
     clock.tick(144)
     fps = clock.get_fps()
     draw_text(f"fps : {int(fps)}",x=10,y=fond_nav.get_height() + 10,color=(255,255,255))
+    if choix_cate:
+        draw_text(f"Vous avez choisi la catégorie {categorie}", x = 200,y = 500)
     if not status_connection_started:
         status_connection(surface_status_co)
         status_connection_started = True
@@ -2500,6 +2688,9 @@ while continuer:
                   y = rect.get_height()/2 - font(TNN,all_size[index],True).size(proposition[index])[1]/2,size = all_size[index], font = TNN, importer = True)
         screen.blit(rect,pos[index])
     draw_text(text_choose,color = blanc, x = 5, y = h_origine - 25)
+    last_screen = screen.copy()
     pygame.display.flip()
+    
+    
 pygame.quit()
 sys.exit()

@@ -191,7 +191,7 @@ class User:
             tuto_transmis (int, optional): Nombre de tuto que l'utilisateur a transmis. Defaults to 0.
             rect_pp (pygame.Rect, optional): Rect de la photo de profil de l'utilisateur. Defaults to None.
     """
-    def __init__(self,nom,prenom,age,pseudo,mdp,photo_profil = None,tuto_transmis = 0,rect_pp = None):
+    def __init__(self,nom,prenom,age,pseudo,mdp,photo_profil = None,tuto_transmis = 0,rect_pp = None,categorie = None):
                 
         self.nom = nom
         self.prenom = prenom
@@ -202,6 +202,7 @@ class User:
         self.mdp = mdp
         self.rect_pp = rect_pp
         self.auteur = f"{self.pseudo}, {self.nom} {self.prenom}"
+        self.categorie = categorie
     
     @staticmethod
     def confirm_close() -> bool:
@@ -242,7 +243,42 @@ class User:
         return text.split(",")[0]
     
     
-         
+    def can_signal(self,id_tuto_signaler):
+        """Fonction verifiant si l'utilisateur peut signaler un tuto
+
+        Args:
+            id_tuto_signaler (int): id du tuto signalé
+
+        Raises:
+            noConnection: Renvoie noConnection quand la connexion a la base a echoué
+
+        Returns:
+            bool: True si il peut signaler,sinon False
+        """
+        no_connection = False 
+        can_signal = True
+        try:
+            if look_for_connection():
+                with connection_principale.cursor() as cursor:
+                    request = f"SELECT COUNT(*) FROM signalements WHERE id_tuto_signaler = '{id_tuto_signaler}' AND pseudo_accuseur = '{self.pseudo}'"
+                    cursor.execute(request)
+                    data = cursor.fetchone()
+                    if data[0] != 0:
+                        can_signal = False
+            else:
+                no_connection = True
+        except sql.Error as err:
+            print(err)
+            no_connection = True
+        except Exception as e:
+            print(e)
+            no_connection = True
+        finally:
+            if no_connection:
+                raise noConnection("connection failed")
+            else:
+                return can_signal
+                    
     def signalement(self, id_tuto_signaler : int, pseudo_accuser : str,text_signalement : str):
         """Fonction gérant les soumissions de signalement par les utilisateurs
 
@@ -255,21 +291,25 @@ class User:
         Raises:
             noConnection: Renvoie noConnection quand aucune connection n'a pu être initalisé
         """     
-        no_connection = False   
+        no_connection = False 
         try:
             connection_principale = connect_to_database()
             connection_principale.begin()
             with connection_principale.cursor() as cursor:
                 
+                
                 current_date = datetime.datetime.now()
                 current_date = current_date.strftime("%Y-%m-%d")
                 request = """ INSERT INTO `signalements` (`id_tuto_signaler`, `signalement`, `pseudo_accuseur`, `date`, `pseudo_accuse`)
                             VALUES (%s,%s,%s,%s,%s);"""
-                infos = (id_tuto_signaler, text_signalement, self.pseudo, current_date,  pseudo_accuser)
                 
+                infos = (id_tuto_signaler, text_signalement, self.pseudo, current_date,  pseudo_accuser)
                 cursor.execute(request,infos)
-                print("finished")        
-            
+                request = f'UPDATE tuto SET signalement = signalement + 1 WHERE id = {id_tuto_signaler}'
+                cursor.execute(request)
+                
+                print("finished")   
+                
         except sql.Error as err:
             print(err)
             
@@ -283,6 +323,7 @@ class User:
             else:
                 connection_principale.commit()
                 connection_principale.close()
+                    
         
             
         
@@ -317,7 +358,31 @@ class User:
             else:
                 connection_principale.commit()
                 connection_principale.close()
-                      
+        
+    def change_categorie_compte(self,Nouvelle_value = None):
+        no_connection = False
+        try:
+            connection_principale = connect_to_database()
+            with connection_principale.cursor() as cursor:
+               request = f"UPDATE utilisateur SET categorie = '{Nouvelle_value}' WHERE pseudo = %s "
+               cursor.execute(request,(self.pseudo))
+        except sql.Error as err:
+            print(err)
+            connection_principale.rollback()
+            no_connection = True
+        except Exception as err:
+            print(err)
+            connection_principale.rollback()
+            no_connection = True
+        finally:
+            if not no_connection:
+                self.categorie = Nouvelle_value
+                connection_principale.commit()
+                connection_principale.close()
+                
+            else:
+                raise noConnection("no connection")
+            
     def change_element(self,nom = False, pseudo = False, prenom = False, photo_pp = False, tuto_transmi = False,rect_pp = False,Nouvelle_value = 0, notif = False,temoin = None)-> None:
         """Fonction permettant de mettre a jour les éléments du compte de l'utilisation
 
@@ -417,6 +482,7 @@ class User:
                     request =f"SELECT * FROM `utilisateur` WHERE pseudo = '{pseudo}';"
                     cursor.execute(request)
                     data = cursor.fetchone()
+                    print(data[10])
                     if data == None:
                         user_do_not_exist = True                    
             else:
@@ -435,7 +501,7 @@ class User:
                     if mdp != data[7]:
                         raise userNonCharger("mauvais mdp")
                     else:
-                        return User(data[1],data[2],data[5],data[6],data[7],data[4],data[3],data[8])
+                        return User(data[1],data[2],data[5],data[6],data[7],data[4],data[3],data[8],data[10])
                 else:
                     raise UserNotExist("Auncun utilisateur trouvée")
             else:
@@ -547,6 +613,30 @@ class Gerer_requete(User):
         """
         return f"{rect[0]},{rect[1]},{rect[2]},{rect[3]}"
     
+    @staticmethod
+    def take_categorie():
+        no_connection = False     
+    
+        try:
+            if look_for_connection():
+                with connection_principale.cursor() as cursor:    
+                    request = "SELECT * FROM categorie"
+                    cursor.execute(request)
+                    data = cursor.fetchall()
+            else:
+                no_connection = True                
+        except sql.Error as err:
+            print("erreur :",err)
+            no_connection = True
+        except Exception as err:
+            print("erreur :",err)
+            no_connection = True
+        finally:
+            if no_connection:
+                raise noConnection("connection failed")
+            else:
+                return data
+            
     def save_tuto(self,doc : str = None, Text :str = "",nom_tuto : str = "",experiment = False) -> None:
         """Fonction permettant de sauvegarder un tuto a mettre en ligne
 
@@ -599,7 +689,7 @@ class Gerer_requete(User):
             
                 
     @staticmethod  
-    def rechercher_data(nom_tuto : str = None,nom_auteur : str = None)->list:
+    def rechercher_data(nom_tuto : str = None,nom_auteur : str = None,nom_categorie = None)->list:
         """Fonction permettant de rechercher des tuto dans la base de données grâce a différente
            données relatives
 
@@ -626,8 +716,10 @@ class Gerer_requete(User):
                             request = f" SELECT * FROM `tuto` ORDER BY date DESC;"
                     elif nom_auteur != None:
                         request = f"SELECT * FROM `tuto` WHERE `auteur` LIKE '{nom_auteur}%' ORDER BY date DESC;"
+                    elif nom_categorie != None:
+                        request = f"SELECT * from `tuto` WHERE `categorie` LIKE '{nom_categorie}%' ORDER BY date DESC;"
                     cursor.execute(request)
-                    data_recup = cursor.fetchall()  
+                    data_recup = cursor.fetchone()
             else:
                 no_connection = True
         except sql.Error as err:
@@ -637,7 +729,6 @@ class Gerer_requete(User):
         except noConnection as e:
             print(e)
             no_connection = True
-            
         except Exception as e:
             print(e)
             no_connection = True
@@ -680,6 +771,8 @@ class Gerer_requete(User):
         root.withdraw()
         tkinter.messagebox.showwarning("Info",text)
         root.destroy()
+        
+   
         
     @staticmethod
     def fail_open(nom_fichier = ""):
