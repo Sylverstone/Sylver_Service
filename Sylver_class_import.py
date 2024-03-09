@@ -1,4 +1,5 @@
 
+from tkinter.tix import Select
 import pygame
 import tkinter.filedialog,tkinter.messagebox
 import pymysql as sql
@@ -364,8 +365,13 @@ class User:
         try:
             connection_principale = connect_to_database()
             with connection_principale.cursor() as cursor:
-               request = f"UPDATE utilisateur SET categorie = '{Nouvelle_value}' WHERE pseudo = %s "
-               cursor.execute(request,(self.pseudo))
+                request = f"UPDATE utilisateur SET categorie = '{Nouvelle_value}' WHERE pseudo = %s "
+                cursor.execute(request,(self.pseudo))
+                if self.categorie != None:
+                    request = f"UPDATE categorie SET membre = membre - 1 WHERE nom = '{self.categorie}'"
+                    cursor.execute(request)
+                request = f"UPDATE categorie SET membre = membre + 1 WHERE nom = '{Nouvelle_value}'"
+                cursor.execute(request)
         except sql.Error as err:
             print(err)
             connection_principale.rollback()
@@ -626,10 +632,10 @@ class Gerer_requete(User):
             else:
                 no_connection = True                
         except sql.Error as err:
-            print("erreur :",err)
+            print("erreur 1:",err)
             no_connection = True
         except Exception as err:
-            print("erreur :",err)
+            print("erreur 2:",err)
             no_connection = True
         finally:
             if no_connection:
@@ -637,7 +643,7 @@ class Gerer_requete(User):
             else:
                 return data
             
-    def save_tuto(self,doc : str = None, Text :str = "",nom_tuto : str = "",experiment = False) -> None:
+    def save_tuto(self,doc : str = None, Text :str = "",nom_tuto : str = "",categorie = None,experiment = False) -> None:
         """Fonction permettant de sauvegarder un tuto a mettre en ligne
 
         Args:
@@ -665,12 +671,14 @@ class Gerer_requete(User):
                 if doc != None:
                     with open(doc,"rb") as fichier:
                         doc = fichier.read()
-                request = """ INSERT INTO `tuto` (`nom`,`date`,`doc`,`text_ctn`,`auteur`,`file`)
-                                VALUES (%s,%s,%s,%s,%s,%s) ;"""
-                infos = (nom,date,doc,Text,auteur,file)
+                request = """ INSERT INTO `tuto` (`nom`,`date`,`doc`,`text_ctn`,`auteur`,`file`,`categorie`)
+                                VALUES (%s,%s,%s,%s,%s,%s,%s) ;"""
+                infos = (nom,date,doc,Text,auteur,file,categorie)
                 cursor.execute(request,infos)
                 request = f"UPDATE utilisateur SET tuto_transmis = tuto_transmis + 1 WHERE pseudo = '{self.pseudo}'"
                 cursor.execute(request)
+                request = "UPDATE categorie SET tuto_count = tuto_count + 1 WHERE nom = %s"
+                cursor.execute(request,(categorie))
                 
            
         except sql.Error as err:
@@ -717,9 +725,11 @@ class Gerer_requete(User):
                     elif nom_auteur != None:
                         request = f"SELECT * FROM `tuto` WHERE `auteur` LIKE '{nom_auteur}%' ORDER BY date DESC;"
                     elif nom_categorie != None:
-                        request = f"SELECT * from `tuto` WHERE `categorie` LIKE '{nom_categorie}%' ORDER BY date DESC;"
+                        request = f"SELECT * from `tuto` WHERE `categorie` = '{nom_categorie}' ORDER BY date DESC;"
+                    print("doing cursor")
                     cursor.execute(request)
-                    data_recup = cursor.fetchone()
+                    print("recup cursor")
+                    data_recup = cursor.fetchall()
             else:
                 no_connection = True
         except sql.Error as err:
@@ -862,6 +872,61 @@ class Gerer_requete(User):
     def connecte_toi():
         """Fonction permettant de prévenir l'utilisateur qu'il doit se conecter pour signaler un tuto"""
         tkinter.messagebox.showerror("Erreur","Vous ne pouvez pas signaler sans être connecté !")
+    
+    @staticmethod
+    def look_for_membre_categorie(categorie):
+        no_connetion = False
+        try:
+            if look_for_connection():
+                with connection_principale.cursor() as cursor:
+                    request = "SELECT membre FROM categorie WHERE nom = %s"
+                    cursor.execute(request,(categorie))
+                    data = cursor.fetchone()
+            else:
+                no_connetion = True
+        except sql.Error as e:
+            print(e)
+            no_connetion = True
+        except Exception as e :
+            print(e)
+            no_connetion = True
+        finally:
+            if not no_connetion:
+                return data[0]
+            else:
+                return None
+    @staticmethod
+    def categorie_tuto_default_ou_non():
+        root = tkinter.Tk()
+        root.withdraw()
+        ans = tkinter.messagebox.askyesnocancel("Categorie","Souhaiter vous mettre a ce tuto la même catégorie que votre compte ? ")
+        root.destroy()
+        return ans
+        
+    @staticmethod 
+    def update_categorie_member():
+        no_connection = False     
+        try:
+            if look_for_connection():
+                with connection_principale.cursor() as cursor:                    
+                    request = f"SELECT nom,membre,tuto_count FROM categorie"
+                    cursor.execute(request)
+                    data_recup = cursor.fetchall()
+                    dico_categorie = {data[0] : {"membre" : data[1], "nombre_de_tuto" : data[2]} for data in data_recup}
+            else:
+                no_connection = True
+        except sql.Error as err:
+            print("erreur 1:",err)
+            no_connection = True
+        except Exception as err:
+            print("erreur 2:",err)
+            no_connection = True
+        finally:
+            if no_connection:
+                raise noConnection("connection failed")
+            else:
+                return dico_categorie
+            
           
 if __name__ == "__main__":
-    Gerer_requete.log_user("Fake user","None")
+    Gerer_requete.update_categorie_member()
