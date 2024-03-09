@@ -2445,6 +2445,7 @@ def input_popup():
                                           rect_container.y + height/2 - 50/2,
                                  width/2,
                                  50)
+        #
         for event in pygame.event.get():
             if rect_input_absolute.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 active_input = not active_input
