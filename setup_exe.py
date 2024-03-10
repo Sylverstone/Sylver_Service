@@ -1,6 +1,6 @@
 
 from cx_Freeze import setup, Executable
-import platform,os
+import platform,os,sys
 
 # Obtenez le nom du système d'exploitation
 system_name = platform.system()
@@ -8,7 +8,7 @@ system_name = platform.system()
 if system_name != "Windows":
     executables = [Executable("sylver_service.py", base=None, icon=os.path.join("Image", "Logo_app_2.ico"))]
 else:
-    executables = [Executable("sylver_service.py", base="Win32GUI",icon=os.path.join("Image", "Logo_app_2.ico"))] # le cmd ne s'ouvra pas
+    executables = [Executable("sylver_service.py", base="Win32GUI",icon=os.path.join("Image", "Logo_app_2.ico"),shortcut_name="Sylver.Service")] # le cmd ne s'ouvra pas
 
 build_options = {
     "packages": ["pygame","os","datetime","sys","threading","keyboard","tkinter","pymysql","tkinter.filedialog","time","pyperclip","math","io"],
@@ -22,17 +22,16 @@ build_options = {
         ("Resize_image.py","Resize_image.py"),
         (".env", ".env"),
         ("font_import.py","font_import.py"),
-        ("Exception.py","Exception.py")
+        ("Exception.py","Exception.py"),
         ("Color.py","Color.py"),
         ("Animation.py","Animation.py"),
-        ("FCP3","FCP3")
-        
+        ("FCP3","FCP3"),
     ],
 }
 
 # Set up the setup function
 setup(
-    name="sylver_service",
+    name="Sylver.Service",
     version='v1.6',
     options={"build_exe": build_options},
     author = "by Sylvio PELAGE MAXIME | Elvann JOLIVEL | Deecleane CORALIE",

@@ -7,3 +7,4 @@ Exe_build/
 Ressource/compte_connecter.txt
 __pycache__/
 *Copie.py
+*.iss

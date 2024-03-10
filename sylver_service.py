@@ -1,4 +1,3 @@
-from concurrent.futures import thread
 import pygame,os,datetime,sys,threading,keyboard,time,math,io,random
 from Sylver_class_import import Gerer_requete,User,status_connection
 from Animation import Animation
@@ -36,10 +35,10 @@ animation_demarrage_application = Animation(screen,color = (255,255,255), text_c
 
 message_categorie_compte = "Choisir une catégorie de compte permettra a l'application\
  de vous proposez une recherche par défaut a l'ouverture du menu. Afin d'en choisir\
- une clickez sur les case ! Vous pourrez alors lire la description des catégories ici même :) "
+ une clickez sur les case ! Vous pourrez alors lire la description des catégories ici même :). (Vous avez la possibilité de scroll si vous ne voyez pas toute les categories) "
 message_categorie_tuto = "Choisir une catégorie pour votre tuto vous permettra d'être référencer chez les utilisateurs ayant une catégorie de compte !\
     Egalement, vos tuto seront disponible dans la recherche par catégorie de votre catégorie.\
-        Afin d'en choisir une clickez sur les case ! Vous pourrez alors lire la description des catégories ici même :) "
+        Afin d'en choisir une clickez sur les case ! Vous pourrez alors lire la description des catégories ici même :). (Vous avez la possibilité de scroll si vous ne voyez pas toute les categories) "
 taille_icone = (50,50)
 #preparation imag
 rect_goback = pygame.Rect(5,5,*taille_icone)
@@ -752,7 +751,7 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
                 break
             if rect_goback.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 go_back = True
-            if 1:
+            if id_ > 1:
                 if rect_surface_ecriture.collidepoint(mouse):
                     if (event.type == pygame.MOUSEBUTTONDOWN and event.button == 4 ) or (event.type == pygame.KEYDOWN and event.key == pygame.K_DOWN):
                         pos_y_ecriture += 30
@@ -900,9 +899,9 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
         text = f"{num} résultat.s pour cette recherche !" if not flop_de_recherche else "Une erreur est survenue ! la recherche n'a pas aboutie"
         text = "Faites une recherche :)" if have_supprime else text
         if user.categorie != None and dict_recherche["nom_categorie"] != None and num == 0 and (liste_rech[indice_type] == "Catégorie" or dict_recherche["nom_categorie"] == user.categorie):
-            text = f"La categorie {dict_recherche["nom_categorie"].lower()} est vide :("
+            text = f'La categorie {dict_recherche["nom_categorie"].lower()} est vide :('
         elif user.categorie != None and dict_recherche["nom_categorie"] != None and num != 0 and (liste_rech[indice_type] == "Catégorie" or dict_recherche["nom_categorie"] == user.categorie):
-            text = f"{num} résultat.s dans la catégorie {dict_recherche["nom_categorie"].lower()}"
+            text = f'{num} résultat.s dans la catégorie {dict_recherche["nom_categorie"].lower()}'
         draw_text(text,color = (255,255,255),
                   x = w_origine/2 - font(chivo_titre,30,False).size(text)[0]/2,y = rect_surf_rechercher.y + rect_surf_rechercher.h + 10,
                   font = chivo_titre,size = 30
@@ -1349,78 +1348,78 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
         pygame.display.update(rect_surf_rechercher)
         pygame.display.flip()
 
-if 1:      
-    def charger_playlist(dossier):
-        """Charge la liste des fichiers audio du dossier spécifié."""
-        fichiers_audio = []
-        for fichier in os.listdir(dossier):
-            if fichier.lower().endswith((".mp3", ".wav")):
-                chemin_complet = os.path.join(dossier, fichier)
-                fichiers_audio.append(chemin_complet)
-        return fichiers_audio
+      
+def charger_playlist(dossier):
+    """Charge la liste des fichiers audio du dossier spécifié."""
+    fichiers_audio = []
+    for fichier in os.listdir(dossier):
+        if fichier.lower().endswith((".mp3", ".wav")):
+            chemin_complet = os.path.join(dossier, fichier)
+            fichiers_audio.append(chemin_complet)
+    return fichiers_audio
 
-    PLAYLIST = charger_playlist("FCP3")
+PLAYLIST = charger_playlist("FCP3")
+stop = False
+
+        
+def jouer_musique(playlist = PLAYLIST):
+    global stop
+    """Joue les musiques de la playlist dans un ordre aléatoire."""
+    pygame.mixer.init()
+    random.shuffle(playlist)# Mélange la playlist
     stop = False
-
-            
-    def jouer_musique(playlist = PLAYLIST):
-        global stop
-        """Joue les musiques de la playlist dans un ordre aléatoire."""
-        pygame.mixer.init()
-        random.shuffle(playlist)# Mélange la playlist
-        stop = False
-        pause = False
-        paused = 0
-        for musique in playlist:
-            print(f"En cours de lecture : {musique}")
-            pygame.mixer.music.load(musique)
-            pygame.mixer.music.play()
-            while pygame.mixer.music.get_busy():# Attente jusqu'à ce que la musique soit terminée
+    pause = False
+    paused = 0
+    for musique in playlist:
+        print(f"En cours de lecture : {musique}")
+        pygame.mixer.music.load(musique)
+        pygame.mixer.music.play()
+        while pygame.mixer.music.get_busy():# Attente jusqu'à ce que la musique soit terminée
+            if keyboard.is_pressed("ctrl+space"):
+                pygame.mixer.music.pause()
+                paused += 1
+                pause = True
+            if keyboard.is_pressed("ctrl") and keyboard.is_pressed("-"):
+                pygame.mixer.music.stop()
+                stop = True
+            if keyboard.is_pressed("ctrl") and keyboard.is_pressed("+"): 
+                pygame.mixer.music.rewind()
+            time.sleep(0.1)
+        
+        if pause:
+            while True: 
                 if keyboard.is_pressed("ctrl+space"):
-                    pygame.mixer.music.pause()
+                    if paused % 2 == 1:
+                        pygame.mixer.music.unpause()
+                    else:
+                        pygame.mixer.music.pause()
                     paused += 1
-                    pause = True
                 if keyboard.is_pressed("ctrl") and keyboard.is_pressed("-"):
                     pygame.mixer.music.stop()
-                    stop = True
                 if keyboard.is_pressed("ctrl") and keyboard.is_pressed("+"): 
                     pygame.mixer.music.rewind()
                 time.sleep(0.1)
             
-            if pause:
-                while True: 
-                    if keyboard.is_pressed("ctrl+space"):
-                        if paused % 2 == 1:
-                            pygame.mixer.music.unpause()
-                        else:
-                            pygame.mixer.music.pause()
-                        paused += 1
-                    if keyboard.is_pressed("ctrl") and keyboard.is_pressed("-"):
-                        pygame.mixer.music.stop()
-                    if keyboard.is_pressed("ctrl") and keyboard.is_pressed("+"): 
-                        pygame.mixer.music.rewind()
-                    time.sleep(0.1)
-                
-            if stop :
-                break
-        
+        if stop :
+            break
+    
 
-    def key_press(event):
-        global stop
-        print(event.name)
-        if keyboard.is_pressed("m+u+s+i+c"):
-            rep = Gerer_requete.askyesno_basic("SECRET","LANCER LA MENACE FCP3 ?")
-            thread_music = threading.Thread(target = jouer_musique,daemon=True) 
+def key_press(event):
+    global stop
+    print(event.name)
+    if keyboard.is_pressed("m+u+s+i+c"):
+        rep = Gerer_requete.askyesno_basic("SECRET","LANCER LA MENACE FCP3 ?")
+        thread_music = threading.Thread(target = jouer_musique,daemon=True) 
 
-            print(rep,thread_music.is_alive())
-            if not thread_music.is_alive():
-                if rep:
-                    thread_music.start()
-                else:
-                    Gerer_requete.message("DOMMAGE")
+        print(rep,thread_music.is_alive())
+        if not thread_music.is_alive():
+            if rep:
+                thread_music.start()
+            else:
+                Gerer_requete.message("DOMMAGE")
+    
         
-            
-    keyboard.on_press(key_press)
+keyboard.on_press(key_press)
     
       
 def relative_at(rect : pygame.Rect,relative : pygame.Rect) -> pygame.Rect:
@@ -2793,7 +2792,15 @@ with open(os.path.join("Ressource", "compte_connecter.txt"), "r+") as fichier:
                 creer_compte = False
                 zone = 1
     else:
-        animation_demarrage_application.start_anime(last_screen,0.8) 
+        try:
+            recup_name_categorie = Gerer_requete.take_categorie() #recuperer le nom de toutes les catégories
+            recup_name_categorie = [nom[0] for nom in recup_name_categorie]
+            recup_name_categorie = ["Informatique","Culture","Langue","Mathématique","Sport","Cuisine"]
+            dict_categorie = Gerer_requete.update_categorie_member()     
+            recup_categorie = Gerer_requete.take_categorie()
+        except:
+            Gerer_requete.error_occured()
+        animation_demarrage_application.start_anime(last_screen) 
         pygame.time.wait(1000)
 animation_demarrage_application.stop_anime()   
 comic_sans_ms = pygame.font.SysFont("Comic Sans Ms", 20)

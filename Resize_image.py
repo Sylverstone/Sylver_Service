@@ -1,4 +1,3 @@
-from typing import Tuple
 import pygame,tkinter.filedialog
 pygame.init()
 
@@ -62,7 +61,7 @@ class resizeImage:
             return surf3
         
                       
-    def try_to_resize(self,screen : pygame.Surface) -> Tuple[pygame.Surface,pygame.Rect,pygame.Surface]:
+    def try_to_resize(self,screen : pygame.Surface)  :
         """créé une mini surface où l'utilisteur pourras selectionner la partie d'une image qu'il souhaite
 
         Args:
@@ -72,7 +71,7 @@ class resizeImage:
             Renvoie AnnuleCropPhoto dans le cas ou l'utilisateur n'a pas achevé sa manoeuvre
 
         Returns:
-            Tuple[pygame.Surface,pygame.Rect,pygame.Surface]: renvoie la surface ou est mise l'image crop, le rect de l'ellipse qui a permit de crop l'image, et l'image qui a été utilsé et resize
+            tuple[pygame.Surface,pygame.Rect,pygame.Surface]: renvoie la surface ou est mise l'image crop, le rect de l'ellipse qui a permit de crop l'image, et l'image qui a été utilsé et resize
         """
         resolution = pygame.display.Info()
         width = resolution.current_w
@@ -128,7 +127,7 @@ class resizeImage:
                 start_y (float): Coordonné y de de la souris
 
             Returns:
-                Tuple(float,float): Coordonnés x et y relative a screen_ de la souris
+                tuple(float,float): Coordonnés x et y relative a screen_ de la souris
             """
             if start_x < size[0]/2:
                 start_x = 0 + size[0]/2

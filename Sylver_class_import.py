@@ -1,7 +1,5 @@
 
-from tkinter.tix import Select
-import pygame
-import tkinter.filedialog,tkinter.messagebox
+import tkinter.filedialog,tkinter.messagebox,pygame
 import pymysql as sql
 import os,datetime,threading,dotenv
 from font_import import *
