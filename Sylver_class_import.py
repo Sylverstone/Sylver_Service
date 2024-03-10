@@ -659,7 +659,7 @@ class Gerer_requete(User):
         current_date = current_date.strftime("%Y-%m-%d")
         date = current_date
         nom = nom_tuto
-        self.user.tuto_transmis += 1
+        
         auteur = f"{self.pseudo}, {self.nom} {self.prenom}"
         file = Doc(doc).get_extension()
         try:
@@ -671,14 +671,16 @@ class Gerer_requete(User):
                 if doc != None:
                     with open(doc,"rb") as fichier:
                         doc = fichier.read()
-                request = """ INSERT INTO `tuto` (`nom`,`date`,`doc`,`text_ctn`,`auteur`,`file`,`categorie`)
-                                VALUES (%s,%s,%s,%s,%s,%s,%s) ;"""
+                print("requete 1")
+                request =  "INSERT INTO `tuto` (`nom`,`date`,`doc`,`text_ctn`,`auteur`,`file`,`categorie`) VALUES (%s,%s,%s,%s,%s,%s,%s)"
                 infos = (nom,date,doc,Text,auteur,file,categorie)
                 cursor.execute(request,infos)
+                print("requete 2")
                 request = f"UPDATE utilisateur SET tuto_transmis = tuto_transmis + 1 WHERE pseudo = '{self.pseudo}'"
                 cursor.execute(request)
-                request = "UPDATE categorie SET tuto_count = tuto_count + 1 WHERE nom = %s"
-                cursor.execute(request,(categorie))
+                print("requete 3")
+                request = f"UPDATE categorie SET tuto_count = tuto_count + 1 WHERE nom = '{categorie}'"
+                cursor.execute(request)
                 
            
         except sql.Error as err:
@@ -691,6 +693,7 @@ class Gerer_requete(User):
             if no_connection:
                 raise noConnection("connection failed")
             else:
+                self.user.tuto_transmis += 1
                 connection_principale.commit()
                 connection_principale.close()
             
@@ -761,10 +764,6 @@ class Gerer_requete(User):
         """
         if not with_path:
             #créé le fichier si il n'existe pas
-            root = tkinter.Tk()
-            root.wm_withdraw()
-            
-            print(dir)
             if dir:
                 path = os.path.join(dir,f"{nom_tuto} par {auteur}{ext}")
                 document = Doc(path,doc,nom_tuto,auteur,ext)
@@ -819,13 +818,12 @@ class Gerer_requete(User):
         no_connection = False
         try:
             data_recup = [None]
-            if look_for_connection():
-               with connection_principale.cursor() as cursor:
-                   request = f"SELECT photo_profil,rect_photo_profil FROM utilisateur WHERE pseudo = '{pseudo}'"
-                   cursor.execute(request)
-                   data_recup = cursor.fetchone()
-            else:
-                no_connection = True
+            
+            with connection_principale.cursor() as cursor:
+                request = f"SELECT photo_profil,rect_photo_profil FROM utilisateur WHERE pseudo = '{pseudo}'"
+                cursor.execute(request)
+                data_recup = cursor.fetchone()
+          
         except sql.Error as err:
             print(err)
             no_connection = False
@@ -926,7 +924,12 @@ class Gerer_requete(User):
                 raise noConnection("connection failed")
             else:
                 return dico_categorie
-            
-          
+    @staticmethod
+    def askyesno_basic(title = None,message = ""):
+        root = tkinter.Tk()
+        root.withdraw()
+        rep = tkinter.messagebox.askyesno(title,message)
+        root.destroy()
+        return rep
 if __name__ == "__main__":
     Gerer_requete.update_categorie_member()
