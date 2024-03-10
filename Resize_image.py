@@ -83,7 +83,7 @@ class resizeImage:
         # Définir la nouvelle largeur (ou hauteur)
         new_width = 500
         # Calculer la nouvelle hauteur (ou largeur) pour conserver le rapport d'aspect (produit en croix)
-        new_height = int(old_height * new_width / old_width)
+        new_height = old_height * new_width / old_width
         # Redimensionner l'image
         image = pygame.transform.smoothscale(image, (new_width,new_height))
         #fin processus suspect
@@ -95,7 +95,7 @@ class resizeImage:
         continuer = True
         can_affiche = False
         new_image = image.copy()
-        size = [200,200] #taille original du carré qui continient le cercle, vous pouvez la changer
+        size = [height*(1-80/100),]*2 #taille original du carré qui continient le cercle, vous pouvez la changer
         start_x = start_y = 0
         rect = pygame.Rect(start_x - size[0]/2,start_y - size[0]/2,*size)
 
@@ -148,24 +148,16 @@ class resizeImage:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     continuer = False
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_UP:
-                        if size[0] + 20 < new_height: 
-                            size[0] += 20
-                            size[1] += 20
-                    elif event.key == pygame.K_DOWN:
-                        if size[0] - 20 > 80: #vous pouvez changer cette taille minimum, meme la retirez (deconseillé)
-                            size[0] -= 20
-                            size[1] -= 20
-                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 4:
-                    if size[0] + 20 < new_height: 
-                            size[0] += 20
-                            size[1] += 20
-                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 5:
-                    if size[0] - 20 > 120: #vous pouvez changer cette taille minimum, meme la retirez
-                            size[0] -= 20
-                            size[1] -= 20
-                    
+                
+                if (event.type == pygame.MOUSEBUTTONDOWN and event.button == 4) or (event.type == pygame.KEYDOWN and event.key == pygame.K_UP):
+                    if size[0] + 20 <= new_height: 
+                        size[0] += 20
+                        size[1] += 20
+                
+                if (event.type == pygame.MOUSEBUTTONDOWN and event.button == 5) or (event.type == pygame.KEYDOWN and event.key == pygame.K_DOWN):
+                    if size[0] - 20 >= height*(1-80/100): 
+                        size[0] -=20
+                        size[1] -=20
                 if (event.type == pygame.KEYDOWN and (event.key == pygame.K_q or event.key == pygame.K_ESCAPE)) :
                     continuer = False
                 if (event.type == pygame.KEYDOWN and event.key == pygame.K_c) or (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1) :

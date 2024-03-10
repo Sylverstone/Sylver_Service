@@ -512,7 +512,10 @@ def interface_deroullante_categorie(last_screen,message1 = "Choisissez votre cat
     rect_go_back = pygame.Rect(5,5,30,30)
     texte = message1
     texte_infos_categorie = message2
-    
+    try:
+        print(recup_categorie)
+    except:
+        recup_categorie = Gerer_requete.take_categorie()
     liste_categorie = {}
     for i in range(len(recup_categorie)):
         liste_categorie[recup_categorie[i][0]] = recup_categorie[i][1].replace("\r","").replace("\n","")
@@ -769,7 +772,7 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
                 
             if popup_option_activer and id_ > 1 and rect_case_icone_tuto_utilisateur.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 if auteur != "":
-                    menu(1,pseudo)
+                    menu(1,auteur.split(",")[0])
                 else:
                     Gerer_requete.message("L'auteur n'existe pas !")
             if id_ > 1 and rect_triple_bar.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -857,7 +860,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
         auteur_rechercher (str, optional): Auteur recherché si la fonction sert a image_userr les tutos d'un utilisateur. Defaults to None.
     """
     #ecrire_tuto(None)
-    global display       
+    global display
     global processing
     #savoir quand la recherche est en cours
     processing = False             
@@ -898,9 +901,9 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
         #pygame.event.clear()        
         text = f"{num} résultat.s pour cette recherche !" if not flop_de_recherche else "Une erreur est survenue ! la recherche n'a pas aboutie"
         text = "Faites une recherche :)" if have_supprime else text
-        if user.categorie != None and dict_recherche["nom_categorie"] != None and num == 0 and (liste_rech[indice_type] == "Catégorie" or dict_recherche["nom_categorie"] == user.categorie):
+        if connect and user.categorie != None and dict_recherche["nom_categorie"] != None and num == 0 and (liste_rech[indice_type] == "Catégorie" or dict_recherche["nom_categorie"] == user.categorie):
             text = f'La categorie {dict_recherche["nom_categorie"].lower()} est vide :('
-        elif user.categorie != None and dict_recherche["nom_categorie"] != None and num != 0 and (liste_rech[indice_type] == "Catégorie" or dict_recherche["nom_categorie"] == user.categorie):
+        elif connect and user.categorie != None and dict_recherche["nom_categorie"] != None and num != 0 and (liste_rech[indice_type] == "Catégorie" or dict_recherche["nom_categorie"] == user.categorie):
             text = f'{num} résultat.s dans la catégorie {dict_recherche["nom_categorie"].lower()}'
         draw_text(text,color = (255,255,255),
                   x = w_origine/2 - font(chivo_titre,30,False).size(text)[0]/2,y = rect_surf_rechercher.y + rect_surf_rechercher.h + 10,
@@ -972,11 +975,9 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                     surface.fill((0,0,0,0))
                     pygame.draw.rect(surface,palette_couleur.couleur_fond_case_tuto,(0,0,surface.get_width(),surface.get_height()),0,20)
                     color_auteur = (255,0,0) if Gerer_requete.est_bytes(doc) else blanc
-                    if len(auteur) >= 15:
-                        ecrit_auteur = auteur[:5] + "..."
-                    else:
-                        ecrit_auteur = auteur
-                    rect_no_depasse = pygame.Rect(0,0,long_case-30-font_30.size(text_date)[0],0)
+                    
+                    ecrit_auteur = auteur
+                    rect_no_depasse = pygame.Rect(0,0,long_case-10-font(font_paragraphe,30,True).size(text_date)[0] - 20 - 20,0)
                     size_ = verification_size(rect_no_depasse,font_paragraphe,30,f"{nom_projet} par {ecrit_auteur}",True)
                     draw_text(color = color_auteur,contener = surface,
                               text = f"{nom_projet} - par {ecrit_auteur}", x = 10,
@@ -1027,11 +1028,14 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
             print(auteur.split(",")[0] in photo_deja_charger)
             if not auteur.split(",")[0] in photo_deja_charger:
                 #recuperation de la pp de l'user qui a fait le tuto
-                bin_pp,rect_pp = Gerer_requete.look_for_user_pp(auteur.split(",")[0])        
-                if rect_pp != None:   
-                    rect_pp = [int(i) for i in rect_pp.split(",")]
-                    rect_pp = pygame.Rect(rect_pp)
-                photo_deja_charger[auteur.split(",")[0]] = (bin_pp,rect_pp)
+                try:
+                    bin_pp,rect_pp = Gerer_requete.look_for_user_pp(auteur.split(",")[0])        
+                    if rect_pp != None:   
+                        rect_pp = [int(i) for i in rect_pp.split(",")]
+                        rect_pp = pygame.Rect(rect_pp)
+                    photo_deja_charger[auteur.split(",")[0]] = (bin_pp,rect_pp)
+                except:
+                    return
             else:
                 bin_pp, rect_pp = photo_deja_charger[auteur.split(",")[0]]
                 
@@ -1160,11 +1164,14 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
     global enter_pressed
     enter_pressed = False
     not_enter = False #sert juste a bloquer l'acces
-    
+    dict_recherche_base = {"nom_projet" : None,"nom_auteur" : None,"nom_categorie" : None}
+    dict_recherche = {"nom_projet" : None,"nom_auteur" : None,"nom_categorie" : None}
+
     while continuer:
         
         if id_ != 0 and not not_enter:
-            th = threading.Thread(target = research, args=({"nom_auteur": auteur_rechercher,"nom_projet" : None},),daemon=True)
+            dict_recherche = {"nom_auteur": auteur_rechercher,"nom_projet" : None,"nom_categorie" : None}
+            th = threading.Thread(target = research, args=(dict_recherche,),daemon=True)
             if not th.is_alive():
                 debut = time.time()
                 th.start()
@@ -1203,7 +1210,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                     elif event.key == pygame.K_BACKSPACE:
                         input_host = input_host[:-1]
                     elif event.key == pygame.K_RETURN and not enter_pressed:
-                        dict_recherche = {"nom_projet" : None,"nom_auteur" : None,"nom_categorie" : None}
+                        dict_recherche = dict_recherche_base
                         all_case_data = {}
                         display = False
                         enter_pressed = True
@@ -1282,6 +1289,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                     display = True
                     have_supprime = True
                     input_host = ""
+                    dict_recherche = dict_recherche_base
  
         pygame.draw.rect(surface_rechercher,(255,255,255),(0,0,rect_surf_rechercher[2],rect_surf_rechercher[3]),0,20)
 
@@ -1872,7 +1880,7 @@ def compte():
                                     animation_update.stop_anime()
                                     Gerer_requete.connection_failed()
                                 except Exception as e:
-                                    print(e)
+                                    print("erreur categorie, ligne 1885", e)
                                     animation_update.stop_anime()
                                     Gerer_requete.error_occured()
                                 else:
@@ -2792,16 +2800,18 @@ with open(os.path.join("Ressource", "compte_connecter.txt"), "r+") as fichier:
                 creer_compte = False
                 zone = 1
     else:
+        animation_demarrage_application.start_anime(last_screen) 
         try:
             recup_name_categorie = Gerer_requete.take_categorie() #recuperer le nom de toutes les catégories
             recup_name_categorie = [nom[0] for nom in recup_name_categorie]
-            recup_name_categorie = ["Informatique","Culture","Langue","Mathématique","Sport","Cuisine"]
+            
             dict_categorie = Gerer_requete.update_categorie_member()     
             recup_categorie = Gerer_requete.take_categorie()
         except:
+            recup_name_categorie = ["Informatique","Culture","Langue","Mathématique","Sport","Cuisine"]
+            animation_demarrage_application.stop_anime()
             Gerer_requete.error_occured()
-        animation_demarrage_application.start_anime(last_screen) 
-        pygame.time.wait(1000)
+        
 animation_demarrage_application.stop_anime()   
 comic_sans_ms = pygame.font.SysFont("Comic Sans Ms", 20)
 
@@ -2905,7 +2915,7 @@ def update_categorie():
             dict_categorie = Gerer_requete.update_categorie_member()
             recup_name_categorie = Gerer_requete.take_categorie() #recuperer le nom de toutes les catégories
             recup_name_categorie = [nom[0] for nom in recup_name_categorie]
-            time.sleep(60)
+            time.sleep(20)
         except:
             pass
 
