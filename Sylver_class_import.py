@@ -4,6 +4,7 @@ import pymysql as sql
 import os,datetime,threading,dotenv
 from font_import import *
 from Exception import *
+import webbrowser
 
 
 
@@ -110,6 +111,26 @@ def look_for_connection():
                 connection_principale = None
                 return False
             
+            
+            
+
+def changer_valeur_env(valeur,new_valeur):
+    chemin_du_env = '.env'
+    # Lirele contenu actuel du fichier .env
+    with open(chemin_du_env, 'r') as fichier_env:
+        lignes = fichier_env.readlines()
+
+    # Modifiez la valeur souhaitée
+    for i in range(len(lignes)):
+        print(lignes)
+        if lignes[i].startswith(f'{valeur}='):
+            lignes[i] = f'{valeur}="{new_valeur}"\n'
+            break
+
+    # Écrivez le nouveau contenu dans le fichier .env
+    with open(chemin_du_env, 'w') as fichier_env:
+        fichier_env.writelines(lignes)      
+    print("fini") 
 class Doc:    
     """Class représentant un fichier
 
@@ -217,7 +238,7 @@ class User:
         return ans
     
     @staticmethod
-    def confirm_open(open = "Word"):
+    def confirm_open(open = "RECHERCHE"):
         """Fonction permettant de confirmer une ouverture
 
         Args:
@@ -226,7 +247,7 @@ class User:
         Returns:
             boolean: Renvoie la reponse de l'utilisateur (True or False)
         """
-        ans = tkinter.messagebox.askyesno(title = open, message = f"Ouvrir {open} ?")
+        ans = tkinter.messagebox.askyesno(title = open, message = f"Ouvrir le document d'aide pour la recherche ?")
         return ans
     
     @staticmethod
@@ -922,6 +943,7 @@ class Gerer_requete(User):
                 raise noConnection("connection failed")
             else:
                 return dico_categorie
+            
     @staticmethod
     def askyesno_basic(title = None,message = ""):
         root = tkinter.Tk()
@@ -929,5 +951,94 @@ class Gerer_requete(User):
         rep = tkinter.messagebox.askyesno(title,message)
         root.destroy()
         return rep
+    
+    @staticmethod
+    def verifier_version_app():
+        no_connection = False
+        try:
+            if look_for_connection():
+                with connection_principale.cursor() as cursor:
+                    request = """SELECT Version,date_de_publication FROM VERSIONNAGE WHERE nom = 'SylverService' ORDER BY id DESC LIMIT 1"""
+                    cursor.execute(request)
+                    data_recup = cursor.fetchone()
+            else:
+                no_connection = False
+        except sql.Error:
+            no_connection = True
+        except Exception as e:
+            print(e)
+            no_connection = True
+        else:
+            print(data_recup)
+            if data_recup[0] != os.environ.get("VERSION"):
+                print("pas a jour")
+                ans = Gerer_requete.askyesno_basic("NOUVELLE VERSION",f"Une Nouvelle version de l'application est disponible !\n({os.environ['VERSION']} -> {data_recup[0]})\n Souhaitez vous l'installer ?")
+                if not ans:
+                    Gerer_requete.message("OK")
+                else:
+                    webbrowser.open(f"https://github.com/Sylverstone/Sylver_Service/releases/tag/{data_recup[0]}")
+            else:
+                print("a jour")
+            print(data_recup)
+    
+    @staticmethod
+    def verifier_version_doc_aide():
+        no_connection = False
+        try:
+            if look_for_connection():
+                with connection_principale.cursor() as cursor:
+                    request = """SELECT Version,date_de_publication,doc FROM VERSIONNAGE WHERE nom = 'Fichier_aide_sylver_service' ORDER BY id DESC LIMIT 1"""
+                    cursor.execute(request)
+                    data_recup = cursor.fetchone()
+            else:
+                no_connection = False
+        except sql.Error:
+            no_connection = True
+        except Exception as e:
+            print(e)
+            no_connection = True
+        else:
+            print(data_recup)
+            if data_recup[0] != os.environ.get("VERSION_DOC_AIDE"):
+                print("pas a jour")
+                os.remove("Ressource/SYLVER.docx")
+                with open("Ressource/SYLVER.docx","wb") as f:
+                    f.write(data_recup[2])  #MET A JOUR LE FICHIER WORD  
+                changer_valeur_env("VERSION_DOC_AIDE",data_recup[0])
+            else:
+                print("a jour")
+            print(data_recup)
+        
+    @staticmethod
+    def verifier_version_doc_info():
+        no_connection = False
+        try:
+            if look_for_connection():
+                with connection_principale.cursor() as cursor:
+                    request = """SELECT Version,date_de_publication,doc FROM VERSIONNAGE WHERE nom = 'Fichier_info_sylver_service' ORDER BY id DESC LIMIT 1"""
+                    cursor.execute(request)
+                    data_recup = cursor.fetchone()
+            else:
+                no_connection = False
+        except sql.Error:
+            no_connection = True
+        except Exception as e:
+            print(e)
+            no_connection = True
+        else:
+            print(data_recup[2].decode("utf-8"))
+            if data_recup[0] != os.environ.get("VERSION_DOC_INFO"):
+                print("pas a jour")
+                os.remove("Ressource/fichier_info.txt")
+                with open("Ressource/fichier_info.txt","wb") as f:
+                    f.write(data_recup[2]) #remet le nouveau fichier
+                changer_valeur_env("VERSION_DOC_INFO",data_recup[0])
+            else:
+                print("a jour")
+        finally:
+            if no_connection:
+                Gerer_requete.error_occured()
+
+
 if __name__ == "__main__":
-    Gerer_requete.update_categorie_member()
+    Gerer_requete.verifier_version_app()

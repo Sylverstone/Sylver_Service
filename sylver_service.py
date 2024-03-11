@@ -2811,6 +2811,12 @@ with open(os.path.join("Ressource", "compte_connecter.txt"), "r+") as fichier:
             recup_name_categorie = ["Informatique","Culture","Langue","Mathématique","Sport","Cuisine"]
             animation_demarrage_application.stop_anime()
             Gerer_requete.error_occured()
+    try:
+        Gerer_requete.verifier_version_app()
+        Gerer_requete.verifier_version_doc_aide()
+        Gerer_requete.verifier_version_doc_info()
+    except:
+        Gerer_requete.error_occured()
         
 animation_demarrage_application.stop_anime()   
 comic_sans_ms = pygame.font.SysFont("Comic Sans Ms", 20)
