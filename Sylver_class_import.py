@@ -969,7 +969,6 @@ class Gerer_requete(User):
             print(e)
             no_connection = True
         else:
-            print(data_recup)
             if data_recup[0] != os.environ.get("VERSION"):
                 print("pas a jour")
                 ans = Gerer_requete.askyesno_basic("NOUVELLE VERSION",f"Une Nouvelle version de l'application est disponible !\n({os.environ['VERSION']} -> {data_recup[0]})\n Souhaitez vous l'installer ?")
@@ -979,7 +978,6 @@ class Gerer_requete(User):
                     webbrowser.open(f"https://github.com/Sylverstone/Sylver_Service/releases/tag/{data_recup[0]}")
             else:
                 print("a jour")
-            print(data_recup)
     
     @staticmethod
     def verifier_version_doc_aide():
@@ -998,7 +996,6 @@ class Gerer_requete(User):
             print(e)
             no_connection = True
         else:
-            print(data_recup)
             if data_recup[0] != os.environ.get("VERSION_DOC_AIDE"):
                 print("pas a jour")
                 os.remove("Ressource/SYLVER.docx")
@@ -1007,7 +1004,6 @@ class Gerer_requete(User):
                 changer_valeur_env("VERSION_DOC_AIDE",data_recup[0])
             else:
                 print("a jour")
-            print(data_recup)
         
     @staticmethod
     def verifier_version_doc_info():
@@ -1026,7 +1022,6 @@ class Gerer_requete(User):
             print(e)
             no_connection = True
         else:
-            print(data_recup[2].decode("utf-8"))
             if data_recup[0] != os.environ.get("VERSION_DOC_INFO"):
                 print("pas a jour")
                 os.remove("Ressource/fichier_info.txt")

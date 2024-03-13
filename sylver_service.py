@@ -1,3 +1,4 @@
+from ipaddress import collapse_addresses
 import pygame,os,datetime,sys,threading,keyboard,time,math,io,random
 from Sylver_class_import import Gerer_requete,User,status_connection
 from Animation import Animation
@@ -18,7 +19,7 @@ pygame.key.set_repeat(750,50)
 resolution = pygame.display.Info()
 width = resolution.current_w
 height = resolution.current_h
-screen = pygame.display.set_mode((width, height), pygame.FULLSCREEN | pygame.SCALED | pygame.HWSURFACE | pygame.DOUBLEBUF)
+screen = pygame.display.set_mode((width, height), pygame.FULLSCREEN | pygame.SCALED | pygame.HWSURFACE | pygame.DOUBLEBUF )
 taille_origine = pygame.display.Info()
 w_origine = taille_origine.current_w
 h_origine = taille_origine.current_h
@@ -697,39 +698,64 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
         taille_ecriture -= 2
         coupage,line,heigth_text = make_line(text = text_info, font = font(font_paragraphe,taille_ecriture,True), size_max= size_max)"""
     all_text = decoupe_text(coupage,line,text_info)
-    width_surface_popup = w_origine/6      
-    rect_popup_btn = pygame.Rect(w_origine - width_surface_popup,40,width_surface_popup,h_origine/4)
-    surface_popup = pygame.Surface((width_surface_popup,50 * 3 + 40 +5)) 
+    width_surface_popup = 350     
     
+    surface_popup_fond = pygame.Surface((width_surface_popup,220), pygame.SRCALPHA) 
+    rect_popup = pygame.Rect(w_origine - width_surface_popup,40,width_surface_popup,surface_popup_fond.get_height())
+    surface_popup = pygame.Surface((surface_popup_fond.get_width() - 40, surface_popup_fond.get_height() - 40),pygame.SRCALPHA)
+    case_dans_popup = pygame.Surface((surface_popup.get_width() - 20,surface_popup.get_height()/2 - 20), pygame.SRCALPHA)
     triple_bar_option = pygame.image.load(os.path.join("Image","3_barre_proto.png"))
     triple_bar_option = pygame.transform.smoothscale(triple_bar_option,(45,45))
-    rect_triple_bar = pygame.Rect(w_origine - surface_popup.get_width()/2 - triple_bar_option.get_width()/2
+    rect_triple_bar = pygame.Rect(w_origine - surface_popup_fond.get_width()/2 - triple_bar_option.get_width()/2
                                   ,45,triple_bar_option.get_width(),triple_bar_option.get_height())
     icone_signalement = pygame.image.load(os.path.join("Image","icone_signalement.png"))
     icone_signalement = pygame.transform.smoothscale(icone_signalement,(50, 50))
-    rect_icone_signalement = icone_signalement.get_rect() #rect relatif a surface_popup
-    rect_icone_signalement.x = 20
-    rect_icone_signalement.y = rect_triple_bar.bottom - 40 + 20
-    #creation du rect_de_collision pour l'icone signalement
-    rect_case_icone_signalement = pygame.Rect(0,rect_icone_signalement.y - 10, surface_popup.get_width(), rect_icone_signalement.h + 20) #rect_relatif a surface_popup
-    rect_case_icone_signalement.x  += rect_popup_btn.x #transformation en rect absolu
-    rect_case_icone_signalement.y += rect_popup_btn.y #transformation en rect absolu
+    rect_icone_signalement = icone_signalement.get_rect() #rect relatif a surface_popup_fond
+    rect_icone_signalement.x = 5
+    rect_icone_signalement.y = case_dans_popup.get_height()/2 - rect_icone_signalement.h/2
 
+    #creation du rect_de_collision pour l'icone signalement
     icone_tuto_utilisateur = pygame.image.load(os.path.join("Image","icone_interrogation.png"))
     icone_tuto_utilisateur = pygame.transform.smoothscale(icone_tuto_utilisateur,taille_icone)
-    rect_icone_tuto_utilisateur = icone_tuto_utilisateur.get_rect() #rect relatif a surface_popup
-    rect_icone_tuto_utilisateur.x = 20
-    rect_icone_tuto_utilisateur.y = rect_icone_signalement.bottom + 20
-    rect_case_icone_tuto_utilisateur = rect_case_icone_signalement.copy()
-    rect_case_icone_tuto_utilisateur.y += rect_case_icone_signalement.h
+    rect_icone_tuto_utilisateur = icone_tuto_utilisateur.get_rect() #rect relatif a surface_popup_fond
+    rect_icone_tuto_utilisateur.x = 5
+    rect_icone_tuto_utilisateur.y = case_dans_popup.get_height()/2 - rect_icone_tuto_utilisateur.h/2
+
     
     texte_pour_signalement = "Signaler ce tuto"
+    taille_signal,taille_voir_tuto = 30,30
+    font_signal = font(font_paragraphe,taille_signal,True)
+    font_voir_tuto = font(font_paragraphe,taille_voir_tuto,True)
     texte_pour_voir_tout_les_tuto = "Voir les tutos de cette utilisateur"
-    rect_a_pas_depasser = pygame.Rect(0,0,surface_popup.get_width() - 50 - 25,0 )
-    size_texte_pour_signalement = verification_size(rect_a_pas_depasser,font_paragraphe,40,texte_pour_signalement,True)
+    rect_a_pas_depasser = pygame.Rect(0,0,surface_popup_fond.get_width() - 50 - 25,0 )
+    """size_texte_pour_signalement = verification_size(rect_a_pas_depasser,font_paragraphe,40,texte_pour_signalement,True)
     size_texte_pour_voir_tout_les_tuto = verification_size(rect_a_pas_depasser,font_paragraphe,40,texte_pour_voir_tout_les_tuto,True)
     taille_texte_signalement = font(font_paragraphe,size_texte_pour_signalement,True).size(texte_pour_signalement)
-    taille_voir_tout_les_tuto = font(font_paragraphe,size_texte_pour_voir_tout_les_tuto,True).size(texte_pour_voir_tout_les_tuto)
+    taille_voir_tout_les_tuto = font(font_paragraphe,size_texte_pour_voir_tout_les_tuto,True).size(texte_pour_voir_tout_les_tuto)"""
+    max_size = case_dans_popup.get_width() - rect_icone_signalement.x - rect_icone_signalement.w - 5 - 10
+    #coupage pour le texte du signalement
+    coupage_signal,line_signal,y_signal = make_line(texte_pour_signalement,font_signal,max_size)
+    while y_signal > case_dans_popup.get_height():
+        taille_signal -= 2
+        coupage_signal,line_signal,y_signal = make_line(texte_pour_signalement,font(font_paragraphe,taille_signal,True),max_size)
+    all_texte_signal = decoupe_text(coupage_signal,line_signal,texte_pour_signalement)
+    #coupage pour le texte de voir tuto
+    coupage_voir_tuto,line_voir_tuto,y_voir_tuto = make_line(texte_pour_voir_tout_les_tuto,font_voir_tuto,max_size)
+    while y_voir_tuto > case_dans_popup.get_height():
+        taille_voir_tuto -= 2
+        coupage_voir_tuto,line_voir_tuto,y_voir_tuto = make_line(texte_pour_voir_tout_les_tuto,font(font_paragraphe,taille_voir_tuto,True),max_size)
+    all_text_voir_tuto = decoupe_text(coupage_voir_tuto,line_voir_tuto,texte_pour_voir_tout_les_tuto)
+
+    position_case_signal_rel = (10,10)
+    rect_case_signal_rel = pygame.Rect(*position_case_signal_rel, *case_dans_popup.get_size()) #relatif a case_dans_popup
+    rect_case_signal = rect_case_signal_rel.copy()
+    rect_case_signal.x += rect_popup.x + 20
+    rect_case_signal.y += rect_popup.y + 20
+    
+    position_case_voir_tuto_rel = (10,surface_popup.get_height() - case_dans_popup.get_height()-10)
+    rect_case_voir_tuto = pygame.Rect(rect_popup.x + 20 + position_case_voir_tuto_rel[0],
+                                      rect_popup.y + 20 + position_case_voir_tuto_rel[1],
+                                      *case_dans_popup.get_size())
 
     position_popup = -h_origine/4
     position_de_fin = 40
@@ -748,13 +774,17 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
         surface_glissant_ecriture.fill((255,255,255,0))  
         pygame.draw.rect(screen,palette_couleur.fond_contenaire_page_tuto,(10,120,width + 30, height + 60),0,20)
         pygame.draw.rect(surface_ecriture,blanc,(0,0,width,height),0,20)
+        
         for event in pygame.event.get():            
             if event.type == pygame.QUIT:
                 continuer = False
                 break
+            
             if rect_goback.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 go_back = True
+                    
             if id_ > 1:
+                
                 if rect_surface_ecriture.collidepoint(mouse):
                     if (event.type == pygame.MOUSEBUTTONDOWN and event.button == 4 ) or (event.type == pygame.KEYDOWN and event.key == pygame.K_DOWN):
                         pos_y_ecriture += 30
@@ -764,42 +794,48 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
                         pos_y_ecriture = depassement_texte
                     if pos_y_ecriture > 0:
                         pos_y_ecriture = 0
-            if id_> 1 and rect_photo_pp.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                if auteur.split(",")[0] == user.pseudo:
-                    affiche_photo_profil(last_screen)
-                else:
-                    affiche_photo_profil(last_screen,True,auteur.split(",")[0])
-                
-            if popup_option_activer and id_ > 1 and rect_case_icone_tuto_utilisateur.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                if auteur != "":
-                    menu(1,auteur.split(",")[0])
-                else:
-                    Gerer_requete.message("L'auteur n'existe pas !")
-            if id_ > 1 and rect_triple_bar.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                popup_option_activer = not popup_option_activer
-                if popup_option_activer == False:
-                    retirez_option = True
-            if id_ > 1 and rect_case_icone_signalement.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and popup_option_activer:
-                if connect:
-                    try:
-                        can_signal = user.can_signal(id_tuto)
-                        if can_signal:
-                            text_signalement, titre = ecrire_tuto(None)
-                            signalement_final = titre + " | " + text_signalement
-                            user.signalement(id_tuto, auteur, signalement_final)
-                            animation_mise_en_ligne.stop_anime()
-                        else:
-                            Gerer_requete.message("Vous avez déjà signalé ce tuto !")
-                    except noConnection:
-                        Gerer_requete.connection_failed()
-                    except Exception as e:
                         
-                        pass
+                if rect_case_signal.collidepoint(mouse) and position_popup == position_de_fin and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and popup_option_activer:
+                    if connect:
+                        try:
+                            can_signal = user.can_signal(id_tuto)
+                            if can_signal:
+                                text_signalement, titre = ecrire_tuto(None)
+                                signalement_final = titre + " | " + text_signalement
+                                user.signalement(id_tuto, auteur, signalement_final)
+                                animation_mise_en_ligne.stop_anime()
+                            else:
+                                Gerer_requete.message("Vous avez déjà signalé ce tuto !")
+                        except noConnection:
+                            Gerer_requete.connection_failed()
+                        except Exception as e:
+                            
+                            pass
+                        else:
+                            if can_signal:
+                                Gerer_requete.processus_fini("Votre signalement a été envoyé")
                     else:
-                        if can_signal:
-                            Gerer_requete.processus_fini("Votre signalement a été envoyé")
-                else:
-                    Gerer_requete.connecte_toi()
+                        Gerer_requete.connecte_toi()
+                if not rect_popup.collidepoint(mouse):
+                    if popup_option_activer and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                        retirez_option = True
+                        popup_option_activer = False
+                if rect_triple_bar.collidepoint(mouse) and popup_option_activer == False and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    popup_option_activer =True
+                
+                if popup_option_activer  and rect_case_voir_tuto.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    if auteur != "":
+                        menu(1,auteur.split(",")[0])
+                    else:
+                        Gerer_requete.message("L'auteur n'existe pas !")
+                
+                if rect_photo_pp.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    if connect and auteur.split(",")[0] == user.pseudo:
+                        affiche_photo_profil(last_screen)
+                    else:
+                        affiche_photo_profil(last_screen,True,auteur.split(",")[0])
+                
+            
         if not "\n" in text_info:
             for i in range(line):
                 draw_text(all_text[i], color = (0,0,0), x = 10, y =20 + (taille_ecriture+5)*i, size = taille_ecriture, contener = surface_glissant_ecriture, font = font_paragraphe, importer = True)
@@ -807,27 +843,39 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
             draw_text(text_info, color = (0,0,0),x = 10,y = 35,
                        size = taille_ecriture, contener = surface_glissant_ecriture, font = font_paragraphe, importer = True)
         #pygame.draw.rect(surface_ecriture, (255,0,0),(0,height/2,width,2))
-        fond_nav.fill(palette_couleur.fond_bar_de_navigation)   
-        surface_popup.fill((255,255,255))                      
+        fond_nav.fill(palette_couleur.fond_bar_de_navigation)         
         screen.blit(fond_nav,(0,0))  
         screen.blit(image_retour,rect_goback)
         title(text_title, size = size_title)
         if id_ > 1:
-            pygame.draw.rect(surface_popup,(0,0,0),surface_popup.get_rect(),1)
-            taille_case = surface_popup.get_height() - rect_icone_signalement.y - 10
-            #image_userr le texte de signalement dans les options
-            draw_text(texte_pour_signalement,font_paragraphe,(0,0,0),
-                      x  = 20 + rect_icone_signalement.w + 5, y = rect_icone_signalement.y + rect_icone_signalement.h/2 - taille_texte_signalement[1]/2,
-                      size = size_texte_pour_signalement, importer=True,contener=surface_popup)
+            pygame.draw.rect(surface_popup_fond,fond_ecran,surface_popup_fond.get_rect(),0,20)
+            pygame.draw.rect(surface_popup_fond,(0,0,0),surface_popup_fond.get_rect(),1,20)
+            pygame.draw.rect(surface_popup,blanc,surface_popup.get_rect(),0,20)
             
-            draw_text(texte_pour_voir_tout_les_tuto,font_paragraphe,(0,0,0),
-                      x  = 20 + rect_icone_signalement.w + 5, y = rect_icone_tuto_utilisateur.y + rect_icone_tuto_utilisateur.h/2 - taille_voir_tout_les_tuto[1]/2,
-                      size = size_texte_pour_voir_tout_les_tuto, importer=True,contener=surface_popup) 
-                       
-            trait(surf = surface_popup, x = 0, y = rect_icone_signalement.y - 10,longueur = surface_popup.get_width(),epaisseur = 1)
-            surface_popup.blit(icone_signalement,(rect_icone_signalement.x,rect_icone_signalement.y))
-            trait(surf = surface_popup, x = 0, y = rect_icone_tuto_utilisateur.y -10,longueur = surface_popup.get_width(),epaisseur = 1)
-            surface_popup.blit(icone_tuto_utilisateur,rect_icone_tuto_utilisateur)
+            taille_case = surface_popup_fond.get_height() - rect_icone_signalement.y - 10
+            #image_userr le texte de signalement dans les options
+            #case_dans_popup.fill(palette_couleur.fond_case_login)
+            pygame.draw.rect(case_dans_popup,palette_couleur.fond_case_login,case_dans_popup.get_rect(),0,20)
+            e = 0
+            for i in all_texte_signal:
+                draw_text(i,font_paragraphe,blanc,
+                        x  = rect_icone_signalement.x + rect_icone_signalement.w + 5, y = case_dans_popup.get_height()/2 - y_signal/2 + font(font_paragraphe,taille_signal,True).size(i)[1] * e,
+                        size = taille_signal, importer=True,contener=case_dans_popup)
+                e+=1
+            case_dans_popup.blit(icone_signalement,rect_icone_signalement)
+            surface_popup.blit(case_dans_popup,position_case_signal_rel)
+            #case_dans_popup.fill(palette_couleur.fond_case_login)
+            pygame.draw.rect(case_dans_popup,palette_couleur.fond_contenaire_page_tuto,case_dans_popup.get_rect(),0,20)
+            for i in range(len(all_text_voir_tuto)):
+                draw_text(all_text_voir_tuto[i],font_paragraphe,blanc,
+                        x  = rect_icone_tuto_utilisateur.x + rect_icone_signalement.w + 5,
+                        y = case_dans_popup.get_height()/2 - y_voir_tuto/2 + font(font_paragraphe,taille_voir_tuto,True).size(all_text_voir_tuto[i])[1] * i,
+                        size = taille_voir_tuto, importer=True,contener=case_dans_popup) 
+            case_dans_popup.blit(icone_tuto_utilisateur,rect_icone_tuto_utilisateur)
+            surface_popup.blit(case_dans_popup,position_case_voir_tuto_rel)
+            
+            
+            surface_popup_fond.blit(surface_popup,(20,20))
             draw_text(date, x = w_origine - font_20.size(str(date))[0] - 10,y = 10, font = font_paragraphe, color = (255,255,255),importer = True)
             
         if go_back:
@@ -836,18 +884,19 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
         screen.blit(surface_ecriture, (25,150))
         if id_ >1:
             #image_userr pp_user
+            screen.blit(triple_bar_option,rect_triple_bar)
             screen.blit(image_photo_profil,position_photo_pp)
             if popup_option_activer:
                 position_popup += 20
                 if position_popup >= position_de_fin:
                     position_popup = position_de_fin            
-                screen.blit(surface_popup,(rect_popup_btn.x,position_popup))
+                screen.blit(surface_popup_fond,(rect_popup.x,position_popup))
             elif retirez_option:
                 position_popup -= 20
-                if position_popup <= -surface_popup.get_height():
-                    position_popup = -surface_popup.get_height()            
-                screen.blit(surface_popup,(rect_popup_btn.x,position_popup))
-            screen.blit(triple_bar_option,rect_triple_bar)
+                if position_popup <= -surface_popup_fond.get_height():
+                    position_popup = -surface_popup_fond.get_height()            
+                screen.blit(surface_popup_fond,(rect_popup.x,position_popup))
+
             
         last_screen = screen.copy()
         pygame.display.flip()
@@ -1948,7 +1997,7 @@ def compte():
                                                 img_ = pygame.image.load(chemin_pp).convert_alpha()
                                                 old_width, old_height = img_.get_size()
                                                 # Définir la nouvelle largeur (ou hauteur)
-                                                new_width = 500
+                                                new_width = 500#le rect a été calculer par rapport a une image qui était en width = 500, alors l'image envoyé doit l'être aussi
                                                 # Calculer la nouvelle hauteur (ou largeur) pour conserver le rapport d'aspect (produit en croix)
                                                 new_height = int(old_height * new_width / old_width)
                                                 # Redimensionner l'image
@@ -1998,7 +2047,7 @@ def compte():
                                                 img_ = pygame.image.load(chemin_pp).convert_alpha()
                                                 old_width, old_height = img_.get_size()
                                                 # Définir la nouvelle largeur (ou hauteur)
-                                                new_width = 500
+                                                new_width = 500 #le rect a été calculer par rapport a une image qui était en width = 500, alors l'image envoyé doit l'être aussi
                                                 # Calculer la nouvelle hauteur (ou largeur) pour conserver le rapport d'aspect (produit en croix)
                                                 new_height = int(old_height * new_width / old_width)
                                                 # Redimensionner l'image
@@ -2156,11 +2205,20 @@ def compte():
                                                         value["coupage"] += 1                                        
                                     else:
                                         if len(value["input_visible"]) < value["max"]:
-                                            if event.unicode.isprintable() and event.unicode != "":
-                                                value["input_visible"] += event.unicode
-                                                value["input_cache"] += "*"
-                                                if value["depasse"]:
-                                                    value["coupage"] += 1
+                                            if key == "input_age":
+                                                if event.unicode.isdigit():
+                                                    value["input_visible"] += event.unicode
+                                                    value["input_cache"] += "*"
+                                                else:
+                                                    pass
+                                            else:
+                                                if event.unicode.isprintable() and event.unicode != "":
+                                                    separation_1 = value["input_visible"][:len(value["input_visible"]) + cursor_position]
+                                                    separation_2 = value["input_visible"][len(value["input_visible"]) + cursor_position:]
+                                                    value["input_visible"] = separation_1 + event.unicode + separation_2
+                                                    value["input_cache"] += "*"
+                                                    if value["depasse"]:
+                                                        value["coupage"] += 1
                             elif event.type == pygame.KEYUP and event.key == pygame.K_TAB:
                                 press_tab = False #Eviter la detection indésirable de l'appuie 2 fois sur la touche tab
                         i += 1
@@ -2492,7 +2550,7 @@ def compte():
                 screen.blit(surf_image2,(x_photo2,y_photo2))
             #masque fait pour detecter la collision très précisément
             #mask = pygame.mask.from_surface(surf_image2)
-            pygame.draw.ellipse(screen,color_bordure_image,(x_photo2,y_photo2,size_grand[0],size_grand[1]),1)
+            #pygame.draw.ellipse(screen,color_bordure_image,(x_photo2,y_photo2,size_grand[0],size_grand[1]),1)
             
             fake_screen  =  screen.copy()
             #pour eviter l'erreur que les mask_x et mask_y deborde du mask car l'ellipse dessiner est aggrandi intentionnellement a cause du
@@ -2599,36 +2657,38 @@ def input_popup():
     """
     pygame.display.flip()
     global continuer
-    container = pygame.Surface((w_origine/3,h_origine/3), pygame.SRCALPHA)
-    rect_container = pygame.Rect(w_origine/2 - container.get_width()/2, h_origine/2 - container.get_height()/2,container.get_width(),container.get_height())
-    width = container.get_width()
-    height = container.get_height()
+    sous_container = pygame.Surface((w_origine/3,h_origine/3), pygame.SRCALPHA)
+    rect_container = pygame.Rect(w_origine/2 - sous_container.get_width()/2, h_origine/2 - sous_container.get_height()/2,sous_container.get_width(),sous_container.get_height())
+    width = sous_container.get_width()
+    height = sous_container.get_height()
+    container = pygame.Surface((width - 40,height - 40), pygame.SRCALPHA)
     active_input = False
     text_input = ""
     max_input = 50
-    rect_quit = pygame.Rect(5,30,30,30)
+    rect_quit = pygame.Rect(15,10,30,30)
     image_retour = pygame.image.load("Image/Icone_retour.png")
     image_retour = pygame.transform.smoothscale(image_retour,(rect_quit.w,rect_quit.h))
     font_paragraphe = apple_titre
    
-    rect_quit_absolute = pygame.Rect(rect_container.x + rect_quit.x, rect_container.y + rect_quit.y, 30,30)
+    rect_quit_absolute = pygame.Rect(rect_container.x + 20 + rect_quit.x, rect_container.y + 20 + rect_quit.y, 30,30)
     text_titre = "Ecrivez le nom de votre tuto"
-    taille_titre = verification_size(pygame.Rect(0,0,container.get_width() - 80,0),chivo_titre,30,text_titre,True)
+    taille_titre = verification_size(pygame.Rect(0,0,sous_container.get_width() - 90,0),chivo_titre,30,text_titre,True)
     text_active = "Input désactivé"
-    color_input = (255,0,0)
+    color_input = palette_couleur.fond_case_login
     cancel = False
     finished = False
     taille_input = 25
-    rect_input = pygame.Rect(width/2 - width/2/2,
-                                 height/2 - 50/2,
-                                 width/2,
-                                 50)
+    width_input = container.get_width()/2
+    height_input = 50
+    rect_input = pygame.Rect(container.get_width()/2 - width_input/2,
+                             container.get_height()/2 - height_input/2,
+                             width_input, height_input)
     surf_glissante = pygame.Surface((3000,rect_input.h),pygame.SRCALPHA)
     pos_x = 0
     coupage = False
     surface_ecriture = pygame.Surface((rect_input.w,rect_input.h),pygame.SRCALPHA) #surface
     while continuer:
-        container.fill((0,0,0,0))
+        sous_container.fill((0,0,0,0))
         mouse = pygame.mouse.get_pos()
         rect_input_absolute = pygame.Rect(rect_container.x + width/2 - (width/2)/2,
                                           rect_container.y + height/2 - 50/2,
@@ -2638,7 +2698,7 @@ def input_popup():
         for event in pygame.event.get():
             if rect_input_absolute.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 active_input = not active_input
-                color_input = (0,0,0) if active_input else (255,0,0)
+                color_input = palette_couleur.fond_deux_login if active_input else palette_couleur.fond_case_login
                 text_active = "Input activé" if active_input else "Input désactivé"
             if rect_quit_absolute.collidepoint(mouse):
                 if  event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -2678,21 +2738,24 @@ def input_popup():
         #fond
         surface_ecriture.fill((0,0,0,0))
         surf_glissante.fill((0,0,0,0))
-        pygame.draw.rect(container,bleu_s,(0,0,*rect_container[2:]),0,50)
+        pygame.draw.rect(sous_container,palette_couleur.fond_deux_login,sous_container.get_rect(),0,50)
+        pygame.draw.rect(container,palette_couleur.fond_un_login,container.get_rect(),0,50)
         pygame.draw.rect(surface_ecriture,color_input,(0,0,rect_input.w,rect_input.h),1)
        
         print(pos_x)
         
-        draw_text(contener = container, text = text_titre,font = chivo_titre, size = taille_titre, x = width/2 - font(chivo_titre,taille_titre,True).size(text_titre)[0]/2,
-                  y = 10,importer = True)
-        draw_text(contener = container, text = text_active, font = chivo_titre, size = 18, x = width/2 - font(chivo_titre,18,True).size(text_active)[0]/2,
-                  y = height - 30, importer = True, color = blanc, ombre = True)
+        draw_text(contener = container, text = text_titre,font = chivo_titre, size = taille_titre, x = (width-40)/2 - font(chivo_titre,taille_titre,True).size(text_titre)[0]/2,
+                  y = 10,importer = True,color = blanc)
+        draw_text(contener = container, text = text_active, font = chivo_titre, size = 18, x = (width-40)/2 - font(chivo_titre,18,True).size(text_active)[0]/2,
+                  y = (height-40) - 30, importer = True, color = blanc, ombre = True)
         draw_text(text_input, x = 5, y = 10 , font = font_paragraphe, size = taille_input,importer = True,contener = surf_glissante)
+        
         print(0+pos_x)
         surface_ecriture.blit(surf_glissante,(pos_x,0))
         container.blit(surface_ecriture,rect_input)
         container.blit(image_retour,rect_quit)
-        screen.blit(container,(rect_container.x,rect_container.y))
+        sous_container.blit(container,(20,20))
+        screen.blit(sous_container,(rect_container.x,rect_container.y))
         pygame.display.update(rect_container)
         if cancel or finished:
             break
