@@ -33,7 +33,7 @@ animation_ouverture = Animation(screen, text_chargement = "Ouverture", color = (
 animation_update = Animation(screen, text_chargement="Mise à jour",color = (255,)*3,ombre=True,W = w_origine)
 animation_demarrage_application = Animation(screen,color = (255,255,255), text_chargement="Sylver.service",W = w_origine)
 #palette de couleur qui regroupe toute les couleurs de l'app
-
+Clock = pygame.time.Clock()
 message_categorie_compte = "Choisir une catégorie de compte permettra a l'application\
  de vous proposez une recherche par défaut a l'ouverture du menu. Afin d'en choisir\
  une clickez sur les case ! Vous pourrez alors lire la description des catégories ici même :). (Vous avez la possibilité de scroll si vous ne voyez pas toute les categories) "
@@ -263,6 +263,7 @@ def ecrire_tuto(user : User | None):
     pos_y_ecrit = 0
     ecrit_en_plus = False
     while continuer:
+        Clock.tick(120)
         screen.fill(fond_ecran)
         fond_nav.fill(palette_couleur.fond_bar_de_navigation)  
         mouse = pygame.mouse.get_pos()
@@ -293,8 +294,12 @@ def ecrire_tuto(user : User | None):
                                 elif rep is None:
                                     categorie = None
                                 if categorie != None:
+                                    if Gerer_requete.ask_if_annonce():
+                                        is_annonce = 1
+                                    else:
+                                        is_annonce = 0
                                     animation_mise_en_ligne.start_anime(last_screen)
-                                    Gerer_requete(user).save_tuto(None,text_pour_tuto,titre,categorie)
+                                    Gerer_requete(user).save_tuto(None,text_pour_tuto,titre,categorie,is_annonce)
                                     animation_mise_en_ligne.stop_anime()
                                     go_back = True 
                             except noConnection:
@@ -510,6 +515,16 @@ def trait(x : float,y : float ,longueur : float ,surf : pygame.Surface,epaisseur
 
 
 def interface_deroullante_categorie(last_screen,message1 = "Choisissez votre catégorie de compte",message2 = message_categorie_compte):
+    """Fonction permettant a l'utilisateur de choisir sa catégorie
+
+    Args:
+        last_screen (pygame.Surface): Dernier écran à afficher
+        message1 (str, optional): message de consigne à ajouter. Defaults to "Choisissez votre catégorie de compte".
+        message2 (str, optional): message de description à ajouter. Defaults to message_categorie_compte.
+
+    Returns:
+        _type_: _description_
+    """    
     rect_go_back = pygame.Rect(5,5,30,30)
     texte = message1
     texte_infos_categorie = message2
@@ -569,6 +584,8 @@ def interface_deroullante_categorie(last_screen,message1 = "Choisissez votre cat
     go_back = False
     pos_y_surf_glissante = 0
     while continuer:
+        Clock.tick(120)
+
         screen.blit(last_screen,(0,0))
         draw_text(texte, color = blanc, x = w_origine/2 -  font(font_paragraphe,20,True).size(texte)[0]/2, y = h_origine-  font(font_paragraphe,20,True).size(texte)[1],
                   font = font_paragraphe, importer = True)
@@ -708,14 +725,14 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
     triple_bar_option = pygame.transform.smoothscale(triple_bar_option,(45,45))
     rect_triple_bar = pygame.Rect(w_origine - surface_popup_fond.get_width()/2 - triple_bar_option.get_width()/2
                                   ,45,triple_bar_option.get_width(),triple_bar_option.get_height())
-    icone_signalement = pygame.image.load(os.path.join("Image","icone_signalement.png"))
+    icone_signalement = pygame.image.load(os.path.join("Image","warning_icone.png"))
     icone_signalement = pygame.transform.smoothscale(icone_signalement,(50, 50))
     rect_icone_signalement = icone_signalement.get_rect() #rect relatif a surface_popup_fond
     rect_icone_signalement.x = 5
     rect_icone_signalement.y = case_dans_popup.get_height()/2 - rect_icone_signalement.h/2
 
     #creation du rect_de_collision pour l'icone signalement
-    icone_tuto_utilisateur = pygame.image.load(os.path.join("Image","icone_interrogation.png"))
+    icone_tuto_utilisateur = pygame.image.load(os.path.join("Image","loupe_icone.png"))
     icone_tuto_utilisateur = pygame.transform.smoothscale(icone_tuto_utilisateur,taille_icone)
     rect_icone_tuto_utilisateur = icone_tuto_utilisateur.get_rect() #rect relatif a surface_popup_fond
     rect_icone_tuto_utilisateur.x = 5
@@ -728,10 +745,6 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
     font_voir_tuto = font(font_paragraphe,taille_voir_tuto,True)
     texte_pour_voir_tout_les_tuto = "Voir les tutos de cette utilisateur"
     rect_a_pas_depasser = pygame.Rect(0,0,surface_popup_fond.get_width() - 50 - 25,0 )
-    """size_texte_pour_signalement = verification_size(rect_a_pas_depasser,font_paragraphe,40,texte_pour_signalement,True)
-    size_texte_pour_voir_tout_les_tuto = verification_size(rect_a_pas_depasser,font_paragraphe,40,texte_pour_voir_tout_les_tuto,True)
-    taille_texte_signalement = font(font_paragraphe,size_texte_pour_signalement,True).size(texte_pour_signalement)
-    taille_voir_tout_les_tuto = font(font_paragraphe,size_texte_pour_voir_tout_les_tuto,True).size(texte_pour_voir_tout_les_tuto)"""
     max_size = case_dans_popup.get_width() - rect_icone_signalement.x - rect_icone_signalement.w - 5 - 10
     #coupage pour le texte du signalement
     coupage_signal,line_signal,y_signal = make_line(texte_pour_signalement,font_signal,max_size)
@@ -767,6 +780,7 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
         rect_photo_pp = pygame.Rect(*position_photo_pp,*image_photo_profil.get_size())
     pos_y_ecriture = 0
     while continuer:
+        Clock.tick(120)
         print(pos_y_ecriture)
         mouse = pygame.mouse.get_pos()
         screen.fill(fond_ecran)
@@ -887,12 +901,12 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
             screen.blit(triple_bar_option,rect_triple_bar)
             screen.blit(image_photo_profil,position_photo_pp)
             if popup_option_activer:
-                position_popup += 20
+                position_popup += 80
                 if position_popup >= position_de_fin:
                     position_popup = position_de_fin            
                 screen.blit(surface_popup_fond,(rect_popup.x,position_popup))
             elif retirez_option:
-                position_popup -= 20
+                position_popup -= 80
                 if position_popup <= -surface_popup_fond.get_height():
                     position_popup = -surface_popup_fond.get_height()            
                 screen.blit(surface_popup_fond,(rect_popup.x,position_popup))
@@ -954,6 +968,8 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
             text = f'La categorie {dict_recherche["nom_categorie"].lower()} est vide :('
         elif connect and user.categorie != None and dict_recherche["nom_categorie"] != None and num != 0 and (liste_rech[indice_type] == "Catégorie" or dict_recherche["nom_categorie"] == user.categorie):
             text = f'{num} résultat.s dans la catégorie {dict_recherche["nom_categorie"].lower()}'
+        if id_ == 2:
+            text = f"Il y a {num} annonce.s disponible.s" if not flop_de_recherche else "Une erreur est survenue ! la recherche n'a pas aboutie"
         draw_text(text,color = (255,255,255),
                   x = w_origine/2 - font(chivo_titre,30,False).size(text)[0]/2,y = rect_surf_rechercher.y + rect_surf_rechercher.h + 10,
                   font = chivo_titre,size = 30
@@ -997,7 +1013,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                 for index,data in enumerate(use_list):
                     nom_projet = data[0]
                     auteur = User.get_only_pseudo(data[5])
-                    id_ = data[4]
+                    id_tuto = data[4]
                     doc  = data[2]
                     date = data[1]
                     file = data[6]
@@ -1041,7 +1057,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                     else:
                         screen.blit(surface,(w_origine/2 - long_case/2, liste_indicey[index]))                
                     pygame.draw.rect(screen,(255,255,255),rect_case,3,20)
-                    case_data = {"zone" : zone_page,"nom_projet" : nom_projet, "contenu" : text, "auteur" : auteur, "date" : date,"rect" : rect_case,"doc" : doc,"id" : id_,"extension" : file}
+                    case_data = {"zone" : zone_page,"nom_projet" : nom_projet, "contenu" : text, "auteur" : auteur, "date" : date,"rect" : rect_case,"doc" : doc,"id" : id_tuto,"extension" : file}
                     if can_add:
                         pygame.display.flip()
                         all_case_data.append(case_data)
@@ -1062,7 +1078,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
         text = data["contenu"]
         auteur = data["auteur"]
         date = data["date"]
-        id_ = data["id"]
+        id_tuto = data["id"]
         date = datetime.datetime.strptime(date,"%d/%m/%Y")
         nom_projet = data["nom_projet"]
         doc = data["doc"]
@@ -1072,7 +1088,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
             if connect:
                 if user.pseudo == auteur.split(",")[0]:
                     #si c'est un tuto de l'utilisateur connectez, on va simplement prendre sa pp qu'on avait déjà charger
-                    page_info(2,text,nom_projet,auteur,date,id_,pygame.transform.smoothscale(image_pp_user,taille_icone))
+                    page_info(2,text,nom_projet,auteur,date,id_tuto,pygame.transform.smoothscale(image_pp_user,taille_icone))
                     return  
             print(auteur.split(",")[0] in photo_deja_charger)
             if not auteur.split(",")[0] in photo_deja_charger:
@@ -1100,7 +1116,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                 rect_pp = pygame.Rect(0,0,*img_.get_size())
             image_pp = resizeImage.rendre_transparent(img_,rect_pp,0)
             image_pp = pygame.transform.smoothscale(image_pp,taille_icone)
-            page_info(2,text,nom_projet,auteur,date,id_,image_pp)
+            page_info(2,text,nom_projet,auteur,date,id_tuto,image_pp)
         else:
             dir = Gerer_requete.open_dir(title = "Lieu du téléchargement")
             print("path : ",dir,",")
@@ -1109,7 +1125,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
             else:
                 animation_ouverture.stop_anime()        
             
-    def research(data):
+    def research(data, id_ = 0):
         """Fonction effectuant la recherche
 
         Args:
@@ -1128,9 +1144,11 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
         zone_page = 0
         try:      
             flop_de_recherche = False   
-            print("commence la recherche") 
-            detail = Gerer_requete.rechercher_data(nom_auteur = data["nom_auteur"], nom_tuto = data["nom_projet"], nom_categorie = data["nom_categorie"])
-            
+            print("commence la recherche")
+            if id_ == 0:
+                detail = Gerer_requete.rechercher_data(nom_auteur = data["nom_auteur"], nom_tuto = data["nom_projet"], nom_categorie = data["nom_categorie"])
+            else:
+                detail = Gerer_requete.rechercher_annonce()
             processing = False
             num_resultat = len(detail)
             access = True
@@ -1209,6 +1227,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
     rect_a_ne_pas_depasser.w -= (rect_aide.w + 5)
     rect_a_ne_pas_depasser.w -= (rect_goback.w+5)
     text_title = "Bienvenue Dans l'espace recherche !" if id_ == 0 else f"Voici les tutos de l'utilisateur {auteur_rechercher} !"
+    text_title = "Voici les annonces les plus récentes de l'applications" if id_ == 2 else text_title
     size_du_titre = verification_size(rect_a_ne_pas_depasser,chivo_titre,size_for_title,text_title,True)
     global enter_pressed
     enter_pressed = False
@@ -1217,8 +1236,8 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
     dict_recherche = {"nom_projet" : None,"nom_auteur" : None,"nom_categorie" : None}
 
     while continuer:
-        
-        if id_ != 0 and not not_enter:
+        Clock.tick(120)
+        if id_ == 1 and not not_enter:
             dict_recherche = {"nom_auteur": auteur_rechercher,"nom_projet" : None,"nom_categorie" : None}
             th = threading.Thread(target = research, args=(dict_recherche,),daemon=True)
             if not th.is_alive():
@@ -1226,7 +1245,14 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                 th.start()
                 print("thread started")
                 not_enter = True
-                
+        if id_ == 2 and not not_enter:
+            dict_recherche = {"nom_auteur": None,"nom_projet" : "*","nom_categorie" : None}
+            th = threading.Thread(target = research, args=(dict_recherche,1),daemon=True)
+            if not th.is_alive():
+                debut = time.time()
+                th.start()
+                print("thread started")
+                not_enter = True
         if id_ == 0 and connect and user.categorie != None and not not_enter:
             #faire la recherche par défaut de l'utilisateur
             dict_recherche = {"nom_auteur": None,"nom_projet" : None,"nom_categorie" : user.categorie}
@@ -1297,7 +1323,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                             zone_page += add_fleche[index]
                             can_add = True
                             all_case_data = []
-            if rect_type_recherche.collidepoint(mouse):
+            if rect_type_recherche.collidepoint(mouse) and id_ == 0:
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     if indice_type < len(dict_recherche) - 1:
                         indice_type += 1
@@ -1332,7 +1358,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                     if active and input_host == phrase_base:
                         input_host = ""            
             if rect_btn.collidepoint(mouse):
-                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and bool(input_host):
+                if id_ == 0 and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and bool(input_host):
                     access = False
                     all_case_data = {}
                     display = True
@@ -1420,8 +1446,9 @@ stop = False
 
         
 def jouer_musique(playlist = PLAYLIST):
-    global stop
     """Joue les musiques de la playlist dans un ordre aléatoire."""
+    global stop
+    
     pygame.mixer.init()
     random.shuffle(playlist)# Mélange la playlist
     stop = False
@@ -1463,17 +1490,19 @@ def jouer_musique(playlist = PLAYLIST):
 
 def key_press(event):
     global stop
-    print(event.name)
     if keyboard.is_pressed("m+u+s+i+c"):
-        rep = Gerer_requete.askyesno_basic("SECRET","LANCER LA MENACE FCP3 ?")
-        thread_music = threading.Thread(target = jouer_musique,daemon=True) 
+        rep = Gerer_requete.askyesno_basic("SECRET","TU AS DECOUVERTS LE SECRET DE L'APP, MAIS POUR L'INSTANT IL SE FAIT PETIT !")
+        """thread_music = threading.Thread(target = jouer_musique,daemon=True) 
 
         print(rep,thread_music.is_alive())
         if not thread_music.is_alive():
             if rep:
                 thread_music.start()
             else:
-                Gerer_requete.message("DOMMAGE")
+                Gerer_requete.message("DOMMAGE")"""
+    elif keyboard.is_pressed("ctrl+c"):
+        sys.exit()
+        quit()
     
         
 keyboard.on_press(key_press)
@@ -1787,7 +1816,11 @@ def compte():
     temoin_processus_fini_pp = [False,]
     press_tab = False
     rect_icone_reglage = pygame.Rect(-1500,2522,1,1)
+    icone_aide = pygame.image.load(os.path.join("image","icone_interrogation.png"))
+    rect_aide = pygame.Rect(w_origine - taille_icone[0]- 5, 5, *taille_icone)
+    icone_aide = pygame.transform.smoothscale(icone_aide,(rect_aide.w,rect_aide.h))
     while continuer:
+        Clock.tick(120)
         mouse = pygame.mouse.get_pos()
         mouse_click = pygame.mouse.get_pressed()[0]
         screen.fill(fond_ecran)
@@ -1806,7 +1839,7 @@ def compte():
                     changement_image += 1
                     check_save_con_data = not check_save_con_data
                     icone_restez_co = liste_image_restez_co[changement_image % 2]
-                    
+                 
             if (rect_editer_photo.collidepoint(mouse) or collide_image) and (zone == 0 or connect):
                 if (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1):
                     try:
@@ -1858,6 +1891,21 @@ def compte():
                         pass
             ###################################################### Système après connection #################################################
             if connect:
+                if rect_aide.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    reponse = User.confirm_open(open="COMPTE",aide = "L'interface Compte") 
+                    if reponse:
+                        animation_ouverture.start_anime(last_screen)
+                        try:
+                            Gerer_requete.demarrer_fichier(doc = os.path.join("Ressource","Aide_interface_compte.docx"),with_path=True,ext = None)
+                        except OSError as e:
+                            print(e)
+                            Gerer_requete.fail_open()
+                        except Exception as e:
+                            print(e)
+                            Gerer_requete.error_occured()
+                        finally:
+                            animation_ouverture.stop_anime()
+
                 if btn_disconnect.collidepoint(mouse):
                     if (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1):
                         #remettre la photo de profil de base dans chemin_pp
@@ -1892,8 +1940,12 @@ def compte():
                                     else:
                                         categorie = None
                                     if categorie != None:
+                                        if Gerer_requete.ask_if_annonce():
+                                            is_annonce = 1
+                                        else:
+                                            is_annonce = 0
                                         animation_mise_en_ligne.start_anime(last_screen)
-                                        Gerer_requete(user).save_tuto(path,"",nom_tuto,categorie)
+                                        Gerer_requete(user).save_tuto(path,"",nom_tuto,categorie,is_annonce)
                                         
                                         animation_mise_en_ligne.stop_anime()
                             else:
@@ -2579,6 +2631,7 @@ def compte():
             text_nom_prenom =  user.nom + " " + user.prenom
             text_pseudo = user.pseudo
             tuto_poster = user.tuto_transmis
+            annonce_poster = user.annonce_transmis
             color_edit = (255,255,255) if not rect_editer_photo.collidepoint(mouse) else palette_couleur.contour_input_login
             draw_text(text_edit,
                       color = color_edit, 
@@ -2595,9 +2648,9 @@ def compte():
                       x = x_photo2 + size_grand[0]/2 - font(font_paragraphe,40,True).size("~ " + text_pseudo + " ~")[0]/2
                       ,y = y_photo2 + size_grand[1] + 5 + font_20.size(text_edit)[1] + font_30.size(text_nom_prenom)[1], size = 40,
                       importer = True, font = font_paragraphe)
-            draw_text(f"Vous avez postez {tuto_poster} tutoriel.s",
+            draw_text(f"Vous avez postez {tuto_poster} tutoriel.s | {annonce_poster} demande.s de tutos",
                       color = (255,255,255), 
-                      x = x_photo2 + size_grand[0]/2 - font_30.size(f"Vous avez postez {tuto_poster} tutoriel.s")[0]/2
+                      x = x_photo2 + size_grand[0]/2 - font_30.size(f"Vous avez postez {tuto_poster} tutoriel.s | {annonce_poster} demande.s de tutos")[0]/2
                       ,y = y_photo2 + size_grand[1] + 5 + font_20.size(text_edit)[1] + font_30.size(text_nom_prenom)[1] + font(font_paragraphe,40,True).size("~ " + text_pseudo + " ~")[1],
                       size = 30,
                       importer = True, font = font_paragraphe)    
@@ -2622,6 +2675,7 @@ def compte():
                     for i in range(len(all_text)):
                         draw_text(all_text[i], font = TNN, size = size ,color = blanc, center_multi_line= True,contener = surface_message_info,importer = True, y = 5 + (size*i))
                 screen.blit(surface_message_info,(x_fond_2 + surface_fond_user_co_back.get_width() + 20,y_fond_2))
+            screen.blit(icone_aide,rect_aide)
         screen.blit(image_retour,rect_goback)
         screen.blit(surface_status_co,pos_surface_status_co)
         pygame.display.flip()
@@ -2631,23 +2685,7 @@ def compte():
         
         
 def request():
-    global continuer
-    go_back = False
-    while continuer:
-        mouse = pygame.mouse.get_pos()
-        screen.fill(fond_ecran)
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                continuer = False
-            if rect_goback.collidepoint(mouse) and (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1):
-                go_back = True              
-        text = "Alors déjà bien jouer !\nMais y'a rien ici sauf un gris bizarre\nCette partie de l'application devrait être faite bientot !\n Ou pas !\n \
-            si elle est effectivement faite, ce sera une page qui regrouperait toute les annonces de tuto laissez par des utilisateurs ! :)"
-        draw_text(text,color = (255,255,255), center_multi_line=True,x = 0,y = 0, center_multi_line_y= True,ombre = True)
-        if go_back:
-            break
-        screen.blit(image_retour,rect_goback)
-        pygame.display.flip()
+    menu(2)
 
 def input_popup():
     """Fonction permettant d'image_userr une input en popup
@@ -2688,6 +2726,7 @@ def input_popup():
     coupage = False
     surface_ecriture = pygame.Surface((rect_input.w,rect_input.h),pygame.SRCALPHA) #surface
     while continuer:
+        Clock.tick(120)
         sous_container.fill((0,0,0,0))
         mouse = pygame.mouse.get_pos()
         rect_input_absolute = pygame.Rect(rect_container.x + width/2 - (width/2)/2,
@@ -2783,8 +2822,6 @@ r = (w_origine/2)/width_logo
 image_logo_app = pygame.transform.smoothscale(image_logo_app,(width_logo * r,height_logo*r))
 screen.blit(image_logo_app,(w_origine/2 - (width_logo*r)/2,h_origine/2 - (height_logo*r)/2))
 pygame.display.update()
-
-
 with open(os.path.join("img_base","photo_profil_user.png"),"rb") as fichier:
         pp_base = fichier.read()
 size_grand = (h_origine * (1-72/100),)*2 #diminution de 75% de la taille originel
@@ -2813,13 +2850,10 @@ with open(os.path.join("Ressource", "compte_connecter.txt"), "r+") as fichier:
                 animation_demarrage_application.texte = "Connexion a votre compte"
                 user = User.log_user(pseudo,mdp)
             except userNonCharger:
-                animation_demarrage_application.stop_anime()
                 Gerer_requete.message("Connection inachevé, il semblerait que le mot de passe ne corresponde pas !\n(Avez vous jouez dans les fichiers de l'appli ?)")
             except noConnection:
-                animation_demarrage_application.stop_anime()
                 Gerer_requete.connection_failed()
             except UserNotExist:
-                animation_demarrage_application.stop_anime()
                 Gerer_requete.message("Ce compte n'existe pas, il se peut que vous ayez été bannis")
             else:
                 animation_demarrage_application.texte = "Récupération de votre photo de profil"
@@ -2872,14 +2906,15 @@ with open(os.path.join("Ressource", "compte_connecter.txt"), "r+") as fichier:
             recup_categorie = Gerer_requete.take_categorie()
         except:
             recup_name_categorie = ["Informatique","Culture","Langue","Mathématique","Sport","Cuisine"]
-            animation_demarrage_application.stop_anime()
-            Gerer_requete.error_occured()
+            Gerer_requete.connection_failed()
     try:
         Gerer_requete.verifier_version_app()
         Gerer_requete.verifier_version_doc_aide()
         Gerer_requete.verifier_version_doc_info()
-    except:
-        Gerer_requete.error_occured()
+        Gerer_requete.verifier_version_doc_aide_compte()
+    except Exception as e:
+        print(e)
+        Gerer_requete.connection_failed()
         
 animation_demarrage_application.stop_anime()   
 comic_sans_ms = pygame.font.SysFont("Comic Sans Ms", 20)
@@ -2924,7 +2959,7 @@ size_text_case = verification_size(rect_pas_depasser,TNN,50,"Annonce",True)
 rect_pas_depasser = pygame.Rect(0,0,size_box_grand_w * (1-40/100),0)
 size_text_case_grand = verification_size(rect_pas_depasser,TNN,50,"Annonce",True)
 all_size = [size_text_case_grand,size_text_case,size_text_case]
-text_user_pas_co = "Salut :) Connecte toi ce sera mieux"
+text_user_pas_co = "Salut :) Connecte toi se sera mieux ! "
 
 def title(text, size = size_for_title, color = blanc,importer = True, y = 5):
     """Fonction permettant de mettre un titre
@@ -3038,7 +3073,7 @@ x_pp,y_pp = 20,fond_nav.get_height()/2 - size_pp_user[1]/2
 rect_photo_profil_user = pygame.Rect(x_pp,y_pp,*size_pp_user)
 
 while continuer:
-    
+    Clock.tick(120)
     screen.fill(fond_ecran)
     if connect:
         text_user_co = f"Salut {user.pseudo} ravis de te voir :)"
@@ -3125,7 +3160,6 @@ while continuer:
         draw_text(proposition[index],contener = rect,color = color_text[index], x = rect.get_width()/2 - font(TNN,all_size[index],True).size(proposition[index])[0]/2,
                   y = rect.get_height()/2 - font(TNN,all_size[index],True).size(proposition[index])[1]/2,size = all_size[index], font = TNN, importer = True)
         screen.blit(rect,pos[index])
-    draw_text(text_choose,color = blanc, x = 5, y = h_origine - 25)
     last_screen = screen.copy()
     pygame.display.flip()
 pygame.quit()
