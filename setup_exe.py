@@ -6,9 +6,9 @@ import platform,os,sys
 system_name = platform.system()
 # Define the executables
 if system_name != "Windows":
-    executables = [Executable("sylver_service.py", base=None, icon=os.path.join("Image", "Logo_app_2.ico"))]
+    executables = [Executable("sylver_service.py", base=None, icon=os.path.join("Image", "Logo_app_3.ico"))]
 else:
-    executables = [Executable("sylver_service.py", base="Win32GUI",icon=os.path.join("Image", "Logo_app_2.ico"),shortcut_name="Sylver.Service")] # le cmd ne s'ouvra pas
+    executables = [Executable("sylver_service.py", base="Win32GUI",icon=os.path.join("Image", "Logo_app_3.ico"),shortcut_name="Sylver.Service")] # le cmd ne s'ouvra pas
 
 build_options = {
     "packages": ["pygame","os","datetime","sys","threading","keyboard","tkinter","pymysql","tkinter.filedialog","time","pyperclip","math","io"],
@@ -32,7 +32,7 @@ build_options = {
 # Set up the setup function
 setup(
     name="Sylver.Service",
-    version='v1.6',
+    version='v1.7',
     options={"build_exe": build_options},
     author = "by Sylvio PELAGE MAXIME | Elvann JOLIVEL | Deecleane CORALIE",
     executables=executables,

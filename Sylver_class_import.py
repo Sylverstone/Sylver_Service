@@ -211,7 +211,7 @@ class User:
             tuto_transmis (int, optional): Nombre de tuto que l'utilisateur a transmis. Defaults to 0.
             rect_pp (pygame.Rect, optional): Rect de la photo de profil de l'utilisateur. Defaults to None.
     """
-    def __init__(self,nom,prenom,age,pseudo,mdp,photo_profil = None,tuto_transmis = 0,rect_pp = None,categorie = None):
+    def __init__(self,nom,prenom,age,pseudo,mdp,photo_profil = None,tuto_transmis = 0,rect_pp = None,categorie = None,annonce_transmis = 0):
                 
         self.nom = nom
         self.prenom = prenom
@@ -223,6 +223,7 @@ class User:
         self.rect_pp = rect_pp
         self.auteur = f"{self.pseudo}, {self.nom} {self.prenom}"
         self.categorie = categorie
+        self.annonce_transmis = annonce_transmis
     
     @staticmethod
     def confirm_close() -> bool:
@@ -238,7 +239,7 @@ class User:
         return ans
     
     @staticmethod
-    def confirm_open(open = "RECHERCHE"):
+    def confirm_open(open = "RECHERCHE",aide = "La recherche"):
         """Fonction permettant de confirmer une ouverture
 
         Args:
@@ -247,7 +248,7 @@ class User:
         Returns:
             boolean: Renvoie la reponse de l'utilisateur (True or False)
         """
-        ans = tkinter.messagebox.askyesno(title = open, message = f"Ouvrir le document d'aide pour la recherche ?")
+        ans = tkinter.messagebox.askyesno(title = open, message = f"Ouvrir le document d'aide pour {aide} ?")
         return ans
     
     @staticmethod
@@ -526,7 +527,7 @@ class User:
                     if mdp != data[7]:
                         raise userNonCharger("mauvais mdp")
                     else:
-                        return User(data[1],data[2],data[5],data[6],data[7],data[4],data[3],data[8],data[10])
+                        return User(data[1],data[2],data[5],data[6],data[7],data[4],data[3],data[8],data[10],data[11])
                 else:
                     raise UserNotExist("Auncun utilisateur trouvée")
             else:
@@ -624,7 +625,7 @@ class Gerer_requete(User):
     def __init__(self,user : User):
         self.user = user
         super().__init__(prenom=user.prenom,nom = user.nom,age = user.age,pseudo = user.pseudo,
-                         mdp = user.mdp,photo_profil=user.photo_profil, tuto_transmis= user.tuto_transmis)       
+                         mdp = user.mdp,photo_profil=user.photo_profil, tuto_transmis= user.tuto_transmis, annonce_transmis=user.annonce_transmis)       
     
     @staticmethod
     def separe_rect(rect):
@@ -661,8 +662,50 @@ class Gerer_requete(User):
                 raise noConnection("connection failed")
             else:
                 return data
+    
+    @staticmethod  
+    def rechercher_annonce()->list:
+        """Fonction permettant de rechercher des tuto dans la base de données grâce a différente
+           données relatives
+
+        Args:
+            nom_tuto (str, optional): Nom du tuto rechercher. Defaults to None.
+            nom_auteur (str, optional): Nom de l'auteur des tutos rechercher. Defaults to None.
+
+        Raises:
+            noConnection: Renvoie noConnection quand la connection n'a pu être établie
+
+        Returns:
+            list: Liste comportant tout les tuto retourner
+        """
+        no_connection = False
+        try:
             
-    def save_tuto(self,doc : str = None, Text :str = "",nom_tuto : str = "",categorie = None,experiment = False) -> None:
+            data_recup = [None]
+            if look_for_connection():
+                with connection_principale.cursor() as cursor:
+                    request = "SELECT * FROM tuto WHERE is_annonce = 1 ORDER BY date DESC"
+                    cursor.execute(request)
+                    data_recup = cursor.fetchall()
+            else:
+                no_connection = True
+        except sql.Error as err:
+            print(err)
+            no_connection = False
+            print("erreur")
+        except noConnection as e:
+            print(e)
+            no_connection = True
+        except Exception as e:
+            print(e)
+            no_connection = True
+            print("raise")
+        finally:
+            if not no_connection:
+                return data_recup
+            raise noConnection("l")
+             
+    def save_tuto(self,doc : str = None, Text :str = "",nom_tuto : str = "",categorie = None,is_annonce = 0,experiment = False) -> None:
         """Fonction permettant de sauvegarder un tuto a mettre en ligne
 
         Args:
@@ -691,14 +734,17 @@ class Gerer_requete(User):
                     with open(doc,"rb") as fichier:
                         doc = fichier.read()
                 print("requete 1")
-                request =  "INSERT INTO `tuto` (`nom`,`date`,`doc`,`text_ctn`,`auteur`,`file`,`categorie`) VALUES (%s,%s,%s,%s,%s,%s,%s)"
-                infos = (nom,date,doc,Text,auteur,file,categorie)
+                request =  "INSERT INTO `tuto` (`nom`,`date`,`doc`,`text_ctn`,`auteur`,`file`,`categorie`,`is_annonce`) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)"
+                infos = (nom,date,doc,Text,auteur,file,categorie,is_annonce)
                 cursor.execute(request,infos)
                 print("requete 2")
                 request = f"UPDATE utilisateur SET tuto_transmis = tuto_transmis + 1 WHERE pseudo = '{self.pseudo}'"
                 cursor.execute(request)
                 print("requete 3")
                 request = f"UPDATE categorie SET tuto_count = tuto_count + 1 WHERE nom = '{categorie}'"
+                cursor.execute(request)
+                print("requete 4")
+                request = f"UPDATE utilisateur SET annonce_count = annonce_count + 1 WHERE pseudo = '{self.pseudo}'"
                 cursor.execute(request)
                 
            
@@ -712,7 +758,10 @@ class Gerer_requete(User):
             if no_connection:
                 raise noConnection("connection failed")
             else:
-                self.user.tuto_transmis += 1
+                if is_annonce == 0:
+                    self.user.tuto_transmis += 1
+                else:
+                    self.user.annonce_transmis += 1
                 connection_principale.commit()
                 connection_principale.close()
             
@@ -980,6 +1029,14 @@ class Gerer_requete(User):
                 print("a jour")
     
     @staticmethod
+    def ask_if_annonce():
+        root = tkinter.Tk()
+        root.withdraw()
+        ans = tkinter.messagebox.askyesno("ATTENTION","Doit t'on considérez votre post comme une demande de tuto ?")
+        root.destroy()
+        return ans
+    
+    @staticmethod
     def verifier_version_doc_aide():
         no_connection = False
         try:
@@ -1033,6 +1090,35 @@ class Gerer_requete(User):
         finally:
             if no_connection:
                 Gerer_requete.error_occured()
+    @staticmethod           
+    def verifier_version_doc_aide_compte():
+        no_connection = False
+        try:
+            if look_for_connection():
+                with connection_principale.cursor() as cursor:
+                    request = """SELECT Version,date_de_publication,doc FROM VERSIONNAGE WHERE nom = 'Fichier_aide_compte' ORDER BY id DESC LIMIT 1"""
+                    cursor.execute(request)
+                    data_recup = cursor.fetchone()
+            else:
+                no_connection = False
+        except sql.Error:
+            no_connection = True
+        except Exception as e:
+            print(e)
+            no_connection = True
+        else:
+            if data_recup[0] != os.environ.get("VERSION_DOC_AIDE_COMPTE"):
+                print("pas a jour")
+                os.remove("Ressource/Aide_interface_compte.docx")
+                with open("Ressource/Aide_interface_compte.docx","wb") as f:
+                    f.write(data_recup[2]) #remet le nouveau fichier
+                changer_valeur_env("VERSION_DOC_AIDE_COMPTE",data_recup[0])
+            else:
+                print("a jour")
+        finally:
+            if no_connection:
+                Gerer_requete.error_occured()
+
 
 
 if __name__ == "__main__":
