@@ -115,6 +115,12 @@ def look_for_connection():
             
 
 def changer_valeur_env(valeur,new_valeur):
+    """Fonction permettant de changer une version du .env
+
+    Args:
+        valeur (str): début de la ligne a changer
+        new_valeur (str): nouvelle valeur a y écrire
+    """
     chemin_du_env = '.env'
     # Lirele contenu actuel du fichier .env
     with open(chemin_du_env, 'r') as fichier_env:
@@ -345,9 +351,6 @@ class User:
                 connection_principale.commit()
                 connection_principale.close()
                     
-        
-            
-        
     def save_user(self):
         """Fonction permettant de sauvegarder un compte d'utilisateur
 
@@ -381,6 +384,14 @@ class User:
                 connection_principale.close()
         
     def change_categorie_compte(self,Nouvelle_value = None):
+        """Fonction permettant de changer la catégorie d'un compte
+
+        Args:
+            Nouvelle_value (str, optional): Nouvelle catégorie choisi. Defaults to None.
+
+        Raises:
+            noConnection: renvoie noConnection quand la connexion n'a pas être initialisé
+        """
         no_connection = False
         try:
             connection_principale = connect_to_database()
@@ -409,6 +420,66 @@ class User:
             else:
                 raise noConnection("no connection")
             
+    def save_tuto(self,doc : str = None, Text :str = "",nom_tuto : str = "",categorie = None,is_annonce = 0,experiment = False) -> None:
+        """Fonction permettant de sauvegarder un tuto a mettre en ligne
+
+        Args:
+            doc (str, optional): Path du fichier a mettre en ligne. Defaults to None.
+            Text (str, optional): Text du tuto a mettre en ligne. Defaults to "".
+            nom_tuto (str, optional): Nom du tuto. Defaults to "".
+
+        Raises:
+            noConnection: Renvoie noConnection quand la conenction n'a pu être établie
+        """
+        no_connection = False     
+        current_date = datetime.datetime.now()
+        current_date = current_date.strftime("%Y-%m-%d")
+        date = current_date
+        nom = nom_tuto
+        
+        auteur = f"{self.pseudo}, {self.nom} {self.prenom}"
+        file = Doc(doc).get_extension()
+        try:
+            connection_principale = connect_to_database()
+            print(connection_principale)
+            connection_principale.begin()
+            with connection_principale.cursor() as cursor:                    
+                print(doc)
+                if doc != None:
+                    with open(doc,"rb") as fichier:
+                        doc = fichier.read()
+                print("requete 1")
+                request =  "INSERT INTO `tuto` (`nom`,`date`,`doc`,`text_ctn`,`auteur`,`file`,`categorie`,`is_annonce`) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)"
+                infos = (nom,date,doc,Text,auteur,file,categorie,is_annonce)
+                cursor.execute(request,infos)
+                print("requete 2")
+                request = f"UPDATE utilisateur SET tuto_transmis = tuto_transmis + 1 WHERE pseudo = '{self.pseudo}'"
+                cursor.execute(request)
+                print("requete 3")
+                request = f"UPDATE categorie SET tuto_count = tuto_count + 1 WHERE nom = '{categorie}'"
+                cursor.execute(request)
+                print("requete 4")
+                request = f"UPDATE utilisateur SET annonce_count = annonce_count + 1 WHERE pseudo = '{self.pseudo}'"
+                cursor.execute(request)
+                
+           
+        except sql.Error as err:
+            print("erreur :",err)
+            no_connection = True
+        except Exception as err:
+            print("erreur :",err)
+            no_connection = True
+        finally:
+            if no_connection:
+                raise noConnection("connection failed")
+            else:
+                if is_annonce == 0:
+                    self.user.tuto_transmis += 1
+                else:
+                    self.user.annonce_transmis += 1
+                connection_principale.commit()
+                connection_principale.close()
+                     
     def change_element(self,nom = False, pseudo = False, prenom = False, photo_pp = False, tuto_transmi = False,rect_pp = False,Nouvelle_value = 0, notif = False,temoin = None)-> None:
         """Fonction permettant de mettre a jour les éléments du compte de l'utilisation
 
@@ -573,17 +644,7 @@ class User:
                 return disponible
             else:
                 raise noConnection("connection failed")
-            """try:
-                if connection_principale.is_connected():
-                    pass
-                else:
-                    raise noConnection("connection failed")
-            except:
-                print("no con")
-                raise noConnection("connection failed")
-            else:
-                #aucune erreur n'a eu lieu
-                return disponible"""
+           
             
                 
             
@@ -620,12 +681,8 @@ class User:
 
         
 #methode pour fichier word, pdt. juste les lires les transfo en bytes et les stocker. reflechir a une maniere de supprimer les tutos depuis sql
-class Gerer_requete(User):   
-    
-    def __init__(self,user : User):
-        self.user = user
-        super().__init__(prenom=user.prenom,nom = user.nom,age = user.age,pseudo = user.pseudo,
-                         mdp = user.mdp,photo_profil=user.photo_profil, tuto_transmis= user.tuto_transmis, annonce_transmis=user.annonce_transmis)       
+class Gerer_requete():   
+    """Fonction qui gère les actions de l'application hormis les actions incluant l'utilisateur et ses données    """
     
     @staticmethod
     def separe_rect(rect):
@@ -641,6 +698,14 @@ class Gerer_requete(User):
     
     @staticmethod
     def take_categorie():
+        """Fonction récupérant tout sur les catégories
+
+        Raises:
+            noConnection: renvoie noConnection quand la connexion n'a pu être initialisé
+
+        Returns:
+            list: donnée de toutes les catégories
+        """
         no_connection = False     
     
         try:
@@ -705,65 +770,7 @@ class Gerer_requete(User):
                 return data_recup
             raise noConnection("l")
              
-    def save_tuto(self,doc : str = None, Text :str = "",nom_tuto : str = "",categorie = None,is_annonce = 0,experiment = False) -> None:
-        """Fonction permettant de sauvegarder un tuto a mettre en ligne
-
-        Args:
-            doc (str, optional): Path du fichier a mettre en ligne. Defaults to None.
-            Text (str, optional): Text du tuto a mettre en ligne. Defaults to "".
-            nom_tuto (str, optional): Nom du tuto. Defaults to "".
-
-        Raises:
-            noConnection: Renvoie noConnection quand la conenction n'a pu être établie
-        """
-        no_connection = False     
-        current_date = datetime.datetime.now()
-        current_date = current_date.strftime("%Y-%m-%d")
-        date = current_date
-        nom = nom_tuto
-        
-        auteur = f"{self.pseudo}, {self.nom} {self.prenom}"
-        file = Doc(doc).get_extension()
-        try:
-            connection_principale = connect_to_database()
-            print(connection_principale)
-            connection_principale.begin()
-            with connection_principale.cursor() as cursor:                    
-                print(doc)
-                if doc != None:
-                    with open(doc,"rb") as fichier:
-                        doc = fichier.read()
-                print("requete 1")
-                request =  "INSERT INTO `tuto` (`nom`,`date`,`doc`,`text_ctn`,`auteur`,`file`,`categorie`,`is_annonce`) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)"
-                infos = (nom,date,doc,Text,auteur,file,categorie,is_annonce)
-                cursor.execute(request,infos)
-                print("requete 2")
-                request = f"UPDATE utilisateur SET tuto_transmis = tuto_transmis + 1 WHERE pseudo = '{self.pseudo}'"
-                cursor.execute(request)
-                print("requete 3")
-                request = f"UPDATE categorie SET tuto_count = tuto_count + 1 WHERE nom = '{categorie}'"
-                cursor.execute(request)
-                print("requete 4")
-                request = f"UPDATE utilisateur SET annonce_count = annonce_count + 1 WHERE pseudo = '{self.pseudo}'"
-                cursor.execute(request)
-                
-           
-        except sql.Error as err:
-            print("erreur :",err)
-            no_connection = True
-        except Exception as err:
-            print("erreur :",err)
-            no_connection = True
-        finally:
-            if no_connection:
-                raise noConnection("connection failed")
-            else:
-                if is_annonce == 0:
-                    self.user.tuto_transmis += 1
-                else:
-                    self.user.annonce_transmis += 1
-                connection_principale.commit()
-                connection_principale.close()
+    
             
             
                 
@@ -844,6 +851,11 @@ class Gerer_requete(User):
         
     @staticmethod
     def message(text):
+        """Fonction permettant d'afficher un warning a l'écran
+
+        Args:
+            text(str): Warning a afficher
+        """
         root = tkinter.Tk()
         root.withdraw()
         tkinter.messagebox.showwarning("Info",text)
@@ -931,6 +943,14 @@ class Gerer_requete(User):
     
     @staticmethod
     def open_dir(title = "Titre"):
+        """Fonction permmettant a l'utilisateur de choisir un dossier
+
+        Args:
+            title (str, optional): titre de la fenetre. Defaults to "Titre".
+
+        Returns:
+            str: chemin du dossier choisi
+        """
         path = tkinter.filedialog.askdirectory(title = title)
         return path
     
@@ -941,13 +961,21 @@ class Gerer_requete(User):
     
     @staticmethod
     def look_for_membre_categorie(categorie):
+        """Fonction permmettant de récupérer les membres d'une catégorie
+
+        Args:
+            categorie (str): nom de la catégorie rechercher
+
+        Returns:
+            int : renvoie le nombre de membre dans la catégoriek
+        """
         no_connetion = False
         try:
             if look_for_connection():
                 with connection_principale.cursor() as cursor:
                     request = "SELECT membre FROM categorie WHERE nom = %s"
                     cursor.execute(request,(categorie))
-                    data = cursor.fetchone()
+                    data = cursor.fetchone()                    
             else:
                 no_connetion = True
         except sql.Error as e:
@@ -961,8 +989,14 @@ class Gerer_requete(User):
                 return data[0]
             else:
                 return None
+            
     @staticmethod
     def categorie_tuto_default_ou_non():
+        """Fonction permettant de savoir si l'utilisateur veut qu'un tuto soit de la même catégorie que son tuto ou non
+
+        Returns:
+            bool: réponse selectionnée par l'utilisateur
+        """
         root = tkinter.Tk()
         root.withdraw()
         ans = tkinter.messagebox.askyesnocancel("Categorie","Souhaiter vous mettre a ce tuto la même catégorie que votre compte ? ")
@@ -971,6 +1005,14 @@ class Gerer_requete(User):
         
     @staticmethod 
     def update_categorie_member():
+        """Fonction permettant de mettre a jour les membres d'une catégorie
+
+        Raises:
+            noConnection: renvoie noConnection quand la connexion n'a pu être initialisé
+
+        Returns:
+            dict: renvoie un dictionnaire avec des infos sur les catégories, une clé 'membre' et une clé 'nombre_de_tuto'
+        """
         no_connection = False     
         try:
             if look_for_connection():
@@ -995,6 +1037,15 @@ class Gerer_requete(User):
             
     @staticmethod
     def askyesno_basic(title = None,message = ""):
+        """Fonction permettant d'afficher une messagebox oui ou non
+
+        Args:
+            title (str, optional): titre de la messagebox. Defaults to None.
+            message (str, optional): message de la messagebox. Defaults to "".
+
+        Returns:
+            bool: retourne la réponse selectionner par l'utilisateur
+        """
         root = tkinter.Tk()
         root.withdraw()
         rep = tkinter.messagebox.askyesno(title,message)
@@ -1003,6 +1054,7 @@ class Gerer_requete(User):
     
     @staticmethod
     def verifier_version_app():
+        """Fonction permettant de vérifier la version de l'app, et donc de proposer une mise a jour si besoin"""
         no_connection = False
         try:
             if look_for_connection():
@@ -1038,6 +1090,7 @@ class Gerer_requete(User):
     
     @staticmethod
     def verifier_version_doc_aide():
+        """Fonction permet de vérifier la version du document aide de l'interface Menu et donc de changer le doc si besoin"""
         no_connection = False
         try:
             if look_for_connection():
@@ -1064,6 +1117,7 @@ class Gerer_requete(User):
         
     @staticmethod
     def verifier_version_doc_info():
+        """Fonction permet de vérifier la version du document info sur SylverService et donc de changer le doc si besoin"""
         no_connection = False
         try:
             if look_for_connection():
@@ -1090,8 +1144,10 @@ class Gerer_requete(User):
         finally:
             if no_connection:
                 Gerer_requete.error_occured()
+                
     @staticmethod           
     def verifier_version_doc_aide_compte():
+        """Fonction permet de vérifier la version du document aide de l'interface compte et donc de changer le doc si besoin"""
         no_connection = False
         try:
             if look_for_connection():

@@ -4,6 +4,7 @@ pygame.init()
 #Egalement un mini-projet git
 
 class AnnuleCropPhoto(Exception):
+    """Fonction permettant de simuler une exception"""
     def __init__(self, what) -> None:
         self.what = what
         super().__init__(self.what)

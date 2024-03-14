@@ -62,6 +62,7 @@ def draw_text(text, font = "Comic Sans Ms", color = (0,0,0), x = 0, y = 0,refere
             contener.blit(text_, (x+1,y+(size+2)*enum))
         text_ = font_.render(str(text), True, color)
         contener.blit(text_, (x,y+(size + 2)*enum))
+        
 class Animation:
     
     """Class permettant de generer une animation de chargement

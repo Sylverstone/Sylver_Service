@@ -1,4 +1,3 @@
-from ipaddress import collapse_addresses
 import pygame,os,datetime,sys,threading,keyboard,time,math,io,random
 from Sylver_class_import import Gerer_requete,User,status_connection
 from Animation import Animation
@@ -6,7 +5,6 @@ from Color import Color
 from Resize_image import AnnuleCropPhoto, resizeImage
 from font_import import *
 from Exception import *
-
 
 
 #reglage de l'ecran
@@ -24,16 +22,18 @@ taille_origine = pygame.display.Info()
 w_origine = taille_origine.current_w
 h_origine = taille_origine.current_h
 rect_screen = screen.get_rect()
+#palette de couleur qui regroupe toute les couleurs de l'app
 palette_couleur = Color()
 #class animation qui servira a declencher des chargement de deux maniere, soit a des periodes bloquante ou non
 animation_chargement = Animation(screen,color = (255,)*3,ombre = True, W = w_origine)
 animation_mise_en_ligne = Animation(screen, text_chargement="Mise en ligne",color = (255,)*3,ombre=True,W = w_origine)
-animation_connection = Animation(screen, text_chargement = "Connection",color = palette_couleur.fond_case_login,ombre = True,W = w_origine)
+animation_connection = Animation(screen, text_chargement = "Connection",color = (255,)*3,ombre = True,W = w_origine)
 animation_ouverture = Animation(screen, text_chargement = "Ouverture", color = (255,)*3,ombre=True,W = w_origine)
 animation_update = Animation(screen, text_chargement="Mise à jour",color = (255,)*3,ombre=True,W = w_origine)
 animation_demarrage_application = Animation(screen,color = (255,255,255), text_chargement="Sylver.service",W = w_origine)
-#palette de couleur qui regroupe toute les couleurs de l'app
+
 Clock = pygame.time.Clock()
+
 message_categorie_compte = "Choisir une catégorie de compte permettra a l'application\
  de vous proposez une recherche par défaut a l'ouverture du menu. Afin d'en choisir\
  une clickez sur les case ! Vous pourrez alors lire la description des catégories ici même :). (Vous avez la possibilité de scroll si vous ne voyez pas toute les categories) "
@@ -299,7 +299,7 @@ def ecrire_tuto(user : User | None):
                                     else:
                                         is_annonce = 0
                                     animation_mise_en_ligne.start_anime(last_screen)
-                                    Gerer_requete(user).save_tuto(None,text_pour_tuto,titre,categorie,is_annonce)
+                                    user.save_tuto(None,text_pour_tuto,titre,categorie,is_annonce)
                                     animation_mise_en_ligne.stop_anime()
                                     go_back = True 
                             except noConnection:
@@ -1945,8 +1945,7 @@ def compte():
                                         else:
                                             is_annonce = 0
                                         animation_mise_en_ligne.start_anime(last_screen)
-                                        Gerer_requete(user).save_tuto(path,"",nom_tuto,categorie,is_annonce)
-                                        
+                                        user.save_tuto(path,"",nom_tuto,categorie,is_annonce)
                                         animation_mise_en_ligne.stop_anime()
                             else:
                                 break
@@ -2826,6 +2825,7 @@ with open(os.path.join("img_base","photo_profil_user.png"),"rb") as fichier:
         pp_base = fichier.read()
 size_grand = (h_origine * (1-72/100),)*2 #diminution de 75% de la taille originel
 #processus de verification de si l'utilisateur est connecter, si oui, connexion au compte
+
 with open(os.path.join("Ressource", "compte_connecter.txt"), "r+") as fichier:
     contenu = fichier.read().splitlines()
     last_screen = screen.copy()
@@ -2926,7 +2926,7 @@ blanc = (255,255,255)
 noir = (0,0,0)
 proposition = ["MENU","COMPTE","ANNONCE"]
 
-etat = ["alpha","alpha","beta"]
+etat = ["alpha","alpha","alpha"]
 size_box_grand_w = w_origine/5.5
 size_box_grand_h = h_origine/8
 size_box_w = size_box_grand_w * (1-30/100)
