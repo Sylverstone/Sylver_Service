@@ -1,8 +1,7 @@
 Sylver.Service a été créé dans le but des Trophées NSI Terminal de 2024. Entamé dès la fin des concours NSI Première 2023,
-cette application a pour objectif d'aider les élèves durant leur parcours scolaire. Vous pourrez y retrouver des tutoriels, des
-demandes de tutoriels, et même poster les vôtres. Via l'onglet "Menu" du début, vous aurez accès à tous les tutoriels. Via
-l'onglet "Annonces", vous aurez accès aux données de toutes les annonces que vous avez mises en ligne. Et enfin, via l'onglet "Compte",
-vous pourrez soumettre des tutoriels, mais également faire des demandes de tutoriels.
-Le projet a été entrepris par Sylvio Pelage-Maxime, débuté en fin d'année scolaire 2023 et fini un jour peut-être !
-Le projet utilise une base de données SQL passant par MySQL pour stocker ses utilisateurs, mais également les tutoriels postés.
-Ceux-ci peuvent être des images, des documents Word/PDF, voire des textes directement écrits dans l'interface.
+cette application a pour objectif d'aider les élèves durant leur parcours scolaire. Vous pourrez y retrouver des tutoriels
+qui pourraient s'avérer vous être utiles. Vous pourrez également postez les votre. Via l'onglet "Menu" du début, vous aurez accès à tous les tutoriels.
+l'onglet "Annonces" est en cours de développement mais pour l'instant vous pouvez y voir toutes les demandes de tutos (de nouvelles fonctionnalitées seront bientôt disponibles). Et enfin, via l'onglet "Compte",
+vous pourrez soumettre des tutoriels en texte ou via des documents, mais également faire des demandes de tutoriels.
+Le projet a été entrepris par Sylvio Pelage-Maxime | Elvann Jolivel | Coralie Deecleane, débuté en fin d'année scolaire 2023 et fini un jour peut-être !
+Le projet utilise une base de données MariaDB (MySQL) héberger sur les serveurs gratuis de alwaysdata (100mo de data seulement)
