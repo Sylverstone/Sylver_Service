@@ -474,9 +474,9 @@ class User:
                 raise noConnection("connection failed")
             else:
                 if is_annonce == 0:
-                    self.user.tuto_transmis += 1
+                    self.tuto_transmis += 1
                 else:
-                    self.user.annonce_transmis += 1
+                    self.annonce_transmis += 1
                 connection_principale.commit()
                 connection_principale.close()
                      

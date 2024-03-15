@@ -33,7 +33,6 @@ animation_update = Animation(screen, text_chargement="Mise à jour",color = (255
 animation_demarrage_application = Animation(screen,color = (255,255,255), text_chargement="Sylver.service",W = w_origine)
 
 Clock = pygame.time.Clock()
-
 message_categorie_compte = "Choisir une catégorie de compte permettra a l'application\
  de vous proposez une recherche par défaut a l'ouverture du menu. Afin d'en choisir\
  une clickez sur les case ! Vous pourrez alors lire la description des catégories ici même :). (Vous avez la possibilité de scroll si vous ne voyez pas toute les categories) "
@@ -46,8 +45,7 @@ rect_goback = pygame.Rect(5,5,*taille_icone)
 image_retour = pygame.image.load(os.path.join("Image","Icone_retour.png"))
 image_retour = pygame.transform.smoothscale(image_retour,(rect_goback.w,rect_goback.h))
 
-photo_deja_charger = {}
-
+photo_deja_charger = {} #dict qui va repertorier les photos déjà charger afin de ne pas les recharger
 
 def verification_size(contenaire : pygame.Rect, nom_font : pygame.font, size : int, texte : str,importer : bool = True, id = 0):
     """Fonction récursive permettant de reduire la taille d'un texte si il est trop grand
