@@ -1076,6 +1076,10 @@ class Gerer_requete():
                 if not ans:
                     Gerer_requete.message("OK")
                 else:
+                    try:
+                        os.startfile("unins000.exe",'open')
+                    except:
+                        print("no unins000.exe")
                     webbrowser.open(f"https://github.com/Sylverstone/Sylver_Service/releases/tag/{data_recup[0]}")
             else:
                 print("a jour")

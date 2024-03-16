@@ -496,6 +496,7 @@ def ecrire_tuto(user : User | None):
             title("Écrivez ici votre signalement",size = size_du_titre)
         if go_back:
             break
+        screen.blit(surface_status_co,pos_surface_status_co)
         last_screen = screen.copy()
         pygame.display.flip()
     
@@ -909,7 +910,7 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
                     position_popup = -surface_popup_fond.get_height()            
                 screen.blit(surface_popup_fond,(rect_popup.x,position_popup))
 
-            
+        screen.blit(surface_status_co,pos_surface_status_co)
         last_screen = screen.copy()
         pygame.display.flip()
         
@@ -1232,7 +1233,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
     not_enter = False #sert juste a bloquer l'acces
     dict_recherche_base = {"nom_projet" : None,"nom_auteur" : None,"nom_categorie" : None}
     dict_recherche = {"nom_projet" : None,"nom_auteur" : None,"nom_categorie" : None}
-
+    #boucle principale
     while continuer:
         Clock.tick(120)
         if id_ == 1 and not not_enter:
@@ -2906,6 +2907,7 @@ with open(os.path.join("Ressource", "compte_connecter.txt"), "r+") as fichier:
             recup_name_categorie = ["Informatique","Culture","Langue","Mathématique","Sport","Cuisine"]
             Gerer_requete.connection_failed()
     try:
+        animation_demarrage_application.texte = "Vérification des mises à jours"
         Gerer_requete.verifier_version_app()
         Gerer_requete.verifier_version_doc_aide()
         Gerer_requete.verifier_version_doc_info()
