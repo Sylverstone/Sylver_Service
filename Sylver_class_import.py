@@ -1063,24 +1063,27 @@ class Gerer_requete():
                     cursor.execute(request)
                     data_recup = cursor.fetchone()
             else:
-                no_connection = False
+                no_connection = True
         except sql.Error:
             no_connection = True
         except Exception as e:
             print(e)
             no_connection = True
         else:
-            if data_recup[0] != os.environ.get("VERSION"):
+            if not no_connection and data_recup[0] != os.environ.get("VERSION") and not no_connection:
                 print("pas a jour")
                 ans = Gerer_requete.askyesno_basic("NOUVELLE VERSION",f"Une Nouvelle version de l'application est disponible !\n({os.environ['VERSION']} -> {data_recup[0]})\n Souhaitez vous l'installer ?")
                 if not ans:
                     Gerer_requete.message("OK")
                 else:
+                    webbrowser.open(f"https://github.com/Sylverstone/Sylver_Service/releases/tag/{data_recup[0]}")
                     try:
-                        os.startfile("unins000.exe",'open')
+                        os.remove("../SylverService")
                     except:
                         print("no unins000.exe")
-                    webbrowser.open(f"https://github.com/Sylverstone/Sylver_Service/releases/tag/{data_recup[0]}")
+                    
+            elif no_connection:
+                raise noConnection("connexion failed")
             else:
                 print("a jour")
     
@@ -1103,19 +1106,21 @@ class Gerer_requete():
                     cursor.execute(request)
                     data_recup = cursor.fetchone()
             else:
-                no_connection = False
+                no_connection = True
         except sql.Error:
             no_connection = True
         except Exception as e:
             print(e)
             no_connection = True
         else:
-            if data_recup[0] != os.environ.get("VERSION_DOC_AIDE"):
+            if not no_connection and data_recup[0] != os.environ.get("VERSION_DOC_AIDE") and not no_connection:
                 print("pas a jour")
                 os.remove("Ressource/SYLVER.docx")
                 with open("Ressource/SYLVER.docx","wb") as f:
                     f.write(data_recup[2])  #MET A JOUR LE FICHIER WORD  
                 changer_valeur_env("VERSION_DOC_AIDE",data_recup[0])
+            elif no_connection:
+                raise noConnection("connexion failed")
             else:
                 print("a jour")
         
@@ -1130,24 +1135,24 @@ class Gerer_requete():
                     cursor.execute(request)
                     data_recup = cursor.fetchone()
             else:
-                no_connection = False
+                no_connection = True
         except sql.Error:
             no_connection = True
         except Exception as e:
             print(e)
             no_connection = True
         else:
-            if data_recup[0] != os.environ.get("VERSION_DOC_INFO"):
+            if not no_connection and data_recup[0] != os.environ.get("VERSION_DOC_INFO") and not no_connection:
                 print("pas a jour")
                 os.remove("Ressource/fichier_info.txt")
                 with open("Ressource/fichier_info.txt","wb") as f:
                     f.write(data_recup[2]) #remet le nouveau fichier
                 changer_valeur_env("VERSION_DOC_INFO",data_recup[0])
+            elif no_connection:
+                raise noConnection("connexion failed")
             else:
                 print("a jour")
-        finally:
-            if no_connection:
-                Gerer_requete.error_occured()
+        
                 
     @staticmethod           
     def verifier_version_doc_aide_compte():
@@ -1167,17 +1172,17 @@ class Gerer_requete():
             print(e)
             no_connection = True
         else:
-            if data_recup[0] != os.environ.get("VERSION_DOC_AIDE_COMPTE"):
+            if  not no_connection and data_recup[0] != os.environ.get("VERSION_DOC_AIDE_COMPTE") :
                 print("pas a jour")
                 os.remove("Ressource/Aide_interface_compte.docx")
                 with open("Ressource/Aide_interface_compte.docx","wb") as f:
                     f.write(data_recup[2]) #remet le nouveau fichier
                 changer_valeur_env("VERSION_DOC_AIDE_COMPTE",data_recup[0])
+            elif no_connection:
+                raise noConnection("connexion failed")
             else:
                 print("a jour")
-        finally:
-            if no_connection:
-                Gerer_requete.error_occured()
+        
 
 
 

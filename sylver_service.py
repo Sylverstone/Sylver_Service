@@ -2914,7 +2914,7 @@ with open(os.path.join("Ressource", "compte_connecter.txt"), "r+") as fichier:
         Gerer_requete.verifier_version_doc_aide_compte()
     except Exception as e:
         print(e)
-        Gerer_requete.connection_failed()
+        Gerer_requete.message(f"La vérification des mises à jours a echoué\nerreur : '{e}'")
         
 animation_demarrage_application.stop_anime()   
 comic_sans_ms = pygame.font.SysFont("Comic Sans Ms", 20)
