@@ -1077,10 +1077,11 @@ class Gerer_requete():
                     Gerer_requete.message("OK")
                 else:
                     webbrowser.open(f"https://github.com/Sylverstone/Sylver_Service/releases/tag/{data_recup[0]}")
-                    try:
-                        os.remove("../SylverService")
-                    except:
-                        print("no unins000.exe")
+                    if "unins000.exe" in os.listdir():
+                        try:
+                            os.remove("SylverService")
+                        except:
+                            pass
                     
             elif no_connection:
                 raise noConnection("connexion failed")
