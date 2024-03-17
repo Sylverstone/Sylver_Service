@@ -118,6 +118,8 @@ def make_line(text : str,font : pygame.font,size_max : int):
     
     * Liste de coupages : liste comportant les indices où une nouvelle ligne commence pour le texte
     """
+    print(text)
+    print('\n' in text)
     coupage = [0]
     line = 1
     start = 0
@@ -135,13 +137,56 @@ def make_line(text : str,font : pygame.font,size_max : int):
             start = i
             coupage.append(start)
             line+=1
+        elif text[start:i][-1:] == "\n": #i recule jusqua la position de l'espace, pour eviter de couper un mot
+            start = i
+            coupage.append(start)
+            line+=1
         i+=1
+    print("line ", line)
     y = 0
     for i in range(line):
         y = font.size(text)[1] + font.size(text)[1] * i
     return coupage,line,y
 
+def make_line_n(text : str,font : pygame.font,size_max : int):
+    """Fonction permettant de faire le coupage d'un texte par rapport a son contenaire,
+    dans cette version de make_line, des \n sont ajouter au texte
 
+    # Args:
+        text (str): text que l'on choisi
+        font (pygame.font): la police attribué a ce text
+        size_max (int): la taille maximum a ne pas depasser
+
+    # Returns:
+        (list,int,float): Renvoie la liste de coupages des caractères, renvoie le nombre de ligne qu'occupe le texte, renvoie la hauteur qu'occupe le texte
+    
+    * Liste de coupages : liste comportant les indices où une nouvelle ligne commence pour le texte
+    """
+    line = 1
+    start = 0
+    i = 0
+    while i < len(text):
+        size = font.size(text[start:i])[0]
+        if size + 20 > size_max:
+            
+            w = -1
+            while text[start:i][w] != " " and abs(w) < len(text[start:i]):
+                w -= 1
+            if abs(w) == len(text[start:i]):
+                #dans le cas ou il n'y a pas d'espace avant le mot
+                w = -1
+            i += w #i recule jusqua la position de l'espace, pour eviter de couper un mot
+            start = i
+            line+=1
+            text = text[0:i] + "\n" + text[i:]
+        elif text[start:i][-1:] == "\n":
+            line += 1
+            start = i
+        i+=1            
+    y = 0
+    for i in range(line):
+        y = font.size(text)[1] + font.size(text)[1] * i
+    return text,line,y
 
 def calcul_height(text, all_text : list,font : pygame.font):
     """Fonction permettant de calculer la taille de plusieur text
@@ -415,7 +460,7 @@ def ecrire_tuto(user : User | None):
                                     else:
                                         dernier_mot = elt["input"][elt["zone_ecrit"]][cursor:].strip()
 
-                                    elt["input"][elt["zone_ecrit"]] = elt["input"][elt["zone_ecrit"]][:cursor]
+                                    elt["input"][elt["zone_ecrit"]] = elt["input"][elt["zone_ecrit"]][:cursor] 
                                     
                                     elt["input"].append("")
                                     elt["zone_ecrit"] += 1
@@ -704,16 +749,16 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
     font_40 = pygame.font.Font(font_paragraphe, 40)
     font_20 = pygame.font.Font(font_paragraphe, 20)
     taille_ecriture = 30
-    coupage,line,heigth_text = make_line(text = text_info, font = font(font_paragraphe,taille_ecriture,True), size_max= size_max)
+    text_info,line,heigth_text = make_line_n(text = text_info, font = font(font_paragraphe,taille_ecriture,True), size_max= size_max)
     depassement_texte = rect_surface_ecriture.bottom - heigth_text
     if depassement_texte > 0:
         depassement_texte = 0
-    print(depassement_texte)
     #mini système pour permettre l'adaptation au écran trop petit
     """while heigth_text >= rect_surface_ecriture.h:
         taille_ecriture -= 2
         coupage,line,heigth_text = make_line(text = text_info, font = font(font_paragraphe,taille_ecriture,True), size_max= size_max)"""
-    all_text = decoupe_text(coupage,line,text_info)
+    #all_text = decoupe_text(coupage,line,text_info)
+    all_text = None
     width_surface_popup = 350     
     
     surface_popup_fond = pygame.Surface((width_surface_popup,220), pygame.SRCALPHA) 
@@ -780,7 +825,6 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
     pos_y_ecriture = 0
     while continuer:
         Clock.tick(120)
-        print(pos_y_ecriture)
         mouse = pygame.mouse.get_pos()
         screen.fill(fond_ecran)
         surface_ecriture.fill((255,255,255,0))     
@@ -799,12 +843,12 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
             if id_ > 1:
                 
                 if rect_surface_ecriture.collidepoint(mouse):
-                    if (event.type == pygame.MOUSEBUTTONDOWN and event.button == 4 ) or (event.type == pygame.KEYDOWN and event.key == pygame.K_DOWN):
+                    if (event.type == pygame.MOUSEBUTTONDOWN and event.button == 4 ) or (event.type == pygame.KEYDOWN and event.key == pygame.K_UP):
                         pos_y_ecriture += 30
                     elif (event.type == pygame.MOUSEBUTTONDOWN and event.button == 5 ) or (event.type == pygame.KEYDOWN and event.key == pygame.K_DOWN):
                         pos_y_ecriture -= 30
-                    if abs(pos_y_ecriture) > abs(depassement_texte):
-                        pos_y_ecriture = depassement_texte
+                    if abs(pos_y_ecriture) > abs(depassement_texte) + 200:
+                        pos_y_ecriture = depassement_texte - 200
                     if pos_y_ecriture > 0:
                         pos_y_ecriture = 0
                         
@@ -851,9 +895,10 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
             
         if not "\n" in text_info:
             for i in range(line):
+                all_text[i] = all_text[i].replace("\n", " ")
                 draw_text(all_text[i], color = (0,0,0), x = 10, y =20 + (taille_ecriture+5)*i, size = taille_ecriture, contener = surface_glissant_ecriture, font = font_paragraphe, importer = True)
         else:
-            draw_text(text_info, color = (0,0,0),x = 10,y = 35,
+            draw_text(text_info, color = (0,0,0),x = 10,y = 20,
                        size = taille_ecriture, contener = surface_glissant_ecriture, font = font_paragraphe, importer = True)
         #pygame.draw.rect(surface_ecriture, (255,0,0),(0,height/2,width,2))
         fond_nav.fill(palette_couleur.fond_bar_de_navigation)         
