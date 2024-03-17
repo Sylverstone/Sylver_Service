@@ -581,7 +581,17 @@ class User:
                     data = cursor.fetchone()
                     print(data[10])
                     if data == None:
-                        user_do_not_exist = True                    
+                        user_do_not_exist = True
+                    else:
+                        print(f"{data[6]}, {data[1]} {data[2]}")
+                        request = f"SELECT COUNT(*) FROM tuto WHERE auteur = '{data[6]}, {data[1]} {data[2]}'"
+                        cursor.execute(request)
+                        tuto_transmis = cursor.fetchone()[0]
+                        print(tuto_transmis)
+                        request = f"SELECT COUNT(*) FROM tuto WHERE auteur = '{data[6]}, {data[1]} {data[2]}' AND is_annonce = 1"
+                        cursor.execute(request)
+                        annonce_transmis = cursor.fetchone()[0]
+                        print(annonce_transmis)
             else:
                 no_connection = True
                 raise noConnection("connection failed")
@@ -590,15 +600,14 @@ class User:
             no_connection = True
         except Exception as e:
             print(e)
-            no_connection = True
-            
+            no_connection = True            
         finally:
             if not no_connection:
                 if user_do_not_exist == False:
                     if mdp != data[7]:
                         raise userNonCharger("mauvais mdp")
                     else:
-                        return User(data[1],data[2],data[5],data[6],data[7],data[4],data[3],data[8],data[10],data[11])
+                        return User(data[1],data[2],data[5],data[6],data[7],data[4],tuto_transmis,data[8],data[10],annonce_transmis)
                 else:
                     raise UserNotExist("Auncun utilisateur trouvée")
             else:
@@ -1189,3 +1198,4 @@ class Gerer_requete():
 
 if __name__ == "__main__":
     Gerer_requete.verifier_version_app()
+    User.log_user("SylverOwner","Daryll08")
