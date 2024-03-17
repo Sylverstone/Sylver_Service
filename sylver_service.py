@@ -284,7 +284,7 @@ def ecrire_tuto(user : User | None):
                          "zone_ecrit" : 0,"can_do_multiple_lines" : False, "base" : "Titre", "active" : False,"rect" : rect_titre, "time": 0, "take_time" : False,
                          "coupage" : 0,"all_size" : 0,"can_write" : True},
         
-        "input_text" : {"coupage" : 0, "max" : 2000,"x" : 20,"y" : 30 ,"surf" : surf_glissant_ecrit, "input" : ["Contenu",], "zone_ecrit" : 0,
+        "input_text" : {"coupage" : 0, "max" : 4000,"x" : 20,"y" : 30 ,"surf" : surf_glissant_ecrit, "input" : ["Contenu",], "zone_ecrit" : 0,
                         "can_do_multiple_lines" : True,"can_write" : True, "base" : "Contenu", "all_size" : 0,"active" : False,"rect" : rect_surf_ecrit,"time": 0, "take_time" : False}
     }
     base_input_text = dict_input["input_text"]["base"]
