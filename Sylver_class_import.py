@@ -806,13 +806,13 @@ class Gerer_requete():
                 with connection_principale.cursor() as cursor:
                     if nom_tuto != None:
                         if nom_tuto != "*":
-                            request = f" SELECT * FROM tuto WHERE nom LIKE '%{nom_tuto}%' ORDER BY date DESC;"
+                            request = f" SELECT * FROM tuto WHERE nom LIKE '%{nom_tuto}%' AND is_annonce = 0 ORDER BY date DESC;"
                         else:
                             request = f" SELECT * FROM tuto ORDER BY date DESC;"
                     elif nom_auteur != None:
-                        request = f"SELECT * FROM tuto WHERE auteur LIKE '{nom_auteur}%' ORDER BY date DESC;"
+                        request = f"SELECT * FROM tuto WHERE auteur LIKE '{nom_auteur}%' AND is_annonce = 0 ORDER BY date DESC;"
                     elif nom_categorie != None:
-                        request = f"SELECT * from tuto WHERE categorie = '{nom_categorie}' ORDER BY date DESC;"
+                        request = f"SELECT * from tuto WHERE categorie = '{nom_categorie}' AND is_annonce = 0 ORDER BY date DESC;"
                     print("doing cursor")
                     cursor.execute(request)
                     print("recup cursor")
