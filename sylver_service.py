@@ -572,10 +572,7 @@ def interface_deroullante_categorie(last_screen,message1 = "Choisissez votre cat
     rect_go_back = pygame.Rect(5,5,30,30)
     texte = message1
     texte_infos_categorie = message2
-    try:
-        print(recup_categorie)
-    except:
-        recup_categorie = Gerer_requete.take_categorie()
+    
     liste_categorie = {}
     for i in range(len(recup_categorie)):
         liste_categorie[recup_categorie[i][0]] = recup_categorie[i][1].replace("\r","").replace("\n","")
@@ -693,7 +690,7 @@ def interface_deroullante_categorie(last_screen,message1 = "Choisissez votre cat
             for i in range(len(all_text_base)):
                 draw_text(all_text_base[i],font_paragraphe,blanc,y = 40 + ((size_base+5)*i),contener = surface_ecriture_categorie,
                             importer = True,size = size_base, x = 5)
-        
+        surface_categorie.fill((255,255,255,100))
         surface_categorie.blit(surface_glissante,(0,pos_y_surf_glissante))
         screen.blit(surface_categorie,(w_origine/2 - taille_totale/2,h_origine/2 - height/2))
         screen.blit(surface_ecriture_categorie,(w_origine/2  - taille_totale/2 +surface_categorie.get_width() + 20 ,h_origine/2 - height/2))
@@ -1570,7 +1567,7 @@ continue_charging = None
 
 def compte():
     """Fonction affichant la partie compte de l'application"""
-    global surf_image2,creer_compte,zone
+    global surf_image2,creer_compte,zone,dict_categorie,recup_categorie
     global connect,pp_base
     global continue_charging
     global fond_nav
@@ -2011,26 +2008,34 @@ def compte():
                     if rect_icone_reglage.collidepoint(mouse):
                         
                         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                            categorie = interface_deroullante_categorie(last_screen)
-                            print(user.pseudo)
-                            if categorie != None:
-                                animation_update.start_anime(last_screen)
-                                try:
-                                    ancien_cate = user.categorie
-                                    user.change_categorie_compte(categorie)
-                                    dict_categorie[categorie]["membre"] += 1
-                                    dict_categorie[ancien_cate]["membre"] -= 1
-                                except noConnection:
-                                    animation_update.stop_anime()
-                                    Gerer_requete.connection_failed()
-                                except Exception as e:
-                                    print("erreur categorie, ligne 1885", e)
-                                    animation_update.stop_anime()
-                                    Gerer_requete.error_occured()
+                            try:
+                                if recup_categorie == None :
+                                    recup_categorie = Gerer_requete.take_categorie()
                                 else:
-                                    animation_update.stop_anime()
-                                    Gerer_requete.processus_fini(message = "La catégorie de votre compte a bien été changé !")
-                    
+                                    categorie = interface_deroullante_categorie(last_screen)
+                                
+                                    if categorie != None:
+                                        animation_update.start_anime(last_screen)
+                                        try:
+                                            ancien_cate = user.categorie
+                                            user.change_categorie_compte(categorie)
+                                            dict_categorie[categorie]["membre"] += 1
+                                            dict_categorie[ancien_cate]["membre"] -= 1
+                                        except noConnection:
+                                            animation_update.stop_anime()
+                                            Gerer_requete.connection_failed()
+                                        except Exception as e:
+                                            print("erreur categorie, ligne 1885", e)
+                                            animation_update.stop_anime()
+                                            Gerer_requete.error_occured()
+                                        else:
+                                            animation_update.stop_anime()
+                                            Gerer_requete.processus_fini(message = "La catégorie de votre compte a bien été changé !")
+
+                            except Exception as e:
+                                print(e)
+                                Gerer_requete.message("Les catégories n'ont pas pu être recuperer")
+                            
             elif creer_compte or not creer_compte:
                 if rect_visible.collidepoint(mouse):
                     if mouse_click:
@@ -2511,7 +2516,13 @@ def compte():
                 size_deconnexion = verification_size(pygame.Rect(0,0,btn_disconnect.w - 40,0),font_paragraphe,100,"Déconnexion",True)
                 surface_message_info = pygame.Surface((h_origine/3,h_origine/3), pygame.SRCALPHA)
                 categorie = user.categorie if user.categorie != None else "Aucune"
-                print(dict_categorie)
+                if dict_categorie == {}:
+                    try:
+                        dict_categorie = Gerer_requete.update_categorie_member()
+                    except:
+                        Gerer_requete.error_occured()
+                        return
+                
                 try:
                     membre_categorie = " " if user.categorie == None else f' Membre de cette catégorie : {dict_categorie[user.categorie]["membre"]}' 
                 except:
@@ -2879,13 +2890,18 @@ with open(os.path.join("Ressource", "compte_connecter.txt"), "r+") as fichier:
         animation_demarrage_application.texte = "Récupération des catégories"
         try:
             recup_name_categorie = Gerer_requete.take_categorie() #recuperer le nom de toutes les catégories
+            recup_categorie = recup_name_categorie
             recup_name_categorie = [nom[0] for nom in recup_name_categorie]
-            recup_name_categorie = ["Informatique","Culture","Langue","Mathématique","Sport","Cuisine"]
+           
             dict_categorie = Gerer_requete.update_categorie_member()     
-            recup_categorie = Gerer_requete.take_categorie()
         except noConnection:
+            recup_categorie = None
+            recup_name_categorie = ["Informatique","Culture","Langue","Mathématique","Sport","Cuisine"]
             Gerer_requete.connection_failed()
-        except Exception:
+        except Exception as e :
+            print(e)
+            recup_categorie = None
+            recup_name_categorie = ["Informatique","Culture","Langue","Mathématique","Sport","Cuisine"]
             Gerer_requete.error_occured()
         else:
             pseudo = contenu[0]
@@ -2943,12 +2959,13 @@ with open(os.path.join("Ressource", "compte_connecter.txt"), "r+") as fichier:
     else:
         animation_demarrage_application.start_anime(last_screen) 
         try:
-            recup_name_categorie = Gerer_requete.take_categorie() #recuperer le nom de toutes les catégories
+            recup_name_categorie = Gerer_requete.take_categorie()
+            recup_categorie = recup_name_categorie#recuperer le nom de toutes les catégories
             recup_name_categorie = [nom[0] for nom in recup_name_categorie]
             
             dict_categorie = Gerer_requete.update_categorie_member()     
-            recup_categorie = Gerer_requete.take_categorie()
         except:
+            recup_categorie = None
             recup_name_categorie = ["Informatique","Culture","Langue","Mathématique","Sport","Cuisine"]
             Gerer_requete.connection_failed()
     try:
