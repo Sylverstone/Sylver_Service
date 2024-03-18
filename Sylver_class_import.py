@@ -808,7 +808,7 @@ class Gerer_requete():
                         if nom_tuto != "*":
                             request = f" SELECT * FROM tuto WHERE nom LIKE '%{nom_tuto}%' AND is_annonce = 0 ORDER BY date DESC;"
                         else:
-                            request = f" SELECT * FROM tuto ORDER BY date DESC;"
+                            request = f" SELECT * FROM tuto  WHERE is_annonce = 0 ORDER BY date DESC;"
                     elif nom_auteur != None:
                         request = f"SELECT * FROM tuto WHERE auteur LIKE '{nom_auteur}%' AND is_annonce = 0 ORDER BY date DESC;"
                     elif nom_categorie != None:
