@@ -3076,10 +3076,12 @@ def update_categorie():
     """Fonction permettant de mettre a jour le nombre de participant dans les catégories, ainsi que récuperer leur nom"""
     global dict_categorie
     global recup_name_categorie
+    global recup_categorie
     while continuer:
         try:
             dict_categorie = Gerer_requete.update_categorie_member()
             recup_name_categorie = Gerer_requete.take_categorie() #recuperer le nom de toutes les catégories
+            recup_categorie = recup_name_categorie
             recup_name_categorie = [nom[0] for nom in recup_name_categorie]
             time.sleep(20)
         except:
