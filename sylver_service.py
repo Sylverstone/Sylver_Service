@@ -1129,7 +1129,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
         Args:
             data (dict): donnée au sujet du tuto
         """
-        text = data["contenu"]
+        text = data["contenu"]  
         auteur = data["auteur"]
         date = data["date"]
         id_tuto = data["id"]
@@ -1137,47 +1137,58 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
         nom_projet = data["nom_projet"]
         doc = data["doc"]
         file = data["extension"]
-        if not Gerer_requete.est_bytes(doc):
-            print(photo_deja_charger.keys())
-            if connect:
-                if user.pseudo == auteur.split(",")[0]:
-                    #si c'est un tuto de l'utilisateur connectez, on va simplement prendre sa pp qu'on avait déjà charger
-                    page_info(2,text,nom_projet,auteur,date,id_tuto,pygame.transform.smoothscale(image_pp_user,taille_icone))
-                    return  
-            print(auteur.split(",")[0] in photo_deja_charger)
-            if not auteur.split(",")[0] in photo_deja_charger:
-                #recuperation de la pp de l'user qui a fait le tuto
-                try:
-                    bin_pp,rect_pp = Gerer_requete.look_for_user_pp(auteur.split(",")[0])        
-                    if rect_pp != None:   
-                        rect_pp = [int(i) for i in rect_pp.split(",")]
-                        rect_pp = pygame.Rect(rect_pp)
-                    photo_deja_charger[auteur.split(",")[0]] = (bin_pp,rect_pp)
-                except:
-                    return
-            else:
-                bin_pp, rect_pp = photo_deja_charger[auteur.split(",")[0]]
-                
-            img_ = pygame.image.load(io.BytesIO(bin_pp)).convert_alpha()
-            old_width, old_height = img_.get_size()
-            # Définir la nouvelle largeur (ou hauteur)
-            new_width = 500
-            # Calculer la nouvelle hauteur (ou largeur) pour conserver le rapport d'aspect (produit en croix)
-            new_height = int(old_height * new_width / old_width)
-            # Redimensionner l'image
-            img_ = pygame.transform.smoothscale(img_, (new_width,new_height))
-            if rect_pp == None:
-                rect_pp = pygame.Rect(0,0,*img_.get_size())
-            image_pp = resizeImage.rendre_transparent(img_,rect_pp,0)
-            image_pp = pygame.transform.smoothscale(image_pp,taille_icone)
-            page_info(2,text,nom_projet,auteur,date,id_tuto,image_pp)
+        print(photo_deja_charger.keys())
+        if connect:
+            if user.pseudo == auteur.split(",")[0]:
+                #si c'est un tuto de l'utilisateur connectez, on va simplement prendre sa pp qu'on avait déjà charger
+                if Gerer_requete.est_bytes(doc):
+                    dir = Gerer_requete.open_dir(title = "Lieu du téléchargement")
+                    print("path : ",dir,",")
+                    if dir != "":
+                        Gerer_requete.demarrer_fichier(dir = dir,doc = doc, ext = file,auteur = auteur, nom_tuto=nom_projet)
+                    else:
+                        animation_ouverture.stop_anime()
+                page_info(2,text,nom_projet,auteur,date,id_tuto,pygame.transform.smoothscale(image_pp_user,taille_icone))
+                return  
+        
+        print(auteur.split(",")[0] in photo_deja_charger)
+        if not auteur.split(",")[0] in photo_deja_charger:
+            #recuperation de la pp de l'user qui a fait le tuto
+            try:
+                bin_pp,rect_pp = Gerer_requete.look_for_user_pp(auteur.split(",")[0])        
+                if rect_pp != None:   
+                    rect_pp = [int(i) for i in rect_pp.split(",")]
+                    rect_pp = pygame.Rect(rect_pp)
+                photo_deja_charger[auteur.split(",")[0]] = (bin_pp,rect_pp)
+            except:
+                return
         else:
+            bin_pp, rect_pp = photo_deja_charger[auteur.split(",")[0]]
+            
+        img_ = pygame.image.load(io.BytesIO(bin_pp)).convert_alpha()
+        old_width, old_height = img_.get_size()
+        # Définir la nouvelle largeur (ou hauteur)
+        new_width = 500
+        # Calculer la nouvelle hauteur (ou largeur) pour conserver le rapport d'aspect (produit en croix)
+        new_height = int(old_height * new_width / old_width)
+        # Redimensionner l'image
+        img_ = pygame.transform.smoothscale(img_, (new_width,new_height))
+        if rect_pp == None:
+            rect_pp = pygame.Rect(0,0,*img_.get_size())
+        image_pp = resizeImage.rendre_transparent(img_,rect_pp,0)
+        image_pp = pygame.transform.smoothscale(image_pp,taille_icone)
+        if Gerer_requete.est_bytes(doc):
+            print("caca")
             dir = Gerer_requete.open_dir(title = "Lieu du téléchargement")
             print("path : ",dir,",")
             if dir != "":
                 Gerer_requete.demarrer_fichier(dir = dir,doc = doc, ext = file,auteur = auteur, nom_tuto=nom_projet)
             else:
-                animation_ouverture.stop_anime()        
+                animation_ouverture.stop_anime()
+            
+        page_info(2,text,nom_projet,auteur,date,id_tuto,image_pp)
+            
+                
             
     def research(data, id_ = 0):
         """Fonction effectuant la recherche
