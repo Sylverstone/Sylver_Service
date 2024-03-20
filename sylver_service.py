@@ -710,6 +710,7 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
         date (datetime.datetime, optional): La date de transmission du tuto. Defaults to None.
         id_tuto (int, optional): Id du tuto selectionner. Defaults to None.
     """
+    print(text)
     global continuer
     global fond_nav
     go_back = False
@@ -746,15 +747,12 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
     font_40 = pygame.font.Font(font_paragraphe, 40)
     font_20 = pygame.font.Font(font_paragraphe, 20)
     taille_ecriture = 30
+    print(text_info)
     text_info,line,heigth_text = make_line_n(text = text_info, font = font(font_paragraphe,taille_ecriture,True), size_max= size_max)
     depassement_texte = rect_surface_ecriture.bottom - (heigth_text + 20)
     print(depassement_texte)
     #mini système pour permettre l'adaptation au écran trop petit
-    """while heigth_text >= rect_surface_ecriture.h:
-        taille_ecriture -= 2
-        coupage,line,heigth_text = make_line(text = text_info, font = font(font_paragraphe,taille_ecriture,True), size_max= size_max)"""
     #all_text = decoupe_text(coupage,line,text_info)
-    all_text = None
     width_surface_popup = 350     
     
     surface_popup_fond = pygame.Surface((width_surface_popup,220), pygame.SRCALPHA) 
@@ -897,13 +895,15 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
                     webbrowser.open(f"mailto:SylverService@outlook.fr") 
                     pygame.display.iconify()
             
-        if not "\n" in text_info:
+        """if not "\n" in text_info:
+            print("chemin 1 ")
+            quit()
             for i in range(line):
                 all_text[i] = all_text[i].replace("\n", " ")
-                draw_text(all_text[i], color = (0,0,0), x = 10, y =20 + (taille_ecriture+5)*i, size = taille_ecriture, contener = surface_glissant_ecriture, font = font_paragraphe, importer = True)
-        else:
-            draw_text(text_info, color = (0,0,0),x = 10,y = 20,
-                       size = taille_ecriture, contener = surface_glissant_ecriture, font = font_paragraphe, importer = True)
+                draw_text(all_text[i], color = (0,0,0), x = 10, y =20 + (taille_ecriture+5)*i, size = taille_ecriture, contener = surface_glissant_ecriture, font = font_paragraphe, importer = True)"""
+       
+        draw_text(text_info, color = (0,0,0),x = 10,y = 20,
+                    size = taille_ecriture, contener = surface_glissant_ecriture, font = font_paragraphe, importer = True)
         #pygame.draw.rect(surface_ecriture, (255,0,0),(0,height/2,width,2))
         fond_nav.fill(palette_couleur.fond_bar_de_navigation)         
         screen.blit(fond_nav,(0,0))  
@@ -1129,7 +1129,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
         Args:
             data (dict): donnée au sujet du tuto
         """
-        text = data["contenu"]  
+        text = data["contenu"]
         auteur = data["auteur"]
         date = data["date"]
         id_tuto = data["id"]
@@ -1148,6 +1148,9 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                         Gerer_requete.demarrer_fichier(dir = dir,doc = doc, ext = file,auteur = auteur, nom_tuto=nom_projet)
                     else:
                         animation_ouverture.stop_anime()
+                        return
+                    text = "Le fichier a été ouvert"
+                print(text)
                 page_info(2,text,nom_projet,auteur,date,id_tuto,pygame.transform.smoothscale(image_pp_user,taille_icone))
                 return  
         
@@ -1185,7 +1188,8 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                 Gerer_requete.demarrer_fichier(dir = dir,doc = doc, ext = file,auteur = auteur, nom_tuto=nom_projet)
             else:
                 animation_ouverture.stop_anime()
-            
+                return
+            text = "Le fichier a été ouvert"
         page_info(2,text,nom_projet,auteur,date,id_tuto,image_pp)
             
                 
