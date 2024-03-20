@@ -1,12 +1,11 @@
 
+import tkinter
 import tkinter.filedialog,tkinter.messagebox,pygame
 import pymysql as sql
 import os,datetime,threading,dotenv
 from font_import import *
 from Exception import *
 import webbrowser
-
-
 
 path = ".env"
 dotenv.load_dotenv(path)
@@ -1011,7 +1010,42 @@ class Gerer_requete():
         ans = tkinter.messagebox.askyesnocancel("Categorie","Souhaiter vous mettre a ce tuto la même catégorie que votre compte ? ")
         root.destroy()
         return ans
-        
+    
+    @staticmethod
+    def update_categorie_data():
+        """Fonnction permettant de remettre a jour les informations des categories concernant les tutos/membres"""
+        no_connection = False     
+        try:
+            connection_principale = connect_to_database()
+            connection_principale.begin()
+            with connection_principale.cursor() as cursor:    
+                request = """UPDATE categorie AS c
+                                SET c.tuto_count = (
+                                SELECT COUNT(*)
+                                FROM tuto AS t
+                                WHERE t.categorie = c.nom
+                                )"""
+                cursor.execute(request)
+                request = """UPDATE categorie AS c
+                                SET c.membre = (
+                                SELECT COUNT(*)
+                                FROM utilisateur AS t
+                                WHERE t.categorie = c.nom
+                                )"""
+                cursor.execute(request)
+           
+        except sql.Error as err:
+            print("erreur 1:",err)
+            no_connection = True
+        except Exception as err:
+            print("erreur 2:",err)
+            no_connection = True
+        finally:
+            if no_connection:
+                raise noConnection("connection failed")
+            else:
+                connection_principale.commit()
+                connection_principale.close()
     @staticmethod 
     def update_categorie_member():
         """Fonction permettant de mettre a jour les membres d'une catégorie
@@ -1085,13 +1119,10 @@ class Gerer_requete():
                 if not ans:
                     Gerer_requete.message("OK")
                 else:
-                    webbrowser.open(f"https://github.com/Sylverstone/Sylver_Service/releases/tag/{data_recup[0]}")
                     if "unins000.exe" in os.listdir():
-                        try:
-                            os.remove("SylverService")
-                        except:
-                            pass
-                    
+                        Gerer_requete.message("Pensez a valider la désinstallation de l'application")
+                        os.startfile("unins000.exe")
+                    webbrowser.open(f"https://github.com/Sylverstone/Sylver_Service/releases/tag/{data_recup[0]}")
             elif no_connection:
                 raise noConnection("connexion failed")
             else:
@@ -1158,6 +1189,36 @@ class Gerer_requete():
                 with open("Ressource/fichier_info.txt","wb") as f:
                     f.write(data_recup[2]) #remet le nouveau fichier
                 changer_valeur_env("VERSION_DOC_INFO",data_recup[0])
+            elif no_connection:
+                raise noConnection("connexion failed")
+            else:
+                print("a jour")
+                
+    @staticmethod
+    def verifier_version_doc_info_annonce():
+        """Fonction permet de vérifier la version du document info sur SylverService et donc de changer le doc si besoin"""
+        no_connection = False
+        try:
+            if look_for_connection():
+                with connection_principale.cursor() as cursor:
+                    request = """SELECT Version,date_de_publication,doc FROM VERSIONNAGE WHERE nom = 'Fichier_info_annonce' ORDER BY id DESC LIMIT 1"""
+                    cursor.execute(request)
+                    data_recup = cursor.fetchone()
+            else:
+                no_connection = True
+        except sql.Error:
+            no_connection = True
+        except Exception as e:
+            print(e)
+            no_connection = True
+        else:
+            if not no_connection and data_recup[0] != os.environ.get("VERSION_DOC_INFO_ANNONCE") and not no_connection:
+                print("pas a jour")
+                Gerer_requete.message("pas a jour detect")
+                os.remove("Ressource/Information_page_annonce.docx")
+                with open("Ressource/Information_page_annonce.docx","wb") as f:
+                    f.write(data_recup[2]) #remet le nouveau fichier
+                changer_valeur_env("VERSION_DOC_INFO_ANNONCE",data_recup[0])
             elif no_connection:
                 raise noConnection("connexion failed")
             else:

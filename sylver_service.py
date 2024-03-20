@@ -5,6 +5,7 @@ from Color import Color
 from Resize_image import AnnuleCropPhoto, resizeImage
 from font_import import *
 from Exception import *
+import webbrowser
 
 
 #reglage de l'ecran
@@ -183,9 +184,8 @@ def make_line_n(text : str,font : pygame.font,size_max : int):
             line += 1
             start = i
         i+=1            
-    y = 0
-    for i in range(line):
-        y = font.size(text)[1] + font.size(text)[1] * i
+    
+    y = font.size(text)[1] + font.size(text)[1] * (line+1)
     return text,line,y
 
 def calcul_height(text, all_text : list,font : pygame.font):
@@ -747,9 +747,8 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
     font_20 = pygame.font.Font(font_paragraphe, 20)
     taille_ecriture = 30
     text_info,line,heigth_text = make_line_n(text = text_info, font = font(font_paragraphe,taille_ecriture,True), size_max= size_max)
-    depassement_texte = rect_surface_ecriture.bottom - heigth_text
-    if depassement_texte > 0:
-        depassement_texte = 0
+    depassement_texte = rect_surface_ecriture.bottom - (heigth_text + 20)
+    print(depassement_texte)
     #mini système pour permettre l'adaptation au écran trop petit
     """while heigth_text >= rect_surface_ecriture.h:
         taille_ecriture -= 2
@@ -820,6 +819,11 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
         position_photo_pp = w_origine - image_photo_profil.get_width() - 10, fond_nav.get_height() - image_photo_profil.get_height() - 10
         rect_photo_pp = pygame.Rect(*position_photo_pp,*image_photo_profil.get_size())
     pos_y_ecriture = 0
+    surf_contact = pygame.Surface((200,60),pygame.SRCALPHA)
+    rect_contact = surf_contact.get_rect()
+    rect_contact.right = w_origine
+    rect_contact.top = 0
+    
     while continuer:
         Clock.tick(120)
         mouse = pygame.mouse.get_pos()
@@ -836,19 +840,18 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
             
             if rect_goback.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 go_back = True
+            
+            if rect_surface_ecriture.collidepoint(mouse) and depassement_texte < 0:
+                if (event.type == pygame.MOUSEBUTTONDOWN and event.button == 4 ) or (event.type == pygame.KEYDOWN and event.key == pygame.K_UP):
+                    pos_y_ecriture += 30
+                elif (event.type == pygame.MOUSEBUTTONDOWN and event.button == 5 ) or (event.type == pygame.KEYDOWN and event.key == pygame.K_DOWN):
+                    pos_y_ecriture -= 30
+                if abs(pos_y_ecriture) > abs(depassement_texte) + 20:
+                    pos_y_ecriture = depassement_texte - 20
+                if pos_y_ecriture > 0:
+                    pos_y_ecriture = 0
                     
-            if id_ > 1:
-                
-                if rect_surface_ecriture.collidepoint(mouse):
-                    if (event.type == pygame.MOUSEBUTTONDOWN and event.button == 4 ) or (event.type == pygame.KEYDOWN and event.key == pygame.K_UP):
-                        pos_y_ecriture += 30
-                    elif (event.type == pygame.MOUSEBUTTONDOWN and event.button == 5 ) or (event.type == pygame.KEYDOWN and event.key == pygame.K_DOWN):
-                        pos_y_ecriture -= 30
-                    if abs(pos_y_ecriture) > abs(depassement_texte) + 200:
-                        pos_y_ecriture = depassement_texte - 200
-                    if pos_y_ecriture > 0:
-                        pos_y_ecriture = 0
-                        
+            if id_ > 1:               
                 if rect_case_signal.collidepoint(mouse) and position_popup == position_de_fin and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and popup_option_activer:
                     if connect:
                         try:
@@ -888,7 +891,11 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
                         affiche_photo_profil(last_screen)
                     else:
                         affiche_photo_profil(last_screen,True,auteur.split(",")[0])
-                
+            else:
+                if rect_contact.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    
+                    webbrowser.open(f"mailto:SylverService@outlook.fr") 
+                    pygame.display.iconify()
             
         if not "\n" in text_info:
             for i in range(line):
@@ -951,7 +958,13 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
                 if position_popup <= -surface_popup_fond.get_height():
                     position_popup = -surface_popup_fond.get_height()            
                 screen.blit(surface_popup_fond,(rect_popup.x,position_popup))
-
+        else:
+            surf_contact.fill((0,0,0,0))
+            pygame.draw.rect(surf_contact,palette_couleur.bleu_pal,surf_contact.get_rect(),1,20)
+            draw_text(contener = surf_contact,text = "CONTACT", font = font_paragraphe,size = 40,color = blanc,
+                      x = surf_contact.get_width()/2 - font(font_paragraphe,40,True).size("CONTACT")[0]/2,
+                      y = surf_contact.get_height()/2 - font(font_paragraphe,40,True).size("CONTACT")[1]/2,importer=True)
+            screen.blit(surf_contact,rect_contact)
         screen.blit(surface_status_co,pos_surface_status_co)
         last_screen = screen.copy()
         pygame.display.flip()
@@ -1372,11 +1385,20 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                         indice_type = 0
             if rect_aide.collidepoint(mouse):
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                    reponse = User.confirm_open()
+                    if id_ != 2:
+                        title_confirm_open = "RECHERCHE"
+                        texte_confirm_open = "La recherche"
+                    else:
+                        title_confirm_open = "ANNONCE"
+                        texte_confirm_open = "La page annonce"
+                    reponse = User.confirm_open(title_confirm_open,texte_confirm_open)
                     if reponse:
                         animation_ouverture.start_anime(last_screen)
                         try:
-                            Gerer_requete.demarrer_fichier(doc = os.path.join("Ressource","SYLVER.docx"),with_path=True,ext = None)
+                            if id_ != 2 :
+                                Gerer_requete.demarrer_fichier(doc = os.path.join("Ressource","SYLVER.docx"),with_path=True,ext = None)
+                            else:
+                                 Gerer_requete.demarrer_fichier(doc = os.path.join("Ressource","Information_page_annonce.docx"),with_path=True,ext = None)     
                         except OSError as e:
                             print(e)
                             Gerer_requete.fail_open()
@@ -2974,6 +2996,7 @@ with open(os.path.join("Ressource", "compte_connecter.txt"), "r+") as fichier:
         Gerer_requete.verifier_version_doc_aide()
         Gerer_requete.verifier_version_doc_info()
         Gerer_requete.verifier_version_doc_aide_compte()
+        Gerer_requete.verifier_version_doc_info_annonce()
     except Exception as e:
         print(e)
         Gerer_requete.message(f"La vérification des mises à jours a echoué\nerreur : '{e}'")
@@ -3083,6 +3106,7 @@ def update_categorie():
             recup_name_categorie = Gerer_requete.take_categorie() #recuperer le nom de toutes les catégories
             recup_categorie = recup_name_categorie
             recup_name_categorie = [nom[0] for nom in recup_name_categorie]
+            Gerer_requete.update_categorie_data()
             time.sleep(20)
         except:
             pass
