@@ -959,7 +959,10 @@ class Gerer_requete():
         Returns:
             str: chemin du dossier choisi
         """
+        root = tkinter.Tk()
+        root.withdraw()
         path = tkinter.filedialog.askdirectory(title = title)
+        root.destroy()
         return path
     
     @staticmethod

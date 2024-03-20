@@ -1143,7 +1143,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                 #si c'est un tuto de l'utilisateur connectez, on va simplement prendre sa pp qu'on avait déjà charger
                 if Gerer_requete.est_bytes(doc):
                     dir = Gerer_requete.open_dir(title = "Lieu du téléchargement")
-                    print("path : ",dir,",")
+                    print("path : ",dir)
                     if dir != "":
                         Gerer_requete.demarrer_fichier(dir = dir,doc = doc, ext = file,auteur = auteur, nom_tuto=nom_projet)
                     else:
@@ -1183,7 +1183,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
         if Gerer_requete.est_bytes(doc):
             print("caca")
             dir = Gerer_requete.open_dir(title = "Lieu du téléchargement")
-            print("path : ",dir,",")
+            print("path : ",dir)
             if dir != "":
                 Gerer_requete.demarrer_fichier(dir = dir,doc = doc, ext = file,auteur = auteur, nom_tuto=nom_projet)
             else:
