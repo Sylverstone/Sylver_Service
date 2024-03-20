@@ -5,3 +5,4 @@ l'onglet "Annonces" est en cours de développement mais pour l'instant vous pouv
 vous pourrez soumettre des tutoriels en texte ou via des documents, mais également faire des demandes de tutoriels.
 Le projet a été entrepris par Sylvio Pelage-Maxime | Elvann Jolivel | Coralie Deecleane, débuté en fin d'année scolaire 2023 et fini un jour peut-être !
 Le projet utilise une base de données MariaDB (MySQL) héberger sur les serveurs gratuis de alwaysdata (100mo de data seulement)
+Contactez nous : SylverService@outlook.fr Appuyez sur le bouton contact dispo en haut a droite si il est dispo dans votre version.
