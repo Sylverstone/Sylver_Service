@@ -1149,7 +1149,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                     else:
                         animation_ouverture.stop_anime()
                         return
-                    text = "Le fichier a été ouvert"
+                    text = "Le fichier a été ouvert profitez en :)\nMaintenant vous pouvez donc signalez un tuto visuel et voir tout les autres tutos de l'utilisateur, comme si c'était un tuto texte :) c'est cool non ?"
                 print(text)
                 page_info(2,text,nom_projet,auteur,date,id_tuto,pygame.transform.smoothscale(image_pp_user,taille_icone))
                 return  
@@ -1181,7 +1181,6 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
         image_pp = resizeImage.rendre_transparent(img_,rect_pp,0)
         image_pp = pygame.transform.smoothscale(image_pp,taille_icone)
         if Gerer_requete.est_bytes(doc):
-            print("caca")
             dir = Gerer_requete.open_dir(title = "Lieu du téléchargement")
             print("path : ",dir)
             if dir != "":
@@ -1189,11 +1188,9 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
             else:
                 animation_ouverture.stop_anime()
                 return
-            text = "Le fichier a été ouvert"
+            text = "Le fichier a été ouvert profitez en :)\nMaintenant vous pouvez donc signalez un tuto visuel et voir tout les autres tutos de l'utilisateur, comme si c'était un tuto texte :) c'est cool non ?"
         page_info(2,text,nom_projet,auteur,date,id_tuto,image_pp)
-            
                 
-            
     def research(data, id_ = 0):
         """Fonction effectuant la recherche
 
