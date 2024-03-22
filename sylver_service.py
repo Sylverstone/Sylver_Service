@@ -6,7 +6,7 @@ from Resize_image import AnnuleCropPhoto, resizeImage
 from font_import import *
 from Exception import *
 import webbrowser
-
+print("debut app")
 
 #reglage de l'ecran
 os.environ['SDL_VIDEO_CENTERED'] = '1'
@@ -363,8 +363,6 @@ def ecrire_tuto(user : User | None):
                             return text_pour_tuto, titre
                     else:
                         Gerer_requete.message("Votre Tuto est vide. Vous ne pouvez pas le valider tant qu'il est vide !")
-                        
-               
                         
             ################################### Logique de l'input #################################      
             for elt in dict_input.values():
@@ -1019,6 +1017,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
         text = f"{num} résultat.s pour cette recherche !" if not flop_de_recherche else "Une erreur est survenue ! la recherche n'a pas aboutie"
         text = "Faites une recherche :)" if have_supprime else text
         if connect and user.categorie != None and dict_recherche["nom_categorie"] != None and num == 0 and (liste_rech[indice_type] == "Catégorie" or dict_recherche["nom_categorie"] == user.categorie):
+            print(dict_recherche)
             text = f'La categorie {dict_recherche["nom_categorie"].lower()} est vide :('
         elif connect and user.categorie != None and dict_recherche["nom_categorie"] != None and num != 0 and (liste_rech[indice_type] == "Catégorie" or dict_recherche["nom_categorie"] == user.categorie):
             text = f'{num} résultat.s dans la catégorie {dict_recherche["nom_categorie"].lower()}'
@@ -1351,7 +1350,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                     elif event.key == pygame.K_BACKSPACE:
                         input_host = input_host[:-1]
                     elif event.key == pygame.K_RETURN and not enter_pressed:
-                        dict_recherche = dict_recherche_base
+                        dict_recherche = dict_recherche_base.copy()
                         all_case_data = {}
                         display = False
                         enter_pressed = True
@@ -1989,6 +1988,7 @@ def compte():
                             fichier.write(pp_base)
                         connect = False
                         del user
+                        erase_connection_tools()
                         pp_choisi = False
                         #image_pp = pygame.image.load(io.BytesIO(pp_base))
                         image_pp = pygame.transform.smoothscale(image_pp,size_photo_pp_petit)
@@ -2030,7 +2030,7 @@ def compte():
                             print(e)
                             Gerer_requete.error_occured()  
                         else:
-                            Gerer_requete.processus_fini("Votre tuto a bien été mis en plus")
+                            Gerer_requete.processus_fini("Votre tuto a bien été mis en ligne")
                         finally:
                             animation_mise_en_ligne.stop_anime()
 
