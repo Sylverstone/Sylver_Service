@@ -1,4 +1,4 @@
-import pygame,os,datetime,sys,threading,keyboard,time,math,io,random
+import pygame,os,datetime,sys,threading,keyboard,time,math,io,random,dotenv
 from Sylver_class_import import Gerer_requete,User,status_connection
 from Animation import Animation
 from Color import Color
@@ -6,6 +6,7 @@ from Resize_image import AnnuleCropPhoto, resizeImage
 from font_import import *
 from Exception import *
 import webbrowser
+dotenv.load_dotenv()
 print("debut app")
 
 #reglage de l'ecran
@@ -1327,9 +1328,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                 debut = time.time()
                 th.start()
                 print("thread started")
-                not_enter = True
-        clock.tick(120)
-        
+                not_enter = True        
         mouse = pygame.mouse.get_pos()
         screen.fill(fond_ecran)            
         surface_rechercher.fill((0,0,0,0))
@@ -3089,9 +3088,6 @@ def gestion_event():
         time.sleep(0.1)
     print("bye")
     
-
-t1 = threading.Thread(target=gestion_event,daemon=True)
-t1.start()
 rect_choose = pygame.Surface((size_box_w,size_box_h), pygame.SRCALPHA)
 rect_grand_choose = pygame.Surface((size_box_grand_w,size_box_grand_h), pygame.SRCALPHA)
 rect_dispo = [pygame.Rect(pos[0][0],pos[0][1],size_box_grand_w,size_box_grand_h),
@@ -3125,7 +3121,7 @@ def update_categorie():
 
 def affiche_photo_profil(last_screen,Photo_pp_tiers = False,pseudo = None):
     """Fonction permettant d'image_userr la photo de profil de l'utilisateur ou d'un utilisateur
-
+    
     Args:
         last_screen (pygame.Surface): Dernier écran a image_userr
         Photo_pp_tiers (bool): Si False, c'est que c'est la photo de profil de l'utilisateur qu'il faut image_userr, sinon c'est celle d'un
@@ -3167,13 +3163,14 @@ def affiche_photo_profil(last_screen,Photo_pp_tiers = False,pseudo = None):
         pygame.display.flip()
         
 threading.Thread(target=update_categorie,daemon = True).start()
+threading.Thread(target=gestion_event,daemon=True).start()
 
 size_pp_user = (80,80)
 x_pp,y_pp = 20,fond_nav.get_height()/2 - size_pp_user[1]/2
 rect_photo_profil_user = pygame.Rect(x_pp,y_pp,*size_pp_user)
-
 while continuer:
     Clock.tick(120)
+    fps = Clock.get_fps()
     screen.fill(fond_ecran)
     if connect:
         text_user_co = f"Salut {user.pseudo} ravis de te voir :)"
@@ -3239,10 +3236,10 @@ while continuer:
     date = datetime.datetime.today().strftime('%Hh%M')
     draw_text(date, size = 20, color = blanc, x = w_origine - 70, y = fond_nav.get_height() +10)
     screen.blit(icone_aide,info)
-    clock.tick(144)
-    fps = clock.get_fps()
-    draw_text(f"fps : {int(fps)}",x=10,y=fond_nav.get_height() + 10,color=(255,255,255))
     
+    draw_text(f"fps : {int(fps)}",x=10,y=fond_nav.get_height() + 10,color=(255,255,255))
+    draw_text(f'VERSION : {os.environ.get("VERSION")}',x = 10, y = h_origine - 20,
+              color = blanc,size =14)
     if not status_connection_started:
         status_connection(surface_status_co)
         status_connection_started = True
