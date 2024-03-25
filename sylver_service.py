@@ -1254,7 +1254,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
     rect_btn.x = rect_rechearch.x + rect_rechearch.w - 100
     rect_btn.y = rect_rechearch.y + rect_rechearch.h/2 - rect_btn.h/2
     input_research = input_apple
-    barre_input = pygame.Surface((2,25))
+    barre_input = pygame.Surface((3,30))
     barre_input.fill((0,0,0))
     phrase_base ="Appuyer pour Rechercher"
     input_host = phrase_base
@@ -1301,7 +1301,9 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
     dict_recherche_base = {"nom_projet" : None,"nom_auteur" : None,"nom_categorie" : None}
     dict_recherche = {"nom_projet" : None,"nom_auteur" : None,"nom_categorie" : None}
     #boucle principale
+    cursor_position = 0
     while continuer:
+        print(cursor_position)
         Clock.tick(120)
         if id_ == 1 and not not_enter:
             dict_recherche = {"nom_auteur": auteur_rechercher,"nom_projet" : None,"nom_categorie" : None}
@@ -1344,10 +1346,19 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
         for event in pygame.event.get():
             if active:
                 if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_LEFT:
+                        cursor_position -= 1
+                        if abs(cursor_position) >= len(input_host):
+                            cursor_position = -len(input_host)
+                            
+                    if event.key == pygame.K_RIGHT:
+                        cursor_position += 1
+                        if cursor_position >= 0 :
+                            cursor_position = 0
                     if event.key == pygame.K_SPACE:
-                        input_host += " "
+                        input_host = input_host[:len(input_host) + cursor_position] + " " + input_host[len(input_host) + cursor_position:]
                     elif event.key == pygame.K_BACKSPACE:
-                        input_host = input_host[:-1]
+                        input_host =  input_host[:len(input_host) + cursor_position][:-1] +  input_host[len(input_host) + cursor_position:]
                     elif event.key == pygame.K_RETURN and not enter_pressed:
                         dict_recherche = dict_recherche_base.copy()
                         all_case_data = {}
@@ -1371,7 +1382,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                         pass                       
                     else:                            
                         if (len(input_host) < max_letter) and (event.unicode.isprintable() and event.unicode != ""):
-                            input_host += event.unicode
+                            input_host = input_host[:len(input_host) + cursor_position] + event.unicode + input_host[len(input_host) + cursor_position:]
             for index,data_recup in enumerate(all_case_data):
                 if data_recup["rect"].collidepoint(mouse) and data_recup["zone"] == zone_page:
                     text_on = data_recup["id"]
@@ -1448,16 +1459,9 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
         #en tout cas c'est similaire a draw_text
         surface_rechercher.blit(blit_input,(10,center_y))
         
-        #crée un rect semblable a la surface et a la bonne pos
         if active:
-            if not take_time:
-                time_start = pygame.time.get_ticks()
-                take_time = True
-            time_ = int(pygame.time.get_ticks() - time_start)/1000
-            surface_rechercher.blit(barre_input, (10 + input_research.size(input_host)[0],2 + input_research.size(input_host)[1]/2))
-            #permet de faire clignoter la petite barre
-            """if int(time_) % 2 == 0 and int(time_) != 0:
-                surface_rechercher.fill((0,0,0), (5 + input_research.size(input_host)[0],2 + input_research.size(input_host)[1]/2,2,25))"""
+            surface_rechercher.blit(barre_input, (10 + input_research.size(input_host[:len(input_host) + cursor_position])[0],2 + input_research.size(input_host[:len(input_host) + cursor_position])[1]/2))
+
         else:
             time_ = 0
             take_time = False
@@ -1646,7 +1650,9 @@ def compte():
     def erase_connection_tools():
         with open(os.path.join("Ressource","compte_connecter.txt"),"w" ):
             pass
-        
+    def in_input_mdp_zone(dict_input):
+        return (zone == 1 and dict_input[1]["input_mdp"]["active"] ==  True) or (zone == 0 and dict_input[0]["input_mdp"]["active"])
+    
     def look_for_connection_tools():
         """Fonction qui verifie si des données d'utilisateur sont déjà enregistrez
 
@@ -2080,129 +2086,128 @@ def compte():
                     
                 else:
                     color_edit = (0,0,200)
-                if btn_submit.collidepoint(mouse):                    
-                    if (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1):                        
-                        animation_connection.start_anime(last_screen)                    
-                        if look_valid(zone):
-                            if look_mdp(zone):
-                                try:
-                                    disponibilite_pseudo = User.verifier_pseudo(dict_input[zone]["input_pseudo"]["input"])
-                                    if disponibilite_pseudo and zone == 0:
-                                        print(1)
-                                        #Le pseudo est disponible, il peut crée un compte
-                                        print("le mot de passe est valide")
+                               
+                if (btn_submit.collidepoint(mouse) and (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1)) or (in_input_mdp_zone(dict_input) and ((event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN))):                        
+                    animation_connection.start_anime(last_screen)                    
+                    if look_valid(zone):
+                        if look_mdp(zone):
+                            try:
+                                disponibilite_pseudo = User.verifier_pseudo(dict_input[zone]["input_pseudo"]["input"])
+                                if disponibilite_pseudo and zone == 0:
+                                    print(1)
+                                    #Le pseudo est disponible, il peut crée un compte
+                                    print("le mot de passe est valide")                                    
+                                    nom = dict_input[0]["input_nom"]["input"].strip()
+                                    prenom = dict_input[0]["input_prenom"]["input"].strip()
+                                    age = int(dict_input[0]["input_age"]["input"])
+                                    pseudo = dict_input[0]["input_pseudo"]["input"].strip()
+                                    mdp = dict_input[0]["input_mdp"]["input_visible"].strip()
+                                    with open(chemin_pp,"rb") as fichier:
+                                        photo_profil = fichier.read()                                            
+                                    user = User(nom,prenom,age,pseudo,mdp,photo_profil,rect_pp = rect_ellipse)
+                                    try:                               
+                                        user.save_user() 
+                                    except noConnection:
+                                        Gerer_requete.connection_failed()
+                                    else:
+                                        connect = True
+                                        #creer_compte = False
+                                        with open(chemin_pp,"wb") as fichier:                                                
+                                            if user.photo_profil != pp_base:
+                                                fichier.write(user.photo_profil)
+                                            else:
+                                                fichier.write(pp_base)                                            
+                                        if check_save_con_data:
+                                            write_connection_tools(pseudo,mdp)
+                                        else:
+                                            erase_connection_tools()
+                                        if user.photo_profil == pp_base:
+                                            image_pp = pygame.image.load(chemin_pp)
+                                            image_pp = pygame.transform.smoothscale(image_pp,size_grand)
+                                        else:
+                                            #processus de reconstruction de la pdp car sinon si on aggrandi juste la surface surf_image elle est flou
+                                            rect_pp = user.rect_pp
+                                            if isinstance(rect_pp,pygame.Rect):
+                                                rect_pp = Gerer_requete.separe_rect(user.rect_pp)
+                                            rect_pp = rect_pp.split(",")
+                                            rect_pp = [int(i) for i in rect_pp]
+                                            rect_pp = pygame.Rect(rect_pp)
+                                            img_ = pygame.image.load(chemin_pp).convert_alpha()
+                                            old_width, old_height = img_.get_size()
+                                            # Définir la nouvelle largeur (ou hauteur)
+                                            new_width = 500#le rect a été calculer par rapport a une image qui était en width = 500, alors l'image envoyé doit l'être aussi
+                                            # Calculer la nouvelle hauteur (ou largeur) pour conserver le rapport d'aspect (produit en croix)
+                                            new_height = int(old_height * new_width / old_width)
+                                            # Redimensionner l'image
+                                            img_ = pygame.transform.smoothscale(img_, (new_width,new_height))
+                                            surf_image2 = resizeImage.rendre_transparent(img_,rect_pp,0)
+                                            surf_image2 = pygame.transform.smoothscale(surf_image2, size_grand)                                                
+                                
+                                elif not disponibilite_pseudo and zone == 0:
+                                    #Le pseudo n'est pas disponible, il ne  peut créé un compte
+                                    print(2)
+                                    pseudo_ndispo = True
+                                elif not disponibilite_pseudo and zone == 1:
+                                    print(3)
+                                    #Le pseudo n'est pas disponible, donc un compte existe, donc il peut essayer de s'y connecter
+                                    pseudo = dict_input[zone]["input_pseudo"]["input"]
+                                    mdp = dict_input[zone]["input_mdp"]["input_visible"]                                     
+                                    try:
+                                        user = User.log_user(pseudo,mdp)
+                                    except userNonCharger:
+                                        pas_correspondance = True
+                                    except noConnection:
+                                        Gerer_requete.connection_failed()
+                                    else:
                                         
-                                        nom = dict_input[0]["input_nom"]["input"].strip()
-                                        prenom = dict_input[0]["input_prenom"]["input"].strip()
-                                        age = int(dict_input[0]["input_age"]["input"])
-                                        pseudo = dict_input[0]["input_pseudo"]["input"].strip()
-                                        mdp = dict_input[0]["input_mdp"]["input_visible"].strip()
-                                        with open(chemin_pp,"rb") as fichier:
-                                            photo_profil = fichier.read()                                            
-                                        user = User(nom,prenom,age,pseudo,mdp,photo_profil,rect_pp = rect_ellipse)
-                                        try:                               
-                                            user.save_user() 
-                                        except noConnection:
-                                            Gerer_requete.connection_failed()
+                                        connect = True
+                                        creer_compte = False
+                                        with open(chemin_pp,"wb") as fichier:
+                                            if user.photo_profil != pp_base:
+                                                fichier.write(user.photo_profil)
+                                            else:
+                                                fichier.write(pp_base)
+                                        if check_save_con_data:
+                                            write_connection_tools(pseudo,mdp)
                                         else:
-                                            connect = True
-                                            #creer_compte = False
-                                            with open(chemin_pp,"wb") as fichier:                                                
-                                                if user.photo_profil != pp_base:
-                                                    fichier.write(user.photo_profil)
-                                                else:
-                                                    fichier.write(pp_base)                                            
-                                            if check_save_con_data:
-                                                write_connection_tools(pseudo,mdp)
-                                            else:
-                                                erase_connection_tools()
-                                            if user.photo_profil == pp_base:
-                                                image_pp = pygame.image.load(chemin_pp)
-                                                image_pp = pygame.transform.smoothscale(image_pp,size_grand)
-                                            else:
-                                                #processus de reconstruction de la pdp car sinon si on aggrandi juste la surface surf_image elle est flou
-                                                rect_pp = user.rect_pp
-                                                if isinstance(rect_pp,pygame.Rect):
-                                                    rect_pp = Gerer_requete.separe_rect(user.rect_pp)
-                                                rect_pp = rect_pp.split(",")
-                                                rect_pp = [int(i) for i in rect_pp]
-                                                rect_pp = pygame.Rect(rect_pp)
-                                                img_ = pygame.image.load(chemin_pp).convert_alpha()
-                                                old_width, old_height = img_.get_size()
-                                                # Définir la nouvelle largeur (ou hauteur)
-                                                new_width = 500#le rect a été calculer par rapport a une image qui était en width = 500, alors l'image envoyé doit l'être aussi
-                                                # Calculer la nouvelle hauteur (ou largeur) pour conserver le rapport d'aspect (produit en croix)
-                                                new_height = int(old_height * new_width / old_width)
-                                                # Redimensionner l'image
-                                                img_ = pygame.transform.smoothscale(img_, (new_width,new_height))
-                                                surf_image2 = resizeImage.rendre_transparent(img_,rect_pp,0)
-                                                surf_image2 = pygame.transform.smoothscale(surf_image2, size_grand)                                                
-                                    
-                                    elif not disponibilite_pseudo and zone == 0:
-                                        #Le pseudo n'est pas disponible, il ne  peut créé un compte
-                                        print(2)
-                                        pseudo_ndispo = True
-                                    elif not disponibilite_pseudo and zone == 1:
-                                        print(3)
-                                        #Le pseudo n'est pas disponible, donc un compte existe, donc il peut essayer de s'y connecter
-                                        pseudo = dict_input[zone]["input_pseudo"]["input"]
-                                        mdp = dict_input[zone]["input_mdp"]["input_visible"]                                     
-                                        try:
-                                            user = User.log_user(pseudo,mdp)
-                                        except userNonCharger:
-                                            pas_correspondance = True
-                                        except noConnection:
-                                            Gerer_requete.connection_failed()
+                                            erase_connection_tools()
+                                        if user.photo_profil == pp_base:
+                                            image_pp = pygame.image.load(chemin_pp)
+                                            image_pp = pygame.transform.smoothscale(image_pp,size_grand)
                                         else:
-                                            
-                                            connect = True
-                                            creer_compte = False
-                                            with open(chemin_pp,"wb") as fichier:
-                                                if user.photo_profil != pp_base:
-                                                    fichier.write(user.photo_profil)
-                                                else:
-                                                    fichier.write(pp_base)
-                                            if check_save_con_data:
-                                                write_connection_tools(pseudo,mdp)
-                                            else:
-                                                erase_connection_tools()
-                                            if user.photo_profil == pp_base:
-                                                image_pp = pygame.image.load(chemin_pp)
-                                                image_pp = pygame.transform.smoothscale(image_pp,size_grand)
-                                            else:
-                                                #processus de reconstruction de la pdp car sinon si on aggrandi juste la surface surf_image elle est flou
-                                                rect_pp = user.rect_pp
-                                                if isinstance(rect_pp,pygame.Rect):
-                                                    rect_pp = Gerer_requete.separe_rect(user.rect_pp)
-                                                rect_pp = rect_pp.split(",")
-                                                rect_pp = [int(i) for i in rect_pp]
-                                                rect_pp = pygame.Rect(rect_pp)
-                                                img_ = pygame.image.load(chemin_pp).convert_alpha()
-                                                old_width, old_height = img_.get_size()
-                                                # Définir la nouvelle largeur (ou hauteur)
-                                                new_width = 500 #le rect a été calculer par rapport a une image qui était en width = 500, alors l'image envoyé doit l'être aussi
-                                                # Calculer la nouvelle hauteur (ou largeur) pour conserver le rapport d'aspect (produit en croix)
-                                                new_height = int(old_height * new_width / old_width)
-                                                # Redimensionner l'image
-                                                img_ = pygame.transform.smoothscale(img_, (new_width,new_height))
-                                                surf_image2 = resizeImage.rendre_transparent(img_,rect_pp,0)
-                                                surf_image2 = pygame.transform.smoothscale(surf_image2, size_grand)                                                
-        
-                                    elif disponibilite_pseudo and zone == 1:
-                                        #Le pseudo est disponible, donc aucun compte n'existe, donc il ne peut s'y connnecter
-                                        n_pseudo = True
-                                    
-                                except noConnection:
-                                    Gerer_requete.connection_failed()
-                                except Exception as e:
-                                    Gerer_requete.error_occured()
-                                finally:
-                                    animation_connection.stop_anime()
-                            else:
-                                invalid_mdp = True
+                                            #processus de reconstruction de la pdp car sinon si on aggrandi juste la surface surf_image elle est flou
+                                            rect_pp = user.rect_pp
+                                            if isinstance(rect_pp,pygame.Rect):
+                                                rect_pp = Gerer_requete.separe_rect(user.rect_pp)
+                                            rect_pp = rect_pp.split(",")
+                                            rect_pp = [int(i) for i in rect_pp]
+                                            rect_pp = pygame.Rect(rect_pp)
+                                            img_ = pygame.image.load(chemin_pp).convert_alpha()
+                                            old_width, old_height = img_.get_size()
+                                            # Définir la nouvelle largeur (ou hauteur)
+                                            new_width = 500 #le rect a été calculer par rapport a une image qui était en width = 500, alors l'image envoyé doit l'être aussi
+                                            # Calculer la nouvelle hauteur (ou largeur) pour conserver le rapport d'aspect (produit en croix)
+                                            new_height = int(old_height * new_width / old_width)
+                                            # Redimensionner l'image
+                                            img_ = pygame.transform.smoothscale(img_, (new_width,new_height))
+                                            surf_image2 = resizeImage.rendre_transparent(img_,rect_pp,0)
+                                            surf_image2 = pygame.transform.smoothscale(surf_image2, size_grand)                                                
+    
+                                elif disponibilite_pseudo and zone == 1:
+                                    #Le pseudo est disponible, donc aucun compte n'existe, donc il ne peut s'y connnecter
+                                    n_pseudo = True
+                                
+                            except noConnection:
+                                Gerer_requete.connection_failed()
+                            except Exception as e:
+                                Gerer_requete.error_occured()
+                            finally:
+                                animation_connection.stop_anime()
                         else:
-                            invalid_champ = True   
-                        animation_connection.stop_anime() 
+                            invalid_mdp = True
+                    else:
+                        invalid_champ = True   
+                    animation_connection.stop_anime() 
                 ################################################################ Système de l'input #################################################################     
                 if not connect:       
                     i = 0         
@@ -2320,7 +2325,8 @@ def compte():
                                     if value["depasse"]:
                                         value["coupage"] += 1
                                 elif event.key == pygame.K_RETURN:
-                                    pass                            
+                                    pass
+                                                                    
                                 else:
                                     if key != "input_mdp":
                                         if len(value["input"]) < value["max"]:
@@ -2785,8 +2791,10 @@ def input_popup():
     sous_container = pygame.Surface((w_origine/3,h_origine/3), pygame.SRCALPHA)
     rect_container = pygame.Rect(w_origine/2 - sous_container.get_width()/2, h_origine/2 - sous_container.get_height()/2,sous_container.get_width(),sous_container.get_height())
     width = sous_container.get_width()
+    
     height = sous_container.get_height()
     container = pygame.Surface((width - 40,height - 40), pygame.SRCALPHA)
+    barre_input = pygame.Surface((3,30))
     active_input = False
     text_input = ""
     max_input = 50
@@ -2812,9 +2820,11 @@ def input_popup():
     pos_x = 0
     coupage = False
     surface_ecriture = pygame.Surface((rect_input.w,rect_input.h),pygame.SRCALPHA) #surface
+    position_cursor = 0
     while continuer:
         Clock.tick(120)
         sous_container.fill((0,0,0,0))
+        barre_input.fill((0,0,0))
         mouse = pygame.mouse.get_pos()
         rect_input_absolute = pygame.Rect(rect_container.x + width/2 - (width/2)/2,
                                           rect_container.y + height/2 - 50/2,
@@ -2831,26 +2841,43 @@ def input_popup():
                     cancel = True
             if active_input:
                 if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_LEFT:
+                        position_cursor -= 1
+                        if pos_x + x_cursor <= 40:
+                            pos_x += 20
+                        
+                        if abs(position_cursor) >= len(text_input):
+                            position_cursor = -len(text_input)
+                            pos_x = 0
+                    if event.key == pygame.K_RIGHT:
+                        if pos_x + x_cursor >= width_input - 40:
+                            pos_x -= 20
+                        position_cursor += 1 
+                        if position_cursor >= 0:
+                            position_cursor = 0
                     if event.key == pygame.K_RETURN:
-                        finished = True
+                        rep_user = Gerer_requete.ask_ok_cancel(message =f"Voici le nom du tuto que vous avez rentrez : \n '{text_input}'")
+                        if rep_user:
+                            finished = True
+                        
                     elif event.key == pygame.K_SPACE and len(text_input) < max_input:
-                        text_input += " "
+                        text_input = text_input[:len(text_input) + position_cursor] + " " + text_input[len(text_input) + position_cursor:]
                         if font(font_paragraphe,taille_input,True).size(text_input)[0] >= rect_input.w:
                             pos_x -= font(font_paragraphe,taille_input,True).size(" ")[0]
                         else:
                             pos_x = 0
                     elif event.key == pygame.K_BACKSPACE:
-                        if len(text_input) > 0:
+                        if len(text_input) > 0 and position_cursor != 0:
                             last_key = text_input[-1]
-                            text_input = text_input[:-1]
+                            text_input = text_input[:len(text_input) + position_cursor][:-1] + text_input[len(text_input) + position_cursor:]
                             if coupage:
-                                pos_x += font(font_paragraphe,taille_input,True).size(last_key)[0]
+                                pos_x +=  font(font_paragraphe,taille_input,True).size(last_key)[0]
                         else:
                             pos_x = 0
                     else:
                         if len(text_input) < max_input:
                             if event.unicode.isprintable() and event.unicode != "":
-                                text_input += event.unicode
+                                text_input = text_input[:len(text_input) + position_cursor] + event.unicode + text_input[len(text_input) + position_cursor:]
                                 if coupage:
                                     pos_x -= font(font_paragraphe,taille_input,True).size(event.unicode)[0]
                     if font(font_paragraphe,taille_input,True).size(text_input)[0] > rect_input.w - 30:
@@ -2868,15 +2895,16 @@ def input_popup():
         pygame.draw.rect(container,palette_couleur.fond_un_login,container.get_rect(),0,50)
         pygame.draw.rect(surface_ecriture,color_input,(0,0,rect_input.w,rect_input.h),1)
        
-        print(pos_x)
         
         draw_text(contener = container, text = text_titre,font = chivo_titre, size = taille_titre, x = (width-40)/2 - font(chivo_titre,taille_titre,True).size(text_titre)[0]/2,
                   y = 10,importer = True,color = blanc)
         draw_text(contener = container, text = text_active, font = chivo_titre, size = 18, x = (width-40)/2 - font(chivo_titre,18,True).size(text_active)[0]/2,
                   y = (height-40) - 30, importer = True, color = blanc, ombre = True)
         draw_text(text_input, x = 5, y = 10 , font = font_paragraphe, size = taille_input,importer = True,contener = surf_glissante)
-        
-        print(0+pos_x)
+        x_cursor,y_cursor =(5 + font(font_paragraphe,taille_input,True).size(text_input[:len(text_input) + position_cursor])[0], 10 + font(font_paragraphe,taille_input,True).size(text_input)[1]/2 - 15)
+        #pos_x + x_cursor = position dans l'input de la barre
+        if active_input:
+            surf_glissante.blit(barre_input,(x_cursor,y_cursor))
         surface_ecriture.blit(surf_glissante,(pos_x,0))
         container.blit(surface_ecriture,rect_input)
         container.blit(image_retour,rect_quit)

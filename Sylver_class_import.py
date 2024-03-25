@@ -1099,6 +1099,14 @@ class Gerer_requete():
         return rep
     
     @staticmethod
+    def ask_ok_cancel(titre = "ATTENTION",message = "Default text"):
+        root = tkinter.Tk()
+        root.withdraw()
+        rep = tkinter.messagebox.askokcancel(title=titre,message=message)
+        root.destroy()
+        return rep
+    
+    @staticmethod
     def verifier_version_app():
         """Fonction permettant de vérifier la version de l'app, et donc de proposer une mise a jour si besoin"""
         no_connection = False
