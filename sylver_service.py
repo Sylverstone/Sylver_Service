@@ -8,7 +8,7 @@ from Exception import *
 import webbrowser
 dotenv.load_dotenv()
 print("debut app")
-
+#achever : mettre le système de deplacement dans presque toute les inputs #prochainement : page contact | stats tuto | modification approfondi tuto | continuer fonction pour modification tuto
 #reglage de l'ecran
 os.environ['SDL_VIDEO_CENTERED'] = '1'
 pygame.init()
@@ -120,8 +120,6 @@ def make_line(text : str,font : pygame.font,size_max : int):
     
     * Liste de coupages : liste comportant les indices où une nouvelle ligne commence pour le texte
     """
-    print(text)
-    print('\n' in text)
     coupage = [0]
     line = 1
     start = 0
@@ -144,7 +142,6 @@ def make_line(text : str,font : pygame.font,size_max : int):
             coupage.append(start)
             line+=1
         i+=1
-    print("line ", line)
     y = 0
     for i in range(line):
         y = font.size(text)[1] + font.size(text)[1] * i
@@ -253,7 +250,7 @@ def decoupe_text(coupage : list ,line : int,text_info : str) :
         all_text.append(text_info[start:limite].strip())
     return all_text       
         
-def ecrire_tuto(user : User | None):  
+def ecrire_tuto(user : User | None,pre_text = ""):  
     """Fonction permettant a l'utilisateur décrire son tuto, cette fonction est également utilisé pour permettre a l'utilisateur décrire
         un signalement
 
@@ -288,6 +285,9 @@ def ecrire_tuto(user : User | None):
         "input_text" : {"coupage" : 0, "max" : 4000,"x" : 20,"y" : 30 ,"surf" : surf_glissant_ecrit, "input" : ["Contenu",], "zone_ecrit" : 0,
                         "can_do_multiple_lines" : True,"can_write" : True, "base" : "Contenu", "all_size" : 0,"active" : False,"rect" : rect_surf_ecrit,"time": 0, "take_time" : False}
     }
+    if pre_text:
+        pass
+        #utiliser make_line puis decoupe_texte pour decouper le texte et le mettre dans input_text
     base_input_text = dict_input["input_text"]["base"]
     base_input_titre = dict_input["input_titre"]["base"]
     menos = False #indique si le dernier effacement a supprimer uneligne
@@ -350,7 +350,6 @@ def ecrire_tuto(user : User | None):
                                 Gerer_requete.connection_failed()
                                 
                             except Exception as e:
-                                print(e)
                                 Gerer_requete.error_occured()
                             else:
                                 Gerer_requete.processus_fini("Votre tuto a bien été mis en ligne")
@@ -443,7 +442,6 @@ def ecrire_tuto(user : User | None):
                                     elt["all_size"] += 1
                             
                         if len(elt["input"][elt["zone_ecrit"]]) > 0 and not menos and elt["can_do_multiple_lines"]:
-                            print("in")
                             if font(font_paragraphe,30,True).size(elt["input"][elt["zone_ecrit"]])[0] >= surf_ecrit.get_width() - 40:
                                 if elt["y"] * len(elt["input"]) + 40 < surf_ecrit.get_height():
                                     ecrit_en_plus = False    
@@ -492,7 +490,6 @@ def ecrire_tuto(user : User | None):
                                     
                         elif elt["can_do_multiple_lines"] == False:
                              if len(''.join(elt["input"]).strip()) < elt["max"]:
-                                print(font(font_paragraphe,30,True).size(elt["input"][elt["zone_ecrit"]]),elt["surf"].get_width())
                                 if (font(font_paragraphe,30,True).size(elt["input"][elt["zone_ecrit"]])[0] >= surf_titre.get_width() - 20):
                                     add = font(font_paragraphe,30,True).size(event.unicode)[0]
                                     if event.key != pygame.K_BACKSPACE:
@@ -608,7 +605,6 @@ def interface_deroullante_categorie(last_screen,message1 = "Choisissez votre cat
             pos_x = rect_case_categorie.x
             pos_y = rect_case_categorie.y + (rect_case_categorie.h +ecart) *i
             rect = pygame.Rect(x_base + pos_x,y_base+pos_y,rect_case_categorie.w,rect_case_categorie.h)
-            print("rect",rect)
             all_rect_case_abs.append(rect.copy())
             rect.x -= x_base
             rect.y -= y_base
@@ -709,7 +705,6 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
         date (datetime.datetime, optional): La date de transmission du tuto. Defaults to None.
         id_tuto (int, optional): Id du tuto selectionner. Defaults to None.
     """
-    print(text)
     global continuer
     global fond_nav
     go_back = False
@@ -725,6 +720,10 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
     font_paragraphe = apple_titre
     rect_a_ne_pas_depasser = rect_screen.copy()
     rect_a_ne_pas_depasser.w -= 5 + image_retour.get_width()
+    affiche_corbeille = False
+    if connect:
+        if user.pseudo == auteur:
+            affiche_corbeille = True
     if id_ > 1:
         date = date.strftime("%d/%m/%Y")
         date_save = date
@@ -746,13 +745,11 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
     font_40 = pygame.font.Font(font_paragraphe, 40)
     font_20 = pygame.font.Font(font_paragraphe, 20)
     taille_ecriture = 30
-    print(text_info)
     text_info,line,heigth_text = make_line_n(text = text_info, font = font(font_paragraphe,taille_ecriture,True), size_max= size_max)
     depassement_texte = rect_surface_ecriture.bottom - (heigth_text + 20)
-    print(depassement_texte)
     #mini système pour permettre l'adaptation au écran trop petit
     #all_text = decoupe_text(coupage,line,text_info)
-    width_surface_popup = 350     
+    width_surface_popup = 350 
     
     surface_popup_fond = pygame.Surface((width_surface_popup,220), pygame.SRCALPHA) 
     rect_popup = pygame.Rect(w_origine - width_surface_popup,40,width_surface_popup,surface_popup_fond.get_height())
@@ -820,7 +817,10 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
     rect_contact = surf_contact.get_rect()
     rect_contact.right = w_origine
     rect_contact.top = 0
-    
+    rect_corbeille = pygame.Rect(10 + image_retour.get_width() + 5 ,fond_nav.get_height(),*taille_icone)
+    rect_corbeille.bottom = fond_nav.get_height() - 5
+    icone_corbeille = pygame.image.load(os.path.join("Image","Icone_corbeille.png"))
+    icone_corbeille = pygame.transform.smoothscale(icone_corbeille,taille_icone)
     while continuer:
         Clock.tick(120)
         mouse = pygame.mouse.get_pos()
@@ -834,7 +834,10 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
             if event.type == pygame.QUIT:
                 continuer = False
                 break
-            
+            if affiche_corbeille:
+                if rect_corbeille.collidepoint(mouse):
+                    if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                        processus_delete_tuto(id_tuto)
             if rect_goback.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 go_back = True
             
@@ -894,12 +897,7 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
                     webbrowser.open(f"mailto:SylverService@outlook.fr") 
                     pygame.display.iconify()
             
-        """if not "\n" in text_info:
-            print("chemin 1 ")
-            quit()
-            for i in range(line):
-                all_text[i] = all_text[i].replace("\n", " ")
-                draw_text(all_text[i], color = (0,0,0), x = 10, y =20 + (taille_ecriture+5)*i, size = taille_ecriture, contener = surface_glissant_ecriture, font = font_paragraphe, importer = True)"""
+        
        
         draw_text(text_info, color = (0,0,0),x = 10,y = 20,
                     size = taille_ecriture, contener = surface_glissant_ecriture, font = font_paragraphe, importer = True)
@@ -965,9 +963,22 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
                       y = surf_contact.get_height()/2 - font(font_paragraphe,40,True).size("CONTACT")[1]/2,importer=True)
             screen.blit(surf_contact,rect_contact)
         screen.blit(surface_status_co,pos_surface_status_co)
+        if affiche_corbeille:
+            screen.blit(icone_corbeille,rect_corbeille)
         last_screen = screen.copy()
         pygame.display.flip()
-        
+     
+def processus_delete_tuto(id_):
+    try:
+        recup_reponse_user = user.delete_tuto(id_)
+    except:
+        Gerer_requete.message("Votre tuto n'a pas pû être supprimé ! ")
+    else:
+        if recup_reponse_user:
+            Gerer_requete.processus_fini("Votre tuto a bien été supprimé :)") 
+        else:
+            pass 
+                 
 def menu(id_ : int = 0,auteur_rechercher : str = None):
     """Fonction permettant de rechercher des tutos | elle sert également a image_userr tout les tutos d'un utilisateur
 
@@ -1018,7 +1029,6 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
         text = f"{num} résultat.s pour cette recherche !" if not flop_de_recherche else "Une erreur est survenue ! la recherche n'a pas aboutie"
         text = "Faites une recherche :)" if have_supprime else text
         if connect and user.categorie != None and dict_recherche["nom_categorie"] != None and num == 0 and (liste_rech[indice_type] == "Catégorie" or dict_recherche["nom_categorie"] == user.categorie):
-            print(dict_recherche)
             text = f'La categorie {dict_recherche["nom_categorie"].lower()} est vide :('
         elif connect and user.categorie != None and dict_recherche["nom_categorie"] != None and num != 0 and (liste_rech[indice_type] == "Catégorie" or dict_recherche["nom_categorie"] == user.categorie):
             text = f'{num} résultat.s dans la catégorie {dict_recherche["nom_categorie"].lower()}'
@@ -1095,7 +1105,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                     pygame.draw.rect(surface,palette_couleur.couleur_fond_case_tuto,(0,0,surface.get_width(),surface.get_height()),0,20)
                     color_auteur = (255,0,0) if Gerer_requete.est_bytes(doc) else blanc
                     
-                    ecrit_auteur = auteur
+                    ecrit_auteur = auteur if len(auteur) <= 15 else auteur[:15]
                     rect_no_depasse = pygame.Rect(0,0,long_case-10-font(font_paragraphe,30,True).size(text_date)[0] - 20 - 20,0)
                     size_ = verification_size(rect_no_depasse,font_paragraphe,30,f"{nom_projet} par {ecrit_auteur}",True)
                     draw_text(color = color_auteur,contener = surface,
@@ -1117,7 +1127,6 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                         all_case_data.append(case_data)
                 can_add = False
             except Exception as e:
-                print(e)
                 access = False
                 flop_de_recherche = True
                 Gerer_requete.error_occured()
@@ -1137,24 +1146,20 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
         nom_projet = data["nom_projet"]
         doc = data["doc"]
         file = data["extension"]
-        print(photo_deja_charger.keys())
         if connect:
             if user.pseudo == auteur.split(",")[0]:
                 #si c'est un tuto de l'utilisateur connectez, on va simplement prendre sa pp qu'on avait déjà charger
                 if Gerer_requete.est_bytes(doc):
                     dir = Gerer_requete.open_dir(title = "Lieu du téléchargement")
-                    print("path : ",dir)
                     if dir != "":
                         Gerer_requete.demarrer_fichier(dir = dir,doc = doc, ext = file,auteur = auteur, nom_tuto=nom_projet)
                     else:
                         animation_ouverture.stop_anime()
                         return
                     text = "Le fichier a été ouvert profitez en :)\nMaintenant vous pouvez donc signalez un tuto visuel et voir tout les autres tutos de l'utilisateur, comme si c'était un tuto texte :) c'est cool non ?"
-                print(text)
                 page_info(2,text,nom_projet,auteur,date,id_tuto,pygame.transform.smoothscale(image_pp_user,taille_icone))
                 return  
         
-        print(auteur.split(",")[0] in photo_deja_charger)
         if not auteur.split(",")[0] in photo_deja_charger:
             #recuperation de la pp de l'user qui a fait le tuto
             try:
@@ -1182,7 +1187,6 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
         image_pp = pygame.transform.smoothscale(image_pp,taille_icone)
         if Gerer_requete.est_bytes(doc):
             dir = Gerer_requete.open_dir(title = "Lieu du téléchargement")
-            print("path : ",dir)
             if dir != "":
                 Gerer_requete.demarrer_fichier(dir = dir,doc = doc, ext = file,auteur = auteur, nom_tuto=nom_projet)
             else:
@@ -1210,7 +1214,6 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
         zone_page = 0
         try:      
             flop_de_recherche = False   
-            print("commence la recherche")
             if id_ == 0:
                 detail = Gerer_requete.rechercher_data(nom_auteur = data["nom_auteur"], nom_tuto = data["nom_projet"], nom_categorie = data["nom_categorie"])
             else:
@@ -1226,8 +1229,6 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
             Gerer_requete.connection_failed()
             
         except Exception as e:
-            print("erreur : ",e)
-            print("flop")
             enter_pressed = False
             flop_de_recherche = True
             processing = False
@@ -1303,7 +1304,6 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
     #boucle principale
     cursor_position = 0
     while continuer:
-        print(cursor_position)
         Clock.tick(120)
         if id_ == 1 and not not_enter:
             dict_recherche = {"nom_auteur": auteur_rechercher,"nom_projet" : None,"nom_categorie" : None}
@@ -1311,7 +1311,6 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
             if not th.is_alive():
                 debut = time.time()
                 th.start()
-                print("thread started")
                 not_enter = True
         if id_ == 2 and not not_enter:
             dict_recherche = {"nom_auteur": None,"nom_projet" : "*","nom_categorie" : None}
@@ -1319,7 +1318,6 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
             if not th.is_alive():
                 debut = time.time()
                 th.start()
-                print("thread started")
                 not_enter = True
         if id_ == 0 and connect and user.categorie != None and not not_enter:
             #faire la recherche par défaut de l'utilisateur
@@ -1329,7 +1327,6 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
             if not th.is_alive():
                 debut = time.time()
                 th.start()
-                print("thread started")
                 not_enter = True        
         mouse = pygame.mouse.get_pos()
         screen.fill(fond_ecran)            
@@ -1372,7 +1369,6 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                         else:
                             thread_recherche = threading.Thread(target=research, args=(dict_recherche,), daemon=True)                       
                             if not thread_recherche.is_alive():
-                                print("start research")
                                 debut = time.time()
                                 thread_recherche.start()
                                             
@@ -1389,8 +1385,11 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                     if event.type == pygame.MOUSEBUTTONDOWN and event.button ==1:
                         animation_ouverture.start_anime(last_screen)
                         start_tuto(data_recup)    
-                        print("sortie_start_tuto")
-                        animation_ouverture.stop_anime()        
+                        animation_ouverture.stop_anime()
+                    elif event.type == pygame.MOUSEBUTTONDOWN and event.button ==3:
+                        if connect:
+                            if user.pseudo == data_recup["auteur"]:
+                                processus_delete_tuto(text_on)       
             for index,values in enumerate(dict_rect_fleche):
                 if values.collidepoint(mouse):
                     if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -1421,10 +1420,8 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                             else:
                                  Gerer_requete.demarrer_fichier(doc = os.path.join("Ressource","Information_page_annonce.docx"),with_path=True,ext = None)     
                         except OSError as e:
-                            print(e)
                             Gerer_requete.fail_open()
                         except Exception as e:
-                            print(e)
                             Gerer_requete.error_occured()
                         finally:
                             animation_ouverture.stop_anime()
@@ -1532,7 +1529,6 @@ def jouer_musique(playlist = PLAYLIST):
     pause = False
     paused = 0
     for musique in playlist:
-        print(f"En cours de lecture : {musique}")
         pygame.mixer.music.load(musique)
         pygame.mixer.music.play()
         while pygame.mixer.music.get_busy():# Attente jusqu'à ce que la musique soit terminée
@@ -1571,7 +1567,6 @@ def key_press(event):
         rep = Gerer_requete.askyesno_basic("SECRET","TU AS DECOUVERTS LE SECRET DE L'APP, MAIS POUR L'INSTANT IL SE FAIT PETIT !")
         """thread_music = threading.Thread(target = jouer_musique,daemon=True) 
 
-        print(rep,thread_music.is_alive())
         if not thread_music.is_alive():
             if rep:
                 thread_music.start()
@@ -1898,12 +1893,12 @@ def compte():
     icone_aide = pygame.image.load(os.path.join("image","icone_interrogation.png"))
     rect_aide = pygame.Rect(w_origine - taille_icone[0]- 5, 5, *taille_icone)
     icone_aide = pygame.transform.smoothscale(icone_aide,(rect_aide.w,rect_aide.h))
+    click_return = False
     while continuer:
         Clock.tick(120)
         mouse = pygame.mouse.get_pos()
         mouse_click = pygame.mouse.get_pressed()[0]
         screen.fill(fond_ecran)
-        
         for event in pygame.event.get():  
             if event.type == pygame.QUIT:
                 continuer = False          
@@ -1936,7 +1931,6 @@ def compte():
                                 surf_image = pygame.transform.smoothscale(surf_image,size_photo_pp_petit)
                             else:
                                 surf_image2 = pygame.transform.smoothscale(surf_image,size_grand)
-                            print("les surfs :",surf_image,surf_image2)
                             try:                                
                                 with open(path,"rb") as fichier:
                                     nv_pp = fichier.read()
@@ -1954,16 +1948,14 @@ def compte():
                                 pp_choisi = True
                             except OSError:
                                 Gerer_requete.fail_open() 
-                                print("err")   
                                                  
                             except Exception:
-                                print("err")
                                 Gerer_requete.error_occured()
                                 
                         except AnnuleCropPhoto as err:
-                            print(err)    
+                            pass    
                         except Exception as e:
-                            print(e)     
+                            pass     
                             Gerer_requete.error_occured()
                                            
                     except noFileException:
@@ -1977,10 +1969,8 @@ def compte():
                         try:
                             Gerer_requete.demarrer_fichier(doc = os.path.join("Ressource","Aide_interface_compte.docx"),with_path=True,ext = None)
                         except OSError as e:
-                            print(e)
                             Gerer_requete.fail_open()
                         except Exception as e:
-                            print(e)
                             Gerer_requete.error_occured()
                         finally:
                             animation_ouverture.stop_anime()
@@ -1988,7 +1978,6 @@ def compte():
                 if btn_disconnect.collidepoint(mouse):
                     if (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1):
                         #remettre la photo de profil de base dans chemin_pp
-                        print(creer_compte,zone)
                         with open(chemin_pp,"wb") as fichier:
                             fichier.write(pp_base)
                         connect = False
@@ -2032,7 +2021,6 @@ def compte():
                         except noConnection:
                             Gerer_requete.connection_failed()   
                         except Exception as e:
-                            print(e)
                             Gerer_requete.error_occured()  
                         else:
                             Gerer_requete.processus_fini("Votre tuto a bien été mis en ligne")
@@ -2064,7 +2052,6 @@ def compte():
                                             animation_update.stop_anime()
                                             Gerer_requete.connection_failed()
                                         except Exception as e:
-                                            print("erreur categorie, ligne 1885", e)
                                             animation_update.stop_anime()
                                             Gerer_requete.error_occured()
                                         else:
@@ -2072,7 +2059,6 @@ def compte():
                                             Gerer_requete.processus_fini(message = "La catégorie de votre compte a bien été changé !")
 
                             except Exception as e:
-                                print(e)
                                 Gerer_requete.message("Les catégories n'ont pas pu être recuperer")
                             
             elif creer_compte or not creer_compte:
@@ -2086,17 +2072,19 @@ def compte():
                     
                 else:
                     color_edit = (0,0,200)
-                               
-                if (btn_submit.collidepoint(mouse) and (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1)) or (in_input_mdp_zone(dict_input) and ((event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN))):                        
+                condi_1 = btn_submit.collidepoint(mouse) and (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1)   
+                condi_2 = in_input_mdp_zone(dict_input) and (event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN and not click_return)
+                print(condi_1,condi_2)
+                if condi_1 or condi_2:
+                    click_return = True                        
+                    print("in")
                     animation_connection.start_anime(last_screen)                    
                     if look_valid(zone):
                         if look_mdp(zone):
                             try:
                                 disponibilite_pseudo = User.verifier_pseudo(dict_input[zone]["input_pseudo"]["input"])
                                 if disponibilite_pseudo and zone == 0:
-                                    print(1)
                                     #Le pseudo est disponible, il peut crée un compte
-                                    print("le mot de passe est valide")                                    
                                     nom = dict_input[0]["input_nom"]["input"].strip()
                                     prenom = dict_input[0]["input_prenom"]["input"].strip()
                                     age = int(dict_input[0]["input_age"]["input"])
@@ -2145,10 +2133,8 @@ def compte():
                                 
                                 elif not disponibilite_pseudo and zone == 0:
                                     #Le pseudo n'est pas disponible, il ne  peut créé un compte
-                                    print(2)
                                     pseudo_ndispo = True
                                 elif not disponibilite_pseudo and zone == 1:
-                                    print(3)
                                     #Le pseudo n'est pas disponible, donc un compte existe, donc il peut essayer de s'y connecter
                                     pseudo = dict_input[zone]["input_pseudo"]["input"]
                                     mdp = dict_input[zone]["input_mdp"]["input_visible"]                                     
@@ -2208,6 +2194,9 @@ def compte():
                     else:
                         invalid_champ = True   
                     animation_connection.stop_anime() 
+                if event.type == pygame.KEYUP:
+                    if event.key == pygame.K_RETURN:
+                        click_return = False
                 ################################################################ Système de l'input #################################################################     
                 if not connect:       
                     i = 0         
@@ -2247,15 +2236,12 @@ def compte():
                             if event.type == pygame.KEYDOWN:
                                 if event.key == pygame.K_TAB and not press_tab:
                                     press_tab = True
-                                    print("key",key)
                                     position = schema_input[zone].index(key) #récuper la position dans la liste a laquel est situé l'input utilisé
                                     if position == len(schema_input[zone]) - 1:
                                         next_input = 0 #Dans ce cas, l'input est situé en derniere position donc on doit revenir au début
                                     else:
                                         next_input = position + 1 #On prend l'input suivant 
-                                    print(zone)
                                     key_ = schema_input[zone][next_input]
-                                    print(key_)
                                     dict_input[zone][key_]["active"] = True #On active l'input suivant
                                     if key_ != "input_mdp":
                                         #On le vide si besoin
@@ -2284,7 +2270,6 @@ def compte():
                                   
                                 if event.key == pygame.K_LEFT:
                                     cursor_position -= 1
-                                    print("right")
                                     if key != "input_mdp":
                                         if len(value["input"][value["coupage"]:]) - cursor_position <= 0:
                                             cursor_position = len(value["input"])
@@ -2293,7 +2278,6 @@ def compte():
                                             cursor_position = 0
                                 elif event.key == pygame.K_RIGHT:
                                     cursor_position += 1
-                                    print("left")
                                     if cursor_position >= 0:
                                         cursor_position = 0
                                 if event.key == pygame.K_BACKSPACE:
@@ -2750,7 +2734,6 @@ def compte():
             screen.blit(icone_reglage,pos_icone_reglage)
             if rect_icone_reglage.collidepoint(mouse):
                 if user.categorie != None and  user.categorie not in  message:
-                    print("recréation message")
                     categorie = user.categorie if user.categorie != None else "Aucune"
                     try:
                         membre_categorie = " " if user.categorie == None else f' Membre de cette catégorie : {dict_categorie[user.categorie]["membre"]}' 
@@ -2775,6 +2758,7 @@ def compte():
         last_screen = screen.copy()
         if go_back:
             break
+
         
         
 def request():
@@ -2881,7 +2865,6 @@ def input_popup():
                                 if coupage:
                                     pos_x -= font(font_paragraphe,taille_input,True).size(event.unicode)[0]
                     if font(font_paragraphe,taille_input,True).size(text_input)[0] > rect_input.w - 30:
-                        print("coupage")
                         coupage = True
                     else:
                         coupage = False
@@ -2960,7 +2943,6 @@ with open(os.path.join("Ressource", "compte_connecter.txt"), "r+") as fichier:
             recup_name_categorie = ["Informatique","Culture","Langue","Mathématique","Sport","Cuisine"]
             Gerer_requete.connection_failed()
         except Exception as e :
-            print(e)
             recup_categorie = None
             recup_name_categorie = ["Informatique","Culture","Langue","Mathématique","Sport","Cuisine"]
             Gerer_requete.error_occured()
@@ -3037,7 +3019,6 @@ with open(os.path.join("Ressource", "compte_connecter.txt"), "r+") as fichier:
         Gerer_requete.verifier_version_doc_aide_compte()
         Gerer_requete.verifier_version_doc_info_annonce()
     except Exception as e:
-        print(e)
         Gerer_requete.message(f"La vérification des mises à jours a echoué\nerreur : '{e}'")
         
 animation_demarrage_application.stop_anime()   
@@ -3108,7 +3089,6 @@ def gestion_event():
     while continuer:
         try:
             if keyboard.is_pressed("Escape"):
-                print(threading.current_thread())
                 continuer = not User.confirm_close()      
         except:
             continue
@@ -3171,7 +3151,6 @@ def affiche_photo_profil(last_screen,Photo_pp_tiers = False,pseudo = None):
         new_width -= 20
         new_height = new_width*height/width
     photo_pp = pygame.transform.smoothscale(photo_pp,(new_width,new_height))
-    print(new_width,new_height)
     position_photo_pp = (surface_photo.get_width()/2 - new_width/2,surface_photo.get_height()/2 - new_height/2)
     position_surface_photo_pp = (w_origine/2 - surface_photo.get_width()/2,h_origine/2 - surface_photo.get_height()/2)
     text = "Belle photo de profil ;)"

@@ -26,7 +26,7 @@ try:
                     )
     connection_principale.ping(False)
 except Exception as e:
-    print("erreur", e)
+    
     connection_principale = None
     
 def connect_to_database():
@@ -80,7 +80,6 @@ class status_connection:
                     connection_principale = conn
                     pygame.draw.rect(self.screen,(0,255,0),(0,0,5,5), 0,50)
                 else:
-                    print("rouge")
                     connection_principale = None
                     pygame.draw.rect(self.screen,(255,0,0),(0,0,5,5), 0,50)
                         
@@ -102,11 +101,10 @@ def look_for_connection():
                 return False
         else:
             try:
-                print("verification connexion")
                 connection_principale.ping(reconnect=True)
                 return True
             except sql.Error as e:
-                print("connection failed : ",e)
+                
                 connection_principale = None
                 return False
             
@@ -127,7 +125,6 @@ def changer_valeur_env(valeur,new_valeur):
 
     # Modifiez la valeur souhaitée
     for i in range(len(lignes)):
-        print(lignes)
         if lignes[i].startswith(f'{valeur}='):
             lignes[i] = f'{valeur}="{new_valeur}"\n'
             break
@@ -135,7 +132,6 @@ def changer_valeur_env(valeur,new_valeur):
     # Écrivez le nouveau contenu dans le fichier .env
     with open(chemin_du_env, 'w') as fichier_env:
         fichier_env.writelines(lignes)      
-    print("fini") 
 class Doc:    
     """Class représentant un fichier
 
@@ -185,7 +181,7 @@ class Doc:
             with open(self.chemin,"wb") as File:
                 File.write(self.bytes)
         except OSError as e:
-            print("erreur : ",e)
+            
             Gerer_requete.fail_open(f"{self.nom_tuto} par {self.auteur}{self.ext}")
             return
         else:
@@ -197,11 +193,11 @@ class Doc:
         try:
             os.startfile(self.chemin,"open")
         except Exception as e:
-            print("erreur : ",e)
+            
             Gerer_requete.fail_open()
         else:
             #no erreur
-            print("document started")      
+            pass      
                  
 class User:
     """Class Representant le compte de l'utilisateur
@@ -294,10 +290,10 @@ class User:
             else:
                 no_connection = True
         except sql.Error as err:
-            print(err)
+            
             no_connection = True
         except Exception as e:
-            print(e)
+            
             no_connection = True
         finally:
             if no_connection:
@@ -334,14 +330,14 @@ class User:
                 request = f'UPDATE tuto SET signalement = signalement + 1 WHERE id = {id_tuto_signaler}'
                 cursor.execute(request)
                 
-                print("finished")   
+                   
                 
         except sql.Error as err:
-            print(err)
+            
             
             no_connection = True
         except Exception as e:
-            print(e)
+            
             no_connection = True
         finally:
             if no_connection:
@@ -371,7 +367,6 @@ class User:
                 cursor.execute(request,infos)            
           
         except sql.Error as err:
-            print(err,"wesh")
             no_connection = True
         except:
             no_connection = True
@@ -403,11 +398,11 @@ class User:
                 request = f"UPDATE categorie SET membre = membre + 1 WHERE nom = '{Nouvelle_value}'"
                 cursor.execute(request)
         except sql.Error as err:
-            print(err)
+            
             connection_principale.rollback()
             no_connection = True
         except Exception as err:
-            print(err)
+            
             connection_principale.rollback()
             no_connection = True
         finally:
@@ -425,7 +420,9 @@ class User:
         Args:
             doc (str, optional): Path du fichier a mettre en ligne. Defaults to None.
             Text (str, optional): Text du tuto a mettre en ligne. Defaults to "".
-            nom_tuto (str, optional): Nom du tuto. Defaults to "".
+            nom_tuto (str): Nom du tuto. Defaults to "".
+            categorie (str): Catégorie dans laquelle se trouve le tuto
+            is_annonce(bool): si is_annonce est True, le tuto est une annonce
 
         Raises:
             noConnection: Renvoie noConnection quand la conenction n'a pu être établie
@@ -440,33 +437,25 @@ class User:
         file = Doc(doc).get_extension()
         try:
             connection_principale = connect_to_database()
-            print(connection_principale)
             connection_principale.begin()
             with connection_principale.cursor() as cursor:                    
-                print(doc)
                 if doc != None:
                     with open(doc,"rb") as fichier:
                         doc = fichier.read()
-                print("requete 1")
                 request =  "INSERT INTO `tuto` (`nom`,`date`,`doc`,`text_ctn`,`auteur`,`file`,`categorie`,`is_annonce`) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)"
                 infos = (nom,date,doc,Text,auteur,file,categorie,is_annonce)
                 cursor.execute(request,infos)
-                print("requete 2")
                 request = f"UPDATE utilisateur SET tuto_transmis = tuto_transmis + 1 WHERE pseudo = '{self.pseudo}'"
                 cursor.execute(request)
-                print("requete 3")
                 request = f"UPDATE categorie SET tuto_count = tuto_count + 1 WHERE nom = '{categorie}'"
                 cursor.execute(request)
-                print("requete 4")
                 request = f"UPDATE utilisateur SET annonce_count = annonce_count + 1 WHERE pseudo = '{self.pseudo}'"
                 cursor.execute(request)
                 
            
         except sql.Error as err:
-            print("erreur :",err)
             no_connection = True
         except Exception as err:
-            print("erreur :",err)
             no_connection = True
         finally:
             if no_connection:
@@ -520,30 +509,26 @@ class User:
             Nouvelle_value[i] = self.rect_pp
         try:
             connection_principale = connect_to_database()
-            print(element)
-            print(len(element) == len(Nouvelle_value))
             connection_principale.begin()
             with connection_principale.cursor() as cursor:
                 for i in range(len(element)):
-                    print(element[i])
-                    print(Nouvelle_value[i][:10])
                     request = f"UPDATE `utilisateur` SET `{element[i]}` = %s WHERE `pseudo` = %s;"
                     infos = (Nouvelle_value[i],self.pseudo)
                     cursor.execute(request,infos)
      
         except sql.Error as err:
-            print(err)
+            
             connection_principale.rollback()
             no_connection = True
         except Exception as err:
-            print(err)
+            
             connection_principale.rollback()
             no_connection = True
         finally:
             if not no_connection:
                 connection_principale.commit()
                 connection_principale.close()
-                print(temoin)
+
                 if notif:
                     Gerer_requete.processus_fini(temoin=temoin)    
                 else:
@@ -553,7 +538,7 @@ class User:
                 temoin[0] = True
                 Gerer_requete.connection_failed()
             
-        
+    
     @staticmethod    
     def log_user(pseudo,mdp):
         """Fonction permettant de charger le compte de l'utilisateur
@@ -578,27 +563,23 @@ class User:
                     request =f"SELECT * FROM `utilisateur` WHERE pseudo = '{pseudo}';"
                     cursor.execute(request)
                     data = cursor.fetchone()
-                    print(data[10])
                     if data == None:
                         user_do_not_exist = True
                     else:
-                        print(f"{data[6]}, {data[1]} {data[2]}")
                         request = f"SELECT COUNT(*) FROM tuto WHERE auteur = '{data[6]}, {data[1]} {data[2]}'"
                         cursor.execute(request)
                         tuto_transmis = cursor.fetchone()[0]
-                        print(tuto_transmis)
                         request = f"SELECT COUNT(*) FROM tuto WHERE auteur = '{data[6]}, {data[1]} {data[2]}' AND is_annonce = 1"
                         cursor.execute(request)
                         annonce_transmis = cursor.fetchone()[0]
-                        print(annonce_transmis)
             else:
                 no_connection = True
                 raise noConnection("connection failed")
         except sql.Error as err:
-            print(err)
+            
             no_connection = True
         except Exception as e:
-            print(e)
+            
             no_connection = True            
         finally:
             if not no_connection:
@@ -633,7 +614,6 @@ class User:
                     request = f"SELECT `pseudo` FROM `utilisateur` WHERE `pseudo` LIKE '{pseudo}%';"
                     cursor.execute(request)
                     all_pseudo = cursor.fetchall()
-                    print("pseudo :",all_pseudo)
                     if (pseudo,) in all_pseudo:
                         disponible = False
             else:
@@ -641,21 +621,70 @@ class User:
                 raise noConnection("connection failed")
             
         except sql.Error as err:
-            print(err)
+            
             no_connection = True
 
         except Exception as e:
-            print(e)
+            
             no_connection = True
         finally:
             if not no_connection:
                 return disponible
             else:
                 raise noConnection("connection failed")
-           
-            
+      
+    
+    def modifier_tuto(self,doc : str = None, Text :str = "",nom_tuto : str = "",categorie = None,is_annonce = 0,id_tuto = 0):
+        """Fonction qui nous sert a modifier un tuto, elle supprime l'ancien pour en mettre un autre
+
+        Args:
+
+            doc (str, optional): Path du fichier a mettre en ligne. Defaults to None.
+            Text (str, optional): Text du tuto a mettre en ligne. Defaults to "".
+            nom_tuto (str): Nom du tuto. Defaults to "".
+            categorie (str): Catégorie dans laquelle se trouve le tuto
+            is_annonce(bool): si is_annonce est True, le tuto est une annonce
+            id_tuto(int): id du tuto a supprimé
+        """
+        self.delete_tuto(id_tuto,demander_user=False)
+        self.save_tuto(doc,Text,nom_tuto,categorie,is_annonce)
+        
+    def delete_tuto(self,id_tuto,demander_user = True):
+        """Fonction permettant de supprimer un tuto de la base de donnée
+
+        Args:
+            id_tuto (int): id du tuto a supprimé de la bdd
+            demander_user (bool, optional): Si True, demande la confirmation de la suppression. Defaults to True.
+        """
+        if demander_user:
+            rep_user = Gerer_requete.askyesno_basic("Suppression","Voulez vous vraiment supprimer définitivement ce tuto ?")
+        else:
+            rep_user = True
+        no_connection = False
+        if rep_user:
+            try:
+                connection_principale = connect_to_database()
+                connection_principale.begin()
+                with connection_principale.cursor() as cursor:
+                    request = "DELETE FROM tuto WHERE id = %s"
+                    cursor.execute(request,id_tuto)
+            except sql.Error as err:
                 
-            
+                connection_principale.rollback()
+                no_connection = True
+            except Exception as err:
+                
+                connection_principale.rollback()
+                no_connection = True
+            finally:
+                if not no_connection:
+                    connection_principale.commit()
+                    connection_principale.close()
+                    return rep_user
+                else:
+                    raise noConnection("Connexion non initialisé")
+        else:
+            return
     
     @staticmethod
     def get_file(idd = 0):
@@ -725,10 +754,10 @@ class Gerer_requete():
             else:
                 no_connection = True                
         except sql.Error as err:
-            print("erreur 1:",err)
+            
             no_connection = True
         except Exception as err:
-            print("erreur 2:",err)
+            
             no_connection = True
         finally:
             if no_connection:
@@ -763,16 +792,16 @@ class Gerer_requete():
             else:
                 no_connection = True
         except sql.Error as err:
-            print(err)
+            
             no_connection = False
-            print("erreur")
+            
         except noConnection as e:
-            print(e)
+            
             no_connection = True
         except Exception as e:
-            print(e)
+            
             no_connection = True
-            print("raise")
+            
         finally:
             if not no_connection:
                 return data_recup
@@ -812,23 +841,21 @@ class Gerer_requete():
                         request = f"SELECT * FROM tuto WHERE auteur LIKE '{nom_auteur}%' AND is_annonce = 0 ORDER BY date DESC;"
                     elif nom_categorie != None:
                         request = f"SELECT * from tuto WHERE categorie = '{nom_categorie}' AND is_annonce = 0 ORDER BY date DESC;"
-                    print("doing cursor")
                     cursor.execute(request)
-                    print("recup cursor")
                     data_recup = cursor.fetchall()
             else:
                 no_connection = True
         except sql.Error as err:
-            print(err)
+            
             no_connection = False
-            print("erreur")
+            
         except noConnection as e:
-            print(e)
+            
             no_connection = True
         except Exception as e:
-            print(e)
+            
             no_connection = True
-            print("raise")
+            
         finally:
             if not no_connection:
                 return data_recup
@@ -913,17 +940,17 @@ class Gerer_requete():
                 data_recup = cursor.fetchone()
           
         except sql.Error as err:
-            print(err)
+            
             no_connection = False
-            print("erreur")
+            
         except noConnection as e:
-            print(e)
+            
             no_connection = True
             
         except Exception as e:
-            print(e)
+            
             no_connection = True
-            print("raise")
+            
         finally:
             if not no_connection:
                 return data_recup
@@ -990,10 +1017,10 @@ class Gerer_requete():
             else:
                 no_connetion = True
         except sql.Error as e:
-            print(e)
+            
             no_connetion = True
         except Exception as e :
-            print(e)
+            
             no_connetion = True
         finally:
             if not no_connetion:
@@ -1038,10 +1065,10 @@ class Gerer_requete():
                 cursor.execute(request)
            
         except sql.Error as err:
-            print("erreur 1:",err)
+            
             no_connection = True
         except Exception as err:
-            print("erreur 2:",err)
+            
             no_connection = True
         finally:
             if no_connection:
@@ -1049,6 +1076,11 @@ class Gerer_requete():
             else:
                 connection_principale.commit()
                 connection_principale.close()
+                
+    @staticmethod
+    def modifier_stat_tuto(id_tuto : int):
+        pass
+    
     @staticmethod 
     def update_categorie_member():
         """Fonction permettant de mettre a jour les membres d'une catégorie
@@ -1070,10 +1102,10 @@ class Gerer_requete():
             else:
                 no_connection = True
         except sql.Error as err:
-            print("erreur 1:",err)
+            
             no_connection = True
         except Exception as err:
-            print("erreur 2:",err)
+            
             no_connection = True
         finally:
             if no_connection:
@@ -1121,11 +1153,11 @@ class Gerer_requete():
         except sql.Error:
             no_connection = True
         except Exception as e:
-            print(e)
+            
             no_connection = True
         else:
             if not no_connection and data_recup[0] != os.environ.get("VERSION") and not no_connection:
-                print("pas a jour")
+                
                 ans = Gerer_requete.askyesno_basic("NOUVELLE VERSION",f"Une Nouvelle version de l'application est disponible !\n({os.environ['VERSION']} -> {data_recup[0]})\n Souhaitez vous l'installer ?")
                 if not ans:
                     Gerer_requete.message("OK")
@@ -1137,7 +1169,7 @@ class Gerer_requete():
             elif no_connection:
                 raise noConnection("connexion failed")
             else:
-                print("a jour")
+                pass
     
     @staticmethod
     def ask_if_annonce():
@@ -1162,11 +1194,11 @@ class Gerer_requete():
         except sql.Error:
             no_connection = True
         except Exception as e:
-            print(e)
+            
             no_connection = True
         else:
             if not no_connection and data_recup[0] != os.environ.get("VERSION_DOC_AIDE") and not no_connection:
-                print("pas a jour")
+                
                 os.remove("Ressource/SYLVER.docx")
                 with open("Ressource/SYLVER.docx","wb") as f:
                     f.write(data_recup[2])  #MET A JOUR LE FICHIER WORD  
@@ -1174,7 +1206,7 @@ class Gerer_requete():
             elif no_connection:
                 raise noConnection("connexion failed")
             else:
-                print("a jour")
+                pass
         
     @staticmethod
     def verifier_version_doc_info():
@@ -1191,11 +1223,11 @@ class Gerer_requete():
         except sql.Error:
             no_connection = True
         except Exception as e:
-            print(e)
+            
             no_connection = True
         else:
             if not no_connection and data_recup[0] != os.environ.get("VERSION_DOC_INFO") and not no_connection:
-                print("pas a jour")
+                
                 os.remove("Ressource/fichier_info.txt")
                 with open("Ressource/fichier_info.txt","wb") as f:
                     f.write(data_recup[2]) #remet le nouveau fichier
@@ -1203,7 +1235,7 @@ class Gerer_requete():
             elif no_connection:
                 raise noConnection("connexion failed")
             else:
-                print("a jour")
+                pass
                 
     @staticmethod
     def verifier_version_doc_info_annonce():
@@ -1220,11 +1252,11 @@ class Gerer_requete():
         except sql.Error:
             no_connection = True
         except Exception as e:
-            print(e)
+            
             no_connection = True
         else:
             if not no_connection and data_recup[0] != os.environ.get("VERSION_DOC_INFO_ANNONCE") and not no_connection:
-                print("pas a jour")
+                
                 Gerer_requete.message("pas a jour detect")
                 os.remove("Ressource/Information_page_annonce.docx")
                 with open("Ressource/Information_page_annonce.docx","wb") as f:
@@ -1233,7 +1265,7 @@ class Gerer_requete():
             elif no_connection:
                 raise noConnection("connexion failed")
             else:
-                print("a jour")
+                pass
         
                 
     @staticmethod           
@@ -1251,11 +1283,11 @@ class Gerer_requete():
         except sql.Error:
             no_connection = True
         except Exception as e:
-            print(e)
+            
             no_connection = True
         else:
             if  not no_connection and data_recup[0] != os.environ.get("VERSION_DOC_AIDE_COMPTE") :
-                print("pas a jour")
+                
                 os.remove("Ressource/Aide_interface_compte.docx")
                 with open("Ressource/Aide_interface_compte.docx","wb") as f:
                     f.write(data_recup[2]) #remet le nouveau fichier
@@ -1263,7 +1295,7 @@ class Gerer_requete():
             elif no_connection:
                 raise noConnection("connexion failed")
             else:
-                print("a jour")
+                pass
         
 
 
