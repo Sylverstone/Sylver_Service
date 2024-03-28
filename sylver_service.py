@@ -250,7 +250,7 @@ def decoupe_text(coupage : list ,line : int,text_info : str) :
         all_text.append(text_info[start:limite].strip())
     return all_text       
         
-def ecrire_tuto(user : User | None,pre_text = ""):  
+def ecrire_tuto(user : User | None,pre_text = "",pre_titre = "",id_tuto_a_supprimer = None):  
     """Fonction permettant a l'utilisateur décrire son tuto, cette fonction est également utilisé pour permettre a l'utilisateur décrire
         un signalement
 
@@ -276,7 +276,8 @@ def ecrire_tuto(user : User | None,pre_text = ""):
     surf_glissant_ecrit = pygame.Surface((surf_ecrit.get_width(),3000),pygame.SRCALPHA)
     rect_titre = pygame.Rect(20,120,surf_titre.get_width(),surf_titre.get_height())
     rect_surf_ecrit = pygame.Rect(20,200,surf_ecrit.get_width(),surf_ecrit.get_height())
-    
+    pos_x = 0
+    pos_y_ecrit = 0
     dict_input = {
         "input_titre" : { "max" : 50,"x" : 10,"y" : rect_titre.h/2 - font(font_paragraphe,30,True).size("m")[1]/2,"surf" : surf_glissant_titre,"input" : ["Titre",],
                          "zone_ecrit" : 0,"can_do_multiple_lines" : False, "base" : "Titre", "active" : False,"rect" : rect_titre, "time": 0, "take_time" : False,
@@ -286,8 +287,23 @@ def ecrire_tuto(user : User | None,pre_text = ""):
                         "can_do_multiple_lines" : True,"can_write" : True, "base" : "Contenu", "all_size" : 0,"active" : False,"rect" : rect_surf_ecrit,"time": 0, "take_time" : False}
     }
     if pre_text:
-        pass
-        #utiliser make_line puis decoupe_texte pour decouper le texte et le mettre dans input_text
+        coupage,line,y = make_line(pre_text,font(font_paragraphe,30,True),surf_ecrit.get_width() - 40)
+        text_decoupe = decoupe_text(coupage,line,pre_text)
+        dict_input["input_text"]["input"] = text_decoupe
+        dict_input["input_text"]["zone_ecrit"] = len(text_decoupe) - 1 
+        dict_input["input_text"]["active"] = True
+        caractere = 0
+        for mot in text_decoupe:
+            for c in mot:
+                caractere += 1
+        dict_input["input_text"]["all_size"] = caractere
+        while pos_y_ecrit + y > surf_ecrit.get_height() - 40:
+            pos_y_ecrit  -= 30
+
+        dict_input["input_titre"]["input"] = [pre_titre,]
+        dict_input["input_titre"]["all_size"] = len(pre_titre)
+        while pos_x + font(font_paragraphe,30,True).size(pre_titre)[0] > surf_titre.get_width() - 30:
+            pos_x -= 20
     base_input_text = dict_input["input_text"]["base"]
     base_input_titre = dict_input["input_titre"]["base"]
     menos = False #indique si le dernier effacement a supprimer uneligne
@@ -303,8 +319,7 @@ def ecrire_tuto(user : User | None,pre_text = ""):
         texte_title = "Écrivez ici votre signalement"
         size_du_titre = verification_size(rect_a_ne_pas_depasser,chivo_titre,size_for_title,texte_title,True)
     #boucle principale
-    pos_x = 0
-    pos_y_ecrit = 0
+    
     ecrit_en_plus = False
     while continuer:
         Clock.tick(120)
@@ -320,7 +335,7 @@ def ecrire_tuto(user : User | None,pre_text = ""):
             if rect_valider.collidepoint(mouse):
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     if ''.join(dict_input["input_text"]["input"]) != base_input_text and ''.join(dict_input["input_titre"]["input"]) != base_input_titre:
-                        if user != None:
+                        if user != None:                            
                             #.strip() utilisé pour supprimer les espaces au debut et a la fin
                             text_pour_tuto = ''.join(dict_input["input_text"]["input"])
                             text_pour_tuto = text_pour_tuto.strip()
@@ -343,7 +358,10 @@ def ecrire_tuto(user : User | None,pre_text = ""):
                                     else:
                                         is_annonce = 0
                                     animation_mise_en_ligne.start_anime(last_screen)
-                                    user.save_tuto(None,text_pour_tuto,titre,categorie,is_annonce)
+                                    if not pre_text:
+                                        user.save_tuto(None,text_pour_tuto,titre,categorie,is_annonce)
+                                    else:
+                                        user.modifier_tuto(None,text_pour_tuto,titre,categorie,is_annonce,id_tuto_a_supprimer)
                                     animation_mise_en_ligne.stop_anime()
                                     go_back = True 
                             except noConnection:
@@ -352,8 +370,12 @@ def ecrire_tuto(user : User | None,pre_text = ""):
                             except Exception as e:
                                 Gerer_requete.error_occured()
                             else:
-                                Gerer_requete.processus_fini("Votre tuto a bien été mis en ligne")
+                                if not pre_text:
+                                    Gerer_requete.processus_fini("Votre tuto a bien été mis en ligne")
+                                else:
+                                    Gerer_requete.processus_fini("Votre tuto a bien été modifié")
                         else:
+                            #si user = None, c'est un signalement qui est écrit
                             #.strip() utilisé pour supprimer les espaces au debut et a la fin
                             text_pour_tuto = ' '.join(dict_input["input_text"]["input"])
                             text_pour_tuto = text_pour_tuto.strip()
@@ -397,8 +419,10 @@ def ecrire_tuto(user : User | None,pre_text = ""):
                         if event.key == pygame.K_UP and elt["can_do_multiple_lines"]:
                             #changer de zone d'ecriture vers le haut
                             elt["zone_ecrit"] -= 1 if len(elt["input"]) > 1 else 0                       
-                                                
-                                                                               
+                            if  elt["y"] * len(elt["input"]) + 40 > surf_ecrit.get_height():            
+                                pos_y_ecrit += 30
+                                if pos_y_ecrit >= 0:
+                                    pos_y_ecrit = 0                                       
                         elif event.key == pygame.K_SPACE and elt["can_write"]:
                             if len(''.join(elt["input"]).strip()) < elt["max"]:
                                 elt["input"][elt["zone_ecrit"]] += " "
@@ -409,6 +433,11 @@ def ecrire_tuto(user : User | None,pre_text = ""):
                                 element_retirer = elt["input"][elt["zone_ecrit"]][-1]
                                 elt["input"][elt["zone_ecrit"]] = elt["input"][elt["zone_ecrit"]][:-1]
                                 elt["all_size"] -= 1
+                                if not elt["can_do_multiple_lines"]:
+                                    pos_x += 0.5
+                                    print(font(font_paragraphe,30,True).size(element_retirer)[0])
+                                    if pos_x >= 0:
+                                        pos_x = 0
                             else:
                                 if elt["can_do_multiple_lines"]:
                                     if len(elt["input"]) > 1:
@@ -418,9 +447,12 @@ def ecrire_tuto(user : User | None,pre_text = ""):
                                         #menos = True
                                         if elt["y"] * len(elt["input"]) + 40 > surf_ecrit.get_height():
                                             pos_y_ecrit += 30
+                                            if pos_y_ecrit >= 0:
+                                                pos_y_ecrit = 0
                                     else:
                                         pos_y_ecrit = 0   
                                 else:
+                                    
                                     pos_x = 0             
                                                       
                         elif (event.key == pygame.K_RETURN or event.key == pygame.K_DOWN) and elt["can_do_multiple_lines"] and elt["can_write"] :
@@ -432,6 +464,7 @@ def ecrire_tuto(user : User | None,pre_text = ""):
                             if elt["y"] * len(elt["input"]) + 40 > surf_ecrit.get_height():
                                 add = font(font_paragraphe,30,True).size("m")[1]
                                 pos_y_ecrit -= 30
+                                
                                 
                         elif event.key == pygame.K_ESCAPE:
                             pass
@@ -694,7 +727,7 @@ def interface_deroullante_categorie(last_screen,message1 = "Choisissez votre cat
             break
     return Categorie_choisi
         
-def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.datetime = None, id_tuto : int = None,image_photo_profil : pygame.Surface= None):
+def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.datetime = None, id_tuto : int = None,image_photo_profil : pygame.Surface= None, is_document = None,doc_tuto = None):
     """Fonction permettant d'image_userr un texte au sujet de Sylver_Service, cette fonction sert aussi a image_userr un tuto
 
     Args:
@@ -821,6 +854,10 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
     rect_corbeille.bottom = fond_nav.get_height() - 5
     icone_corbeille = pygame.image.load(os.path.join("Image","Icone_corbeille.png"))
     icone_corbeille = pygame.transform.smoothscale(icone_corbeille,taille_icone)
+    icone_editer = pygame.image.load(os.path.join("Image","Icone_modification.png"))
+    icone_editer = pygame.transform.smoothscale(icone_editer,taille_icone)
+    rect_editer = rect_corbeille.copy()
+    rect_editer.x += rect_corbeille.w + 5
     while continuer:
         Clock.tick(120)
         mouse = pygame.mouse.get_pos()
@@ -838,6 +875,38 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
                 if rect_corbeille.collidepoint(mouse):
                     if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                         processus_delete_tuto(id_tuto)
+                if rect_editer.collidepoint(mouse):
+                    if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                        if not is_document:
+                            ecrire_tuto(user,text,nom_projet,id_tuto)
+                        else:
+                             nom_tuto = input_popup()
+                             if nom_tuto != False:
+                                path = User.get_file(1)[0]
+                                if path != " ":
+                                    if user.categorie != None:
+                                        rep = Gerer_requete.categorie_tuto_default_ou_non()
+                                    else:
+                                        rep = False
+                                    if rep is False:
+                                        categorie = interface_deroullante_categorie(last_screen)
+                                    elif rep is True:
+                                        categorie = user.categorie
+                                    else:
+                                        categorie = None
+                                    if categorie != None:
+                                        if Gerer_requete.ask_if_annonce():
+                                            is_annonce = 1
+                                        else:
+                                            is_annonce = 0
+                                        try:
+                                            animation_mise_en_ligne.start_anime(last_screen)
+                                            user.modifier_tuto(path,"",nom_tuto,categorie,is_annonce,id_tuto)
+                                            animation_mise_en_ligne.stop_anime()
+                                        except:
+                                            Gerer_requete.error_occured()
+                                        else:
+                                            Gerer_requete.processus_fini("Votre tuto a bien été modifié")
             if rect_goback.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 go_back = True
             
@@ -965,6 +1034,7 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
         screen.blit(surface_status_co,pos_surface_status_co)
         if affiche_corbeille:
             screen.blit(icone_corbeille,rect_corbeille)
+            screen.blit(icone_editer,rect_editer)
         last_screen = screen.copy()
         pygame.display.flip()
      
@@ -1074,13 +1144,13 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                           x = w_origine/2 - longueur_decompte/2,
                           y = y_all,
                           font = font_paragraphe, importer = True,size = int(taille_icone[0]))
-                for index,data in enumerate(use_list):
-                    nom_projet = data[0]
-                    auteur = User.get_only_pseudo(data[5])
-                    id_tuto = data[4]
-                    doc  = data[2]
-                    date = data[1]
-                    file = data[6]
+                for index,tuto in enumerate(use_list):
+                    nom_projet = tuto.nom
+                    auteur = User.get_only_pseudo(tuto.auteur)
+                    id_tuto = tuto.id_
+                    doc  = tuto.doc
+                    date = tuto.date
+                    file = tuto.extension
                     date = date.strftime("%d/%m/%Y")
                     date_actuelle = datetime.datetime.now()
                     date_actuelle = date_actuelle.strftime("%d/%m/%Y")
@@ -1088,7 +1158,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                         text_date = "posté aujourd'hui"
                     else:
                         text_date = f"posté le {date}"
-                    text = data[3]
+                    text = tuto.contenu
                     
                     if len(use_list) <=max_par_page/2:
                         #dans ce cas les tuto se positionne au milieu de la page
@@ -1146,18 +1216,20 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
         nom_projet = data["nom_projet"]
         doc = data["doc"]
         file = data["extension"]
+        is_document = False
         if connect:
             if user.pseudo == auteur.split(",")[0]:
                 #si c'est un tuto de l'utilisateur connectez, on va simplement prendre sa pp qu'on avait déjà charger
                 if Gerer_requete.est_bytes(doc):
                     dir = Gerer_requete.open_dir(title = "Lieu du téléchargement")
+                    is_document = True
                     if dir != "":
                         Gerer_requete.demarrer_fichier(dir = dir,doc = doc, ext = file,auteur = auteur, nom_tuto=nom_projet)
                     else:
                         animation_ouverture.stop_anime()
                         return
                     text = "Le fichier a été ouvert profitez en :)\nMaintenant vous pouvez donc signalez un tuto visuel et voir tout les autres tutos de l'utilisateur, comme si c'était un tuto texte :) c'est cool non ?"
-                page_info(2,text,nom_projet,auteur,date,id_tuto,pygame.transform.smoothscale(image_pp_user,taille_icone))
+                page_info(2,text,nom_projet,auteur,date,id_tuto,pygame.transform.smoothscale(image_pp_user,taille_icone),is_document,doc)
                 return  
         
         if not auteur.split(",")[0] in photo_deja_charger:
@@ -1186,6 +1258,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
         image_pp = resizeImage.rendre_transparent(img_,rect_pp,0)
         image_pp = pygame.transform.smoothscale(image_pp,taille_icone)
         if Gerer_requete.est_bytes(doc):
+            is_document = True
             dir = Gerer_requete.open_dir(title = "Lieu du téléchargement")
             if dir != "":
                 Gerer_requete.demarrer_fichier(dir = dir,doc = doc, ext = file,auteur = auteur, nom_tuto=nom_projet)
@@ -1193,7 +1266,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                 animation_ouverture.stop_anime()
                 return
             text = "Le fichier a été ouvert profitez en :)\nMaintenant vous pouvez donc signalez un tuto visuel et voir tout les autres tutos de l'utilisateur, comme si c'était un tuto texte :) c'est cool non ?"
-        page_info(2,text,nom_projet,auteur,date,id_tuto,image_pp)
+        page_info(2,text,nom_projet,auteur,date,id_tuto,image_pp,is_document,doc)
                 
     def research(data, id_ = 0):
         """Fonction effectuant la recherche
@@ -2074,10 +2147,8 @@ def compte():
                     color_edit = (0,0,200)
                 condi_1 = btn_submit.collidepoint(mouse) and (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1)   
                 condi_2 = in_input_mdp_zone(dict_input) and (event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN and not click_return)
-                print(condi_1,condi_2)
                 if condi_1 or condi_2:
                     click_return = True                        
-                    print("in")
                     animation_connection.start_anime(last_screen)                    
                     if look_valid(zone):
                         if look_mdp(zone):
@@ -2851,7 +2922,7 @@ def input_popup():
                         else:
                             pos_x = 0
                     elif event.key == pygame.K_BACKSPACE:
-                        if len(text_input) > 0 and position_cursor != 0:
+                        if len(text_input) > 0 and position_cursor != -(len(text_input)):
                             last_key = text_input[-1]
                             text_input = text_input[:len(text_input) + position_cursor][:-1] + text_input[len(text_input) + position_cursor:]
                             if coupage:

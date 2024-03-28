@@ -164,6 +164,7 @@ class Doc:
             return None
         path = self.chemin
         cursor = -1
+        print(path)
         while path[:cursor][-1] != ".":
             cursor -= 1
         ext = path[cursor-1:]
@@ -199,6 +200,25 @@ class Doc:
             #no erreur
             pass      
                  
+class Tuto:
+    
+    def __init__(self,nom,date,doc,contenu,id_,auteur,extension,nb_signalement,
+                 type_tuto,categorie,is_annonce):
+        self.nom = nom
+        self.date = date
+        self.doc = doc
+        self.contenu = contenu
+        self.id_ = id_
+        self.auteur = auteur
+        self.extension = extension
+        self.nb_signalement = nb_signalement
+        self.type_tuto = type_tuto
+        self.categorie = categorie
+        self.is_annonce = is_annonce
+    
+    def get_tuto_as_list(self):
+        return [self.nom,self.date,"doc",self.contenu,self.auteur,self.extension,
+                self.nb_signalement,self.type_tuto,self.categorie,self.is_annonce]
 class User:
     """Class Representant le compte de l'utilisateur
 
@@ -843,6 +863,9 @@ class Gerer_requete():
                         request = f"SELECT * from tuto WHERE categorie = '{nom_categorie}' AND is_annonce = 0 ORDER BY date DESC;"
                     cursor.execute(request)
                     data_recup = cursor.fetchall()
+                    tutos = []
+                    for tuto in data_recup:
+                        tutos.append(Tuto(*tuto))
             else:
                 no_connection = True
         except sql.Error as err:
@@ -853,12 +876,12 @@ class Gerer_requete():
             
             no_connection = True
         except Exception as e:
-            
+            print(e)
             no_connection = True
             
         finally:
             if not no_connection:
-                return data_recup
+                return tutos
             raise noConnection("l")
 
     @staticmethod
