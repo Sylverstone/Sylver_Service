@@ -289,9 +289,6 @@ def ecrire_tuto(user : User | None,pre_text = "",pre_titre = "",id_tuto_a_suppri
     if pre_text:
         coupage,line,y = make_line(pre_text,font(font_paragraphe,30,True),surf_ecrit.get_width() - 20)
         text_decoupe = decoupe_text(coupage,line,pre_text)
-        decoupe = [text +"\n" for text in text_decoupe[:-1]]
-        text_decoupe = decoupe + [text_decoupe[-1]]
-        print(text_decoupe,"\n" in text_decoupe[0])
         dict_input["input_text"]["input"] = text_decoupe
         dict_input["input_text"]["zone_ecrit"] = len(text_decoupe) - 1 
         dict_input["input_text"]["active"] = True
@@ -308,8 +305,7 @@ def ecrire_tuto(user : User | None,pre_text = "",pre_titre = "",id_tuto_a_suppri
             pos_x -= 20
     base_input_text = dict_input["input_text"]["base"]
     base_input_titre = dict_input["input_titre"]["base"]
-    menos = False #indique si le dernier effacement a supprimer uneligne
-    
+    a_ecrit = False
     
     go_back = False
     rect_a_ne_pas_depasser = rect_screen
@@ -321,7 +317,7 @@ def ecrire_tuto(user : User | None,pre_text = "",pre_titre = "",id_tuto_a_suppri
         texte_title = "Écrivez ici votre signalement"
         size_du_titre = verification_size(rect_a_ne_pas_depasser,chivo_titre,size_for_title,texte_title,True)
     #boucle principale
-    
+    cursor_ecriture = 0 # 0 signifi cursor a la fin du mot
     ecrit_en_plus = False
     while continuer:
         Clock.tick(120)
@@ -337,6 +333,8 @@ def ecrire_tuto(user : User | None,pre_text = "",pre_titre = "",id_tuto_a_suppri
             if rect_valider.collidepoint(mouse):
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     if ''.join(dict_input["input_text"]["input"]) != base_input_text and ''.join(dict_input["input_titre"]["input"]) != base_input_titre:
+                        all_input = [text + "\n" for text in dict_input["input_text"]["input"]]
+                        dict_input["input_text"]["input"] = all_input
                         if user != None:                            
                             #.strip() utilisé pour supprimer les espaces au debut et a la fin
                             text_pour_tuto = ''.join(dict_input["input_text"]["input"])
@@ -406,6 +404,7 @@ def ecrire_tuto(user : User | None,pre_text = "",pre_titre = "",id_tuto_a_suppri
                         
                 if elt["active"]:
                     if event.type == pygame.KEYDOWN:
+                        len_input = len(elt["input"][elt["zone_ecrit"]])
                         #systeme de copié collé defaillant
                         """if event.key == pygame.K_v and event.mod & pygame.KMOD_CTRL:
                             text_pasted = pyperclip.paste()
@@ -418,9 +417,28 @@ def ecrire_tuto(user : User | None,pre_text = "",pre_titre = "",id_tuto_a_suppri
                                     debut = cursor +1
                                     elt["zone_ecrit"] += 1
                                 cursor += 1"""
+                        if event.key == pygame.K_LEFT:
+                            cursor_ecriture -= 1
+                            if abs(cursor_ecriture) >= len(elt["input"][elt["zone_ecrit"]]):
+                                if elt["zone_ecrit"] > 0:
+                                    elt["zone_ecrit"] -= 1
+                                    cursor_ecriture = 0
+                                    print(elt["input"][elt["zone_ecrit"]])
+                                else:
+                                    cursor_ecriture = -len(elt["input"][elt["zone_ecrit"]])
+                                
+                        if event.key == pygame.K_RIGHT:
+                            cursor_ecriture += 1
+                            if cursor_ecriture >= 0:
+                                if elt["zone_ecrit"] != len(elt["input"]) -1:
+                                    elt["zone_ecrit"] += 1
+                                    #elt["input"][elt["zone_ecrit"] - 1] += "\n"
+                                    cursor_ecriture = -len(elt["input"][elt["zone_ecrit"]])
+                                else:
+                                    cursor_ecriture = 0
+                                    
                         if event.key == pygame.K_UP and elt["can_do_multiple_lines"]:
                             #changer de zone d'ecriture vers le haut
-                            print("-",elt["input"][elt["zone_ecrit"]],"-")
                             elt["zone_ecrit"] -= 1 if elt["zone_ecrit"] > 0 else 0                     
                             if  elt["y"] * len(elt["input"]) + 40 > surf_ecrit.get_height():            
                                 pos_y_ecrit += 30
@@ -429,13 +447,16 @@ def ecrire_tuto(user : User | None,pre_text = "",pre_titre = "",id_tuto_a_suppri
                                                         
                         elif event.key == pygame.K_SPACE and elt["can_write"]:
                             if len(''.join(elt["input"]).strip()) < elt["max"]:
-                                elt["input"][elt["zone_ecrit"]] += " "
+                                a_ecrit= True
+                                
+                                elt["input"][elt["zone_ecrit"]] = elt["input"][elt["zone_ecrit"]][:len_input + cursor_ecriture] + " " + elt["input"][elt["zone_ecrit"]][len_input + cursor_ecriture:]
                                 elt["all_size"] += 1
                                 
                         elif event.key == pygame.K_BACKSPACE:
+                            
                             if elt["input"][elt["zone_ecrit"]] != "":
                                 element_retirer = elt["input"][elt["zone_ecrit"]][-1]
-                                elt["input"][elt["zone_ecrit"]] = elt["input"][elt["zone_ecrit"]][:-1]
+                                elt["input"][elt["zone_ecrit"]] = elt["input"][elt["zone_ecrit"]][:len_input +  cursor_ecriture][:-1] + elt["input"][elt["zone_ecrit"]][len_input +  cursor_ecriture:]
                                 elt["all_size"] -= 1
                                 if not elt["can_do_multiple_lines"]:
                                     pos_x += 0.5
@@ -448,7 +469,7 @@ def ecrire_tuto(user : User | None,pre_text = "",pre_titre = "",id_tuto_a_suppri
                                         #supprimer la ligne
                                         del(elt["input"][elt["zone_ecrit"]])
                                         elt["zone_ecrit"] -= 1 
-                                        #menos = True
+                                        #  = True
                                         if elt["y"] * len(elt["input"]) + 40 > surf_ecrit.get_height():
                                             pos_y_ecrit += 30
                                             if pos_y_ecrit >= 0:
@@ -460,15 +481,22 @@ def ecrire_tuto(user : User | None,pre_text = "",pre_titre = "",id_tuto_a_suppri
                                     pos_x = 0             
                                                       
                         elif (event.key == pygame.K_RETURN) and elt["can_do_multiple_lines"] and elt["can_write"] :
-                            elt["input"][elt["zone_ecrit"]] += "\n"
-                            
-                            #ajouter une zone d'ecriture
-                            elt["input"].insert(elt["zone_ecrit"] + 1,"")
+                            #elt["input"][elt["zone_ecrit"]] += "\n"
+                            if cursor_ecriture != 0:
+                                origine_input = elt["input"][elt["zone_ecrit"]]
+                                elt["input"][elt["zone_ecrit"]] = elt["input"][elt["zone_ecrit"]][:cursor_ecriture]# + "\n"
+                                
+                                #ajouter une zone d'ecriture
+                                elt["input"].insert(elt["zone_ecrit"] + 1,origine_input[cursor_ecriture:])
+                            else:
+                                #elt["input"][elt["zone_ecrit"]] += "\n"
+                                elt["input"].insert(elt["zone_ecrit"] + 1,"")
                             elt["zone_ecrit"]+=1
                             elt["input"][elt["zone_ecrit"]] = elt["input"][elt["zone_ecrit"]].strip()
                             if elt["y"] * len(elt["input"]) + 40 > surf_ecrit.get_height():
                                 add = font(font_paragraphe,30,True).size("m")[1]
                                 pos_y_ecrit -= 30
+                            cursor_ecriture = 0
                             
                         elif event.key == pygame.K_DOWN:
                             elt["zone_ecrit"] += 1 if elt["zone_ecrit"] < len(elt["input"]) -1 else 0
@@ -481,10 +509,11 @@ def ecrire_tuto(user : User | None,pre_text = "",pre_titre = "",id_tuto_a_suppri
                         else:
                             if len(''.join(elt["input"]).strip())< elt["max"] and elt["can_write"]:
                                 if event.unicode.isprintable() and event.unicode != "":
-                                    elt["input"][elt["zone_ecrit"]] += event.unicode
+                                    a_ecrit = True
+                                    elt["input"][elt["zone_ecrit"]] = elt["input"][elt["zone_ecrit"]][:len_input +  cursor_ecriture] + event.unicode + elt["input"][elt["zone_ecrit"]][len_input +  cursor_ecriture:]                                   
                                     elt["all_size"] += 1
                             
-                        if len(elt["input"][elt["zone_ecrit"]]) > 0 and not menos and elt["can_do_multiple_lines"]:
+                        if len(elt["input"][elt["zone_ecrit"]]) > 0 and a_ecrit and elt["can_do_multiple_lines"]:
                             if font(font_paragraphe,30,True).size(elt["input"][elt["zone_ecrit"]])[0] >= surf_ecrit.get_width() - 40:
                                 if elt["y"] * len(elt["input"]) + 40 < surf_ecrit.get_height():
                                     ecrit_en_plus = False    
@@ -502,9 +531,10 @@ def ecrire_tuto(user : User | None,pre_text = "",pre_titre = "",id_tuto_a_suppri
 
                                     elt["input"][elt["zone_ecrit"]] = elt["input"][elt["zone_ecrit"]][:cursor] 
                                     
-                                    elt["input"].append("")
+                                    elt["input"].insert(elt["zone_ecrit"] + 1,"")
                                     elt["zone_ecrit"] += 1
                                     elt["input"][elt["zone_ecrit"]] += dernier_mot
+                                    
                                     
                                 else:
                                     ecrit_en_plus = True  
@@ -523,7 +553,7 @@ def ecrire_tuto(user : User | None,pre_text = "",pre_titre = "",id_tuto_a_suppri
 
                                         elt["input"][elt["zone_ecrit"]] = elt["input"][elt["zone_ecrit"]][:cursor]
                                         
-                                        elt["input"].append("")
+                                        elt["input"].insert(elt["zone_ecrit"] + 1,"")
                                         elt["zone_ecrit"] += 1
                                         elt["input"][elt["zone_ecrit"]] += dernier_mot
                                     else:
@@ -540,8 +570,7 @@ def ecrire_tuto(user : User | None,pre_text = "",pre_titre = "",id_tuto_a_suppri
                                     else:
                                         add = font(font_paragraphe,30,True).size(element_retirer)[0]
                                         pos_x += add
-                                    
-                        menos = False                  
+                        a_ecrit = False            
         surf_valider.fill((0,0,0,0))
         surf_titre.fill((0,0,0,0))
         surf_glissant_titre.fill((0,0,0,0))
@@ -562,11 +591,14 @@ def ecrire_tuto(user : User | None,pre_text = "",pre_titre = "",id_tuto_a_suppri
                 if keys == "input_titre":
                     add = 1
                 else:
+                    
                     add = 0
                 draw_text(i,importer=True,size = 30,contener=elt["surf"], x = elt["x"], y = elt["y"]*(enum+add), font=font_paragraphe)
             if elt["active"]:
                 add = 1 if keys == "input_titre" else 0
-                elt["surf"].blit(barre_input, (elt["x"] + font(font_paragraphe,30,True).size(elt["input"][elt["zone_ecrit"]])[0], 2 + elt["y"] * (elt["zone_ecrit"]+add))) #le y le met a la position du texte adapter en fonction de zone_ecrit
+                len_text = len(elt["input"][elt["zone_ecrit"]])
+                text_tuto = elt["input"][elt["zone_ecrit"]]
+                elt["surf"].blit(barre_input, (elt["x"] + font(font_paragraphe,30,True).size(text_tuto[:len_text + cursor_ecriture])[0], 2 + elt["y"] * (elt["zone_ecrit"]+add))) #le y le met a la position du texte adapter en fonction de zone_ecrit
         surf_ecrit.blit(surf_glissant_ecrit,(0,pos_y_ecrit))
         surf_titre.blit(surf_glissant_titre,(pos_x,0))
         screen.blit(surf_titre,(rect_titre[0],rect_titre[1]))
@@ -1109,9 +1141,9 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
         text = f"{num} résultat.s pour cette recherche !" if not flop_de_recherche else "Une erreur est survenue ! la recherche n'a pas aboutie"
         text = "Faites une recherche :)" if have_supprime else text
         if connect and user.categorie != None and dict_recherche["nom_categorie"] != None and num == 0 and (liste_rech[indice_type] == "Catégorie" or dict_recherche["nom_categorie"] == user.categorie):
-            text = f'La categorie {dict_recherche["nom_categorie"].lower()} est vide :('
+            text = f'La categorie {categorie_rechercher} est vide :('
         elif connect and user.categorie != None and dict_recherche["nom_categorie"] != None and num != 0 and (liste_rech[indice_type] == "Catégorie" or dict_recherche["nom_categorie"] == user.categorie):
-            text = f'{num} résultat.s dans la catégorie {dict_recherche["nom_categorie"].lower()}'
+            text = f'{num} résultat.s dans la catégorie {categorie_rechercher}'
         if id_ == 2:
             text = f"Il y a {num} annonce.s disponible.s" if not flop_de_recherche else "Une erreur est survenue ! la recherche n'a pas aboutie"
         draw_text(text,color = (255,255,255),
@@ -1290,7 +1322,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
         processing = True
         global have_supprime
         have_supprime = False   
-        global detail,can_add,access,display,num_resultat,flop_de_recherche,enter_pressed
+        global detail,can_add,access,display,num_resultat,flop_de_recherche,enter_pressed,categorie_rechercher
         can_add = True
         access = False
         global zone_page
@@ -1298,7 +1330,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
         try:      
             flop_de_recherche = False   
             if id_ == 0:
-                detail = Gerer_requete.rechercher_data(nom_auteur = data["nom_auteur"], nom_tuto = data["nom_projet"], nom_categorie = data["nom_categorie"])
+                detail,categorie_rechercher = Gerer_requete.rechercher_data(nom_auteur = data["nom_auteur"], nom_tuto = data["nom_projet"], nom_categorie = data["nom_categorie"])
             else:
                 detail = Gerer_requete.rechercher_annonce()
             processing = False
@@ -1306,12 +1338,19 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
             access = True
             display = True
             enter_pressed = False
-        except noConnection:
+        except noConnection as err:
+            print(err)
             enter_pressed = False
             processing = False
             Gerer_requete.connection_failed()
             
+        except noCategorie as e:
+            processing = False
+            enter_pressed= False
+            Gerer_requete.message(e)
+            
         except Exception as e:
+            print(e)
             enter_pressed = False
             flop_de_recherche = True
             processing = False
@@ -1446,14 +1485,11 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                         enter_pressed = True
                         recherche_type = liste_rech[indice_type+3]
                         dict_recherche[recherche_type] = input_host
-                        if recherche_type == "nom_categorie" and input_host not in recup_name_categorie:
-                            Gerer_requete.message("Cette catégorie n'existe pas !!!")
-                            enter_pressed = False
-                        else:
-                            thread_recherche = threading.Thread(target=research, args=(dict_recherche,), daemon=True)                       
-                            if not thread_recherche.is_alive():
-                                debut = time.time()
-                                thread_recherche.start()
+                       
+                        thread_recherche = threading.Thread(target=research, args=(dict_recherche,), daemon=True)                       
+                        if not thread_recherche.is_alive():
+                            debut = time.time()
+                            thread_recherche.start()
                                             
                     elif event.key == pygame.K_ESCAPE:
                         pass
@@ -3014,18 +3050,14 @@ with open(os.path.join("Ressource", "compte_connecter.txt"), "r+") as fichier:
         animation_demarrage_application.start_anime(last_screen,20)
         animation_demarrage_application.texte = "Récupération des catégories"
         try:
-            recup_name_categorie = Gerer_requete.take_categorie() #recuperer le nom de toutes les catégories
-            recup_categorie = recup_name_categorie
-            recup_name_categorie = [nom[0] for nom in recup_name_categorie]
+            recup_categorie = Gerer_requete.take_categorie() #recuperer le nom de toutes les catégories
            
             dict_categorie = Gerer_requete.update_categorie_member()     
         except noConnection:
             recup_categorie = None
-            recup_name_categorie = ["Informatique","Culture","Langue","Mathématique","Sport","Cuisine"]
             Gerer_requete.connection_failed()
         except Exception as e :
             recup_categorie = None
-            recup_name_categorie = ["Informatique","Culture","Langue","Mathématique","Sport","Cuisine"]
             Gerer_requete.error_occured()
         else:
             pseudo = contenu[0]
@@ -3083,14 +3115,10 @@ with open(os.path.join("Ressource", "compte_connecter.txt"), "r+") as fichier:
     else:
         animation_demarrage_application.start_anime(last_screen) 
         try:
-            recup_name_categorie = Gerer_requete.take_categorie()
-            recup_categorie = recup_name_categorie#recuperer le nom de toutes les catégories
-            recup_name_categorie = [nom[0] for nom in recup_name_categorie]
-            
+            recup_categorie = Gerer_requete.take_categorie()
             dict_categorie = Gerer_requete.update_categorie_member()     
         except:
             recup_categorie = None
-            recup_name_categorie = ["Informatique","Culture","Langue","Mathématique","Sport","Cuisine"]
             Gerer_requete.connection_failed()
     try:
         animation_demarrage_application.texte = "Vérification des mises à jours"
@@ -3195,14 +3223,11 @@ dict_categorie = {}
 def update_categorie():
     """Fonction permettant de mettre a jour le nombre de participant dans les catégories, ainsi que récuperer leur nom"""
     global dict_categorie
-    global recup_name_categorie
     global recup_categorie
     while continuer:
         try:
             dict_categorie = Gerer_requete.update_categorie_member()
-            recup_name_categorie = Gerer_requete.take_categorie() #recuperer le nom de toutes les catégories
-            recup_categorie = recup_name_categorie
-            recup_name_categorie = [nom[0] for nom in recup_name_categorie]
+            recup_categorie= Gerer_requete.take_categorie() #recuperer le nom de toutes les catégories
             Gerer_requete.update_categorie_data()
             time.sleep(20)
         except:
