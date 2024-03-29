@@ -32,6 +32,18 @@ class noConnection(Exception):
         super().__init__(self.what)
 
 
+class noCategorie(Exception):
+    """Class representant une erreur de recherche de categorie
+
+        Args:
+            what (str): Message d'erreur
+    """
+    def __init__(self, what) -> None:
+        
+        self.what = what
+        super().__init__(self.what)
+
+
 class noFileException(Exception):
     """Class reprensentant aucun fichier choisi
 
