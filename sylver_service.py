@@ -287,8 +287,11 @@ def ecrire_tuto(user : User | None,pre_text = "",pre_titre = "",id_tuto_a_suppri
                         "can_do_multiple_lines" : True,"can_write" : True, "base" : "Contenu", "all_size" : 0,"active" : False,"rect" : rect_surf_ecrit,"time": 0, "take_time" : False}
     }
     if pre_text:
-        coupage,line,y = make_line(pre_text,font(font_paragraphe,30,True),surf_ecrit.get_width() - 40)
+        coupage,line,y = make_line(pre_text,font(font_paragraphe,30,True),surf_ecrit.get_width() - 20)
         text_decoupe = decoupe_text(coupage,line,pre_text)
+        decoupe = [text +"\n" for text in text_decoupe[:-1]]
+        text_decoupe = decoupe + [text_decoupe[-1]]
+        print(text_decoupe,"\n" in text_decoupe[0])
         dict_input["input_text"]["input"] = text_decoupe
         dict_input["input_text"]["zone_ecrit"] = len(text_decoupe) - 1 
         dict_input["input_text"]["active"] = True
@@ -299,7 +302,6 @@ def ecrire_tuto(user : User | None,pre_text = "",pre_titre = "",id_tuto_a_suppri
         dict_input["input_text"]["all_size"] = caractere
         while pos_y_ecrit + y > surf_ecrit.get_height() - 40:
             pos_y_ecrit  -= 30
-
         dict_input["input_titre"]["input"] = [pre_titre,]
         dict_input["input_titre"]["all_size"] = len(pre_titre)
         while pos_x + font(font_paragraphe,30,True).size(pre_titre)[0] > surf_titre.get_width() - 30:
@@ -418,11 +420,13 @@ def ecrire_tuto(user : User | None,pre_text = "",pre_titre = "",id_tuto_a_suppri
                                 cursor += 1"""
                         if event.key == pygame.K_UP and elt["can_do_multiple_lines"]:
                             #changer de zone d'ecriture vers le haut
-                            elt["zone_ecrit"] -= 1 if len(elt["input"]) > 1 else 0                       
+                            print("-",elt["input"][elt["zone_ecrit"]],"-")
+                            elt["zone_ecrit"] -= 1 if elt["zone_ecrit"] > 0 else 0                     
                             if  elt["y"] * len(elt["input"]) + 40 > surf_ecrit.get_height():            
                                 pos_y_ecrit += 30
                                 if pos_y_ecrit >= 0:
-                                    pos_y_ecrit = 0                                       
+                                    pos_y_ecrit = 0 
+                                                        
                         elif event.key == pygame.K_SPACE and elt["can_write"]:
                             if len(''.join(elt["input"]).strip()) < elt["max"]:
                                 elt["input"][elt["zone_ecrit"]] += " "
@@ -455,17 +459,23 @@ def ecrire_tuto(user : User | None,pre_text = "",pre_titre = "",id_tuto_a_suppri
                                     
                                     pos_x = 0             
                                                       
-                        elif (event.key == pygame.K_RETURN or event.key == pygame.K_DOWN) and elt["can_do_multiple_lines"] and elt["can_write"] :
+                        elif (event.key == pygame.K_RETURN) and elt["can_do_multiple_lines"] and elt["can_write"] :
                             elt["input"][elt["zone_ecrit"]] += "\n"
-                            elt["input"].append("")
+                            
                             #ajouter une zone d'ecriture
+                            elt["input"].insert(elt["zone_ecrit"] + 1,"")
                             elt["zone_ecrit"]+=1
                             elt["input"][elt["zone_ecrit"]] = elt["input"][elt["zone_ecrit"]].strip()
                             if elt["y"] * len(elt["input"]) + 40 > surf_ecrit.get_height():
                                 add = font(font_paragraphe,30,True).size("m")[1]
                                 pos_y_ecrit -= 30
-                                
-                                
+                            
+                        elif event.key == pygame.K_DOWN:
+                            elt["zone_ecrit"] += 1 if elt["zone_ecrit"] < len(elt["input"]) -1 else 0
+                            if elt["zone_ecrit"] < len(elt["input"]) -1:
+                                if elt["y"] * len(elt["input"][:elt["zone_ecrit"]]) +40 > surf_ecrit.get_height():
+                                    pos_y_ecrit -= 35 
+                                    
                         elif event.key == pygame.K_ESCAPE:
                             pass
                         else:
