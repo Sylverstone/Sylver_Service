@@ -1136,13 +1136,13 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
         Args:
             num (int): nombres de résultats obtenu
         """
-        global access,zone_page,all_case_data,dict_rect_fleche,add_fleche,can_add,have_supprime,flop_de_recherche
+        global access,zone_page,all_case_data,dict_rect_fleche,add_fleche,can_add,have_supprime,flop_de_recherche,categorie_rechercher
         #pygame.event.clear()        
         text = f"{num} résultat.s pour cette recherche !" if not flop_de_recherche else "Une erreur est survenue ! la recherche n'a pas aboutie"
         text = "Faites une recherche :)" if have_supprime else text
-        if connect and user.categorie != None and dict_recherche["nom_categorie"] != None and num == 0 and (liste_rech[indice_type] == "Catégorie" or dict_recherche["nom_categorie"] == user.categorie):
+        if dict_recherche["nom_categorie"] != None and num == 0 and (liste_rech[indice_type] == "Catégorie" or dict_recherche["nom_categorie"] == user.categorie):
             text = f'La categorie {categorie_rechercher} est vide :('
-        elif connect and user.categorie != None and dict_recherche["nom_categorie"] != None and num != 0 and (liste_rech[indice_type] == "Catégorie" or dict_recherche["nom_categorie"] == user.categorie):
+        elif dict_recherche["nom_categorie"] != None and num != 0 and (liste_rech[indice_type] == "Catégorie" or dict_recherche["nom_categorie"] == user.categorie):
             text = f'{num} résultat.s dans la catégorie {categorie_rechercher}'
         if id_ == 2:
             text = f"Il y a {num} annonce.s disponible.s" if not flop_de_recherche else "Une erreur est survenue ! la recherche n'a pas aboutie"
@@ -1330,6 +1330,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
         try:      
             flop_de_recherche = False   
             if id_ == 0:
+                print("recherche :",data["nom_categorie"])
                 detail,categorie_rechercher = Gerer_requete.rechercher_data(nom_auteur = data["nom_auteur"], nom_tuto = data["nom_projet"], nom_categorie = data["nom_categorie"])
             else:
                 detail = Gerer_requete.rechercher_annonce()
@@ -3352,7 +3353,7 @@ while continuer:
     
     draw_text(f"fps : {int(fps)}",x=10,y=fond_nav.get_height() + 10,color=(255,255,255))
     draw_text(f'VERSION : {os.environ.get("VERSION")}',x = 10, y = h_origine - 20,
-              color = blanc,size =14)
+              color = blanc,size =14, font = chivo_titre, importer = True)
     if not status_connection_started:
         status_connection(surface_status_co)
         status_connection_started = True

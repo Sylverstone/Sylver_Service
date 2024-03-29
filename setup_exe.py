@@ -32,8 +32,8 @@ build_options = {
 # Set up the setup function
 setup(
     name="Sylver.Service",
-    version='v1.7',
+    version='v1.8',
     options={"build_exe": build_options},
-    author = "by Sylvio PELAGE MAXIME | Elvann JOLIVEL | Deecleane CORALIE",
+    author = "by Sylvio PELAGE MAXIME",
     executables=executables,
 )
