@@ -1,5 +1,5 @@
 
-import tkinter
+import tkinter,time
 import tkinter.filedialog,tkinter.messagebox,pygame
 import pymysql as sql
 import os,datetime,threading,dotenv
@@ -109,7 +109,15 @@ def look_for_connection():
                 return False
             
             
-            
+def categorie_plus_proche(noms_categories,categorie):
+    categorie_la_plus_proche = None
+    print(categorie)
+    for nom in noms_categories:
+        print(nom)
+        if categorie.lower() in nom[0].lower():
+            categorie_la_plus_proche = nom[0]
+            break    
+    return categorie_la_plus_proche
 
 def changer_valeur_env(valeur,new_valeur):
     """Fonction permettant de changer une version du .env
@@ -754,7 +762,7 @@ class Gerer_requete():
         return f"{rect[0]},{rect[1]},{rect[2]},{rect[3]}"
     
     @staticmethod
-    def take_categorie():
+    def take_categorie(selector = "*"):
         """Fonction récupérant tout sur les catégories
 
         Raises:
@@ -766,18 +774,15 @@ class Gerer_requete():
         no_connection = False     
     
         try:
-            if look_for_connection():
-                with connection_principale.cursor() as cursor:    
-                    request = "SELECT * FROM categorie"
-                    cursor.execute(request)
-                    data = cursor.fetchall()
-            else:
-                no_connection = True                
+            with connection_principale.cursor() as cursor:    
+                request = f"SELECT {selector} FROM categorie"
+                cursor.execute(request)
+                data = cursor.fetchall()
         except sql.Error as err:
-            
+            print(err)
             no_connection = True
         except Exception as err:
-            
+            print(err)
             no_connection = True
         finally:
             if no_connection:
@@ -809,28 +814,26 @@ class Gerer_requete():
                     request = "SELECT * FROM tuto WHERE is_annonce = 1 ORDER BY date DESC"
                     cursor.execute(request)
                     data_recup = cursor.fetchall()
+                    tutos = []
+                    for tuto in data_recup:
+                        tutos.append(Tuto(*tuto))
             else:
                 no_connection = True
         except sql.Error as err:
-            
             no_connection = False
             
-        except noConnection as e:
+        except noConnection as err:
             
             no_connection = True
-        except Exception as e:
-            
+        except Exception as err:
             no_connection = True
             
         finally:
             if not no_connection:
-                return data_recup
+                return tutos
             raise noConnection("l")
              
-    
-            
-            
-                
+
     @staticmethod  
     def rechercher_data(nom_tuto : str = None,nom_auteur : str = None,nom_categorie = None)->list:
         """Fonction permettant de rechercher des tuto dans la base de données grâce a différente
@@ -847,11 +850,15 @@ class Gerer_requete():
             list: Liste comportant tout les tuto retourner
         """
         no_connection = False
+        no_categorie = False
+        categorie_la_plus_proche = None
         try:
             
             data_recup = [None]
+                
             if look_for_connection():
                 with connection_principale.cursor() as cursor:
+                    request = None
                     if nom_tuto != None:
                         if nom_tuto != "*":
                             request = f" SELECT * FROM tuto WHERE nom LIKE '%{nom_tuto}%' AND is_annonce = 0 ORDER BY date DESC;"
@@ -860,29 +867,45 @@ class Gerer_requete():
                     elif nom_auteur != None:
                         request = f"SELECT * FROM tuto WHERE auteur LIKE '{nom_auteur}%' AND is_annonce = 0 ORDER BY date DESC;"
                     elif nom_categorie != None:
-                        request = f"SELECT * from tuto WHERE categorie = '{nom_categorie}' AND is_annonce = 0 ORDER BY date DESC;"
-                    cursor.execute(request)
-                    data_recup = cursor.fetchall()
-                    tutos = []
-                    for tuto in data_recup:
-                        tutos.append(Tuto(*tuto))
+                        noms_categories = Gerer_requete.take_categorie("nom")
+                        print(noms_categories)
+                        categorie_la_plus_proche = categorie_plus_proche(noms_categories,nom_categorie)
+                        if categorie_la_plus_proche != None:
+                            request = f"SELECT * from tuto WHERE categorie = '{categorie_la_plus_proche}' AND is_annonce = 0 ORDER BY date DESC;"
+                    print(request)
+                    if request != None:
+                        cursor.execute(request)
+                        data_recup = cursor.fetchall()
+                        tutos = []
+                        for tuto in data_recup:
+                            tutos.append(Tuto(*tuto))
+                    else:
+                        raise noCategorie("La catégorie n'existe pas !")
             else:
                 no_connection = True
+                
         except sql.Error as err:
-            
+            print(err)
             no_connection = False
             
-        except noConnection as e:
-            
+        except noConnection as err:
+            print(err)
             no_connection = True
-        except Exception as e:
-            print(e)
+            
+        except noCategorie as err:
+            print(err)
+            no_categorie = True
+        
+        except Exception as err:
+            print(err)
             no_connection = True
             
         finally:
-            if not no_connection:
-                return tutos
-            raise noConnection("l")
+            if not no_connection and not no_categorie:
+                return tutos,categorie_la_plus_proche
+            if no_connection:
+                raise noConnection("l")
+            raise noCategorie("La catégorie n'existe pas !")
 
     @staticmethod
     def demarrer_fichier(doc : bytes | str,ext,with_path = False,nom_tuto = "",auteur = "",dir = None)->None:
@@ -1325,4 +1348,4 @@ class Gerer_requete():
 
 if __name__ == "__main__":
     Gerer_requete.verifier_version_app()
-    User.log_user("SylverOwner","Daryll08")
+    print(Gerer_requete.rechercher_annonce())
