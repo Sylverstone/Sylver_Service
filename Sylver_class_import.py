@@ -1,5 +1,5 @@
 
-import tkinter,time
+import tkinter
 import tkinter.filedialog,tkinter.messagebox,pygame
 import pymysql as sql
 import os,datetime,threading,dotenv
@@ -1348,4 +1348,4 @@ class Gerer_requete():
 
 if __name__ == "__main__":
     Gerer_requete.verifier_version_app()
-    print(Gerer_requete.rechercher_annonce())
+    
