@@ -30,6 +30,7 @@ h_origine = taille_origine.current_h
 rect_screen = screen.get_rect()
 #palette de couleur qui regroupe toute les couleurs de l'app
 palette_couleur = Color()
+dialog = BoiteDialogPygame(screen = screen)
 #class animation qui servira a declencher des chargement de deux maniere, soit a des periodes bloquante ou non
 animation_chargement = Animation(screen,color = (255,)*3,ombre = True, W = w_origine)
 animation_mise_en_ligne = Animation(screen, text_chargement="Mise en ligne",color = (255,)*3,ombre=True,W = w_origine)
@@ -187,7 +188,7 @@ def ecrire_tuto(user : User | None,pre_text = "",pre_titre = "",id_tuto_a_suppri
                             titre = titre.strip()
                             try:
                                 if user.categorie != None:
-                                    rep = Gerer_requete.categorie_tuto_default_ou_non()
+                                    rep = dialog.ask_yes_no_cancel(f"Souhaitez vous mettre a ce tuto la même catégorie que votre compte ? ({user.categorie})",last_screen)
                                 else:
                                     rep = False
                                 if  rep is False:
@@ -197,7 +198,7 @@ def ecrire_tuto(user : User | None,pre_text = "",pre_titre = "",id_tuto_a_suppri
                                 elif rep is None:
                                     categorie = None
                                 if categorie != None:
-                                    if Gerer_requete.ask_if_annonce():
+                                    if dialog.ask_yes_no("Doit-on considerer votre tuto comme une demande de tuto ?",last_screen):
                                         is_annonce = 1
                                     else:
                                         is_annonce = 0
@@ -209,15 +210,17 @@ def ecrire_tuto(user : User | None,pre_text = "",pre_titre = "",id_tuto_a_suppri
                                     animation_mise_en_ligne.stop_anime()
                                     go_back = True 
                             except noConnection:
-                                Gerer_requete.connection_failed()
+                                dialog.message("Une erreur de connexion a eu lieu !",last_screen)
                                 
                             except Exception as e:
-                                Gerer_requete.error_occured()
+                                dialog.message("Une erreur est survenue ! ", last_screen)
                             else:
                                 if not pre_text:
-                                    Gerer_requete.processus_fini("Votre tuto a bien été mis en ligne")
+                                    if rep != None:
+                                        dialog.message("Votre tuto a bien été mis en ligne ! ",last_screen)
                                 else:
-                                    Gerer_requete.processus_fini("Votre tuto a bien été modifié")
+                                    if rep != None:
+                                        dialog.message("Votre tuto a bien été modifié !",last_screen)
                         else:
                             #si user = None, c'est un signalement qui est écrit
                             #.strip() utilisé pour supprimer les espaces au debut et a la fin
@@ -228,7 +231,7 @@ def ecrire_tuto(user : User | None,pre_text = "",pre_titre = "",id_tuto_a_suppri
                             animation_mise_en_ligne.start_anime(last_screen)
                             return text_pour_tuto, titre
                     else:
-                        Gerer_requete.message("Votre Tuto est vide. Vous ne pouvez pas le valider tant qu'il est vide !")
+                        dialog.message("Votre Tuto est vide. Vous ne pouvez pas le valider tant qu'il est vide !",last_screen)
                         
             ################################### Logique de l'input #################################      
             for elt in dict_input.values():
@@ -760,7 +763,7 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
             if affiche_corbeille:
                 if rect_corbeille.collidepoint(mouse):
                     if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                        processus_delete_tuto(id_tuto)
+                        processus_delete_tuto(id_tuto,last_screen)  
                 if rect_editer.collidepoint(mouse):
                     if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                         if not is_document:
@@ -781,7 +784,7 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
                                     else:
                                         categorie = None
                                     if categorie != None:
-                                        if Gerer_requete.ask_if_annonce():
+                                        if dialog.ask_yes_no("Doit-on considerer votre tuto comme une demande de tuto ?",last_screen):
                                             is_annonce = 1
                                         else:
                                             is_annonce = 0
@@ -790,9 +793,9 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
                                             user.modifier_tuto(path,"",nom_tuto,categorie,is_annonce,id_tuto)
                                             animation_mise_en_ligne.stop_anime()
                                         except:
-                                            Gerer_requete.error_occured()
+                                            dialog.message("Une erreur est survenue ! ", last_screen)
                                         else:
-                                            Gerer_requete.processus_fini("Votre tuto a bien été modifié")
+                                            dialog.message("Votre tuto a bien été modifié !",last_screen)
             if rect_goback.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 go_back = True
             
@@ -817,17 +820,17 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
                                 user.signalement(id_tuto, auteur, signalement_final)
                                 animation_mise_en_ligne.stop_anime()
                             else:
-                                Gerer_requete.message("Vous avez déjà signalé ce tuto !")
+                                dialog.message("Vous avez déjà signalé ce tuto ! ")
                         except noConnection:
-                            Gerer_requete.connection_failed()
+                            dialog.message("Une erreur de connexion a eu lieu !",last_screen)
                         except Exception as e:
                             
                             pass
                         else:
                             if can_signal:
-                                Gerer_requete.processus_fini("Votre signalement a été envoyé")
+                                dialog.message("Votre signalement a bien été envoyée !",last_screen)
                     else:
-                        Gerer_requete.connecte_toi()
+                        dialog.message("Pour signalez un tuto vous devez être connecté !",last_screen)
                 if not rect_popup.collidepoint(mouse):
                     if popup_option_activer and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                         retirez_option = True
@@ -839,7 +842,8 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
                     if auteur != "":
                         menu(1,auteur.split(",")[0])
                     else:
-                        Gerer_requete.message("L'auteur n'existe pas !")
+                        dialog.message("L'auteur n'existe pas !",last_screen)
+                        
                 
                 if rect_photo_pp.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     if connect and auteur.split(",")[0] == user.pseudo:
@@ -924,14 +928,14 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
         last_screen = screen.copy()
         pygame.display.flip()
     
-def processus_delete_tuto(id_):
+def processus_delete_tuto(id_,l):
     try:
         recup_reponse_user = user.delete_tuto(id_)
     except:
-        Gerer_requete.message("Votre tuto n'a pas pû être supprimé ! ")
+        dialog.message("Votre tuto n'a pas pû être supprimé ! ",l)
     else:
         if recup_reponse_user:
-            Gerer_requete.processus_fini("Votre tuto a bien été supprimé :)") 
+            dialog.message("Votre tuto a bien été supprimé :)",l) 
         else:
             pass 
                 
@@ -1085,7 +1089,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
             except Exception as e:
                 access = False
                 flop_de_recherche = True
-                Gerer_requete.error_occured()
+                dialog.message("Une erreur est survenue ! ", last_screen)
                 
     def start_tuto(data):
         global photo_deja_charger
@@ -1187,12 +1191,11 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
             print(err)
             enter_pressed = False
             processing = False
-            Gerer_requete.connection_failed()
+            dialog.message("Une erreur de connexion a eu lieu !",last_screen)
             
         except noCategorie as e:
             processing = False
             enter_pressed= False
-            Gerer_requete.message(e)
             
         except Exception as e:
             print(e)
@@ -1201,7 +1204,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
             processing = False
             access = False
             display = True
-            Gerer_requete.error_occured()
+            dialog.message("Une erreur est survenue ! ", last_screen)
         
     
     global continuer
@@ -1353,7 +1356,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                     elif event.type == pygame.MOUSEBUTTONDOWN and event.button ==3:
                         if connect:
                             if user.pseudo == data_recup["auteur"]:
-                                processus_delete_tuto(text_on)       
+                                processus_delete_tuto(text_on,last_screen)       
             for index,values in enumerate(dict_rect_fleche):
                 if values.collidepoint(mouse):
                     if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -1371,11 +1374,11 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     if id_ != 2:
                         title_confirm_open = "RECHERCHE"
-                        texte_confirm_open = "La recherche"
+                        texte_confirm_open ="du Menu"
                     else:
                         title_confirm_open = "ANNONCE"
-                        texte_confirm_open = "La page annonce"
-                    reponse = User.confirm_open(title_confirm_open,texte_confirm_open)
+                        texte_confirm_open = "de la page annonce"
+                    reponse = dialog.ask_yes_no(f"Souhaitez vous ouvrir le document d'aide {texte_confirm_open} ?",last_screen)
                     if reponse:
                         animation_ouverture.start_anime(last_screen)
                         try:
@@ -1384,9 +1387,9 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                             else:
                                 Gerer_requete.demarrer_fichier(doc = os.path.join("Ressource","Information_page_annonce.docx"),with_path=True,ext = None)     
                         except OSError as e:
-                            Gerer_requete.fail_open()
+                            dialog.message("L'ouverture de ce document à échouer !",last_screen)
                         except Exception as e:
-                            Gerer_requete.error_occured()
+                            dialog.message("Une erreur est survenue ! ", last_screen)
                         finally:
                             animation_ouverture.stop_anime()
 
@@ -1528,7 +1531,7 @@ def jouer_musique(playlist = PLAYLIST):
 def key_press(event):
     global stop
     if keyboard.is_pressed("m+u+s+i+c"):
-        rep = Gerer_requete.askyesno_basic("SECRET","TU AS DECOUVERTS LE SECRET DE L'APP, MAIS POUR L'INSTANT IL SE FAIT PETIT !")
+        rep = Gerer_requete.message("SECRET","TU AS DECOUVERTS LE SECRET DE L'APP, MAIS POUR L'INSTANT IL SE FAIT PETIT !")
         """thread_music = threading.Thread(target = jouer_musique,daemon=True) 
 
         if not thread_music.is_alive():
@@ -1911,31 +1914,31 @@ def compte():
                                     thread_changement.start()
                                 pp_choisi = True
                             except OSError:
-                                Gerer_requete.fail_open() 
+                                dialog.message("L'ouverture de ce document à échouer !",last_screen) 
                                                 
                             except Exception:
-                                Gerer_requete.error_occured()
+                                dialog.message("Une erreur est survenue ! ", last_screen)
                                 
                         except AnnuleCropPhoto as err:
                             pass    
                         except Exception as e:
                             pass     
-                            Gerer_requete.error_occured()
+                            dialog.message("Une erreur est survenue ! ", last_screen)
                                         
                     except noFileException:
                         pass
             ###################################################### Système après connection #################################################
             if connect:
                 if rect_aide.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                    reponse = User.confirm_open(open="COMPTE",aide = "L'interface Compte") 
+                    reponse = dialog.ask_yes_no("Souhaitez vous ouvrir le document aide de la page compte ? ", last_screen)
                     if reponse:
                         animation_ouverture.start_anime(last_screen)
                         try:
                             Gerer_requete.demarrer_fichier(doc = os.path.join("Ressource","Aide_interface_compte.docx"),with_path=True,ext = None)
                         except OSError as e:
-                            Gerer_requete.fail_open()
+                            dialog.message("L'ouverture de ce document à échouer !",last_screen)
                         except Exception as e:
-                            Gerer_requete.error_occured()
+                            dialog.message("Une erreur est survenue ! ", last_screen)
                         finally:
                             animation_ouverture.stop_anime()
 
@@ -1963,7 +1966,7 @@ def compte():
                                 path = User.get_file(1)[0]
                                 if path != " ":
                                     if user.categorie != None:
-                                        rep = Gerer_requete.categorie_tuto_default_ou_non()
+                                        rep = dialog.ask_yes_no_cancel(f"Souhaitez vous mettre a ce tuto la même catégorie que votre compte ? ({user.categorie})",last_screen)
                                     else:
                                         rep = False
                                     if rep is False:
@@ -1973,7 +1976,7 @@ def compte():
                                     else:
                                         categorie = None
                                     if categorie != None:
-                                        if Gerer_requete.ask_if_annonce():
+                                        if dialog.ask_yes_no("Doit on considérez votre tuto comme une demande de tutos ?",last_screen):
                                             is_annonce = 1
                                         else:
                                             is_annonce = 0
@@ -1983,11 +1986,12 @@ def compte():
                             else:
                                 break
                         except noConnection:
-                            Gerer_requete.connection_failed()   
+                            dialog.message("Une erreur de connexion a eu lieu !",last_screen)   
                         except Exception as e:
-                            Gerer_requete.error_occured()  
+                            dialog.message("Une erreur est survenue ! ", last_screen)  
                         else:
-                            Gerer_requete.processus_fini("Votre tuto a bien été mis en ligne")
+                            if rep != None:
+                                dialog.message("Votre tuto a bien été mis en ligne ! ",last_screen)
                         finally:
                             animation_mise_en_ligne.stop_anime()
 
@@ -2014,16 +2018,16 @@ def compte():
                                             dict_categorie[ancien_cate]["membre"] -= 1
                                         except noConnection:
                                             animation_update.stop_anime()
-                                            Gerer_requete.connection_failed()
+                                            dialog.message("Une erreur de connexion a eu lieu !",last_screen)
                                         except Exception as e:
                                             animation_update.stop_anime()
-                                            Gerer_requete.error_occured()
+                                            dialog.message("Une erreur est survenue ! ", last_screen)
                                         else:
                                             animation_update.stop_anime()
-                                            Gerer_requete.processus_fini(message = "La catégorie de votre compte a bien été changé !")
+                                            dialog.message("La catégorie de votre compte a bien été changeée",last_screen)
 
                             except Exception as e:
-                                Gerer_requete.message("Les catégories n'ont pas pu être recuperer")
+                                dialog.message("Les catégories n'ont pas pu être récupéré",last_screen)
                             
             elif creer_compte or not creer_compte:
                 if rect_visible.collidepoint(mouse):
@@ -2058,7 +2062,7 @@ def compte():
                                     try:                               
                                         user.save_user() 
                                     except noConnection:
-                                        Gerer_requete.connection_failed()
+                                        dialog.message("Une erreur de connexion a eu lieu !",last_screen)
                                     else:
                                         connect = True
                                         #creer_compte = False
@@ -2105,7 +2109,7 @@ def compte():
                                     except userNonCharger:
                                         pas_correspondance = True
                                     except noConnection:
-                                        Gerer_requete.connection_failed()
+                                        dialog.message("Une erreur de connexion a eu lieu !",last_screen)
                                     else:
                                         
                                         connect = True
@@ -2146,9 +2150,9 @@ def compte():
                                     n_pseudo = True
                                 
                             except noConnection:
-                                Gerer_requete.connection_failed()
+                                dialog.message("Une erreur de connexion a eu lieu !",last_screen)
                             except Exception as e:
-                                Gerer_requete.error_occured()
+                                dialog.message("Une erreur est survenue ! ", last_screen)
                             finally:
                                 animation_connection.stop_anime()
                         else:
@@ -2505,7 +2509,7 @@ def compte():
                     try:
                         dict_categorie = Gerer_requete.update_categorie_member()
                     except:
-                        Gerer_requete.error_occured()
+                        dialog.message("Une erreur est survenue ! ", last_screen)
                         return
                 
                 try:
@@ -2802,7 +2806,7 @@ def input_popup():
                         if position_cursor >= 0:
                             position_cursor = 0
                     if event.key == pygame.K_RETURN:
-                        rep_user = Gerer_requete.ask_ok_cancel(message =f"Voici le nom du tuto que vous avez rentrez : \n '{text_input}'")
+                        rep_user = dialog.ask_yes_no_cancel(f"Voici le nom du tuto que vous avez rentrez : \n '{text_input}'",last_screen)
                         if rep_user:
                             finished = True
                         
@@ -2856,10 +2860,12 @@ def input_popup():
         sous_container.blit(container,(20,20))
         screen.blit(sous_container,(rect_container.x,rect_container.y))
         pygame.display.update(rect_container)
+        last_screen = screen.copy()
         if cancel or finished:
             break
     if finished:
         return text_input.strip()
+    
     return False
 
 fond_ecran =  palette_couleur.Gris
@@ -2894,10 +2900,10 @@ with open(os.path.join("Ressource", "compte_connecter.txt"), "r+") as fichier:
             dict_categorie = Gerer_requete.update_categorie_member()     
         except noConnection:
             recup_categorie = None
-            Gerer_requete.connection_failed()
+            dialog.message("Une erreur de connexion a eu lieu !",last_screen)
         except Exception as e :
             recup_categorie = None
-            Gerer_requete.error_occured()
+            dialog.message("Une erreur est survenue ! ", last_screen)
         else:
             pseudo = contenu[0]
             mdp = contenu[1]
@@ -2905,11 +2911,11 @@ with open(os.path.join("Ressource", "compte_connecter.txt"), "r+") as fichier:
                 animation_demarrage_application.texte = "Connexion a votre compte"
                 user = User.log_user(pseudo,mdp)
             except userNonCharger:
-                Gerer_requete.message("Connection inachevé, il semblerait que le mot de passe ne corresponde pas !\n(Avez vous jouez dans les fichiers de l'appli ?)")
+                dialog.message("Connection inachevé, il semblerait que le mot de passe ne corresponde pas !\n(Avez vous jouez dans les fichiers de l'appli ?)",last_screen)
             except noConnection:
-                Gerer_requete.connection_failed()
+                dialog.message("Une erreur de connexion a eu lieu !",last_screen)
             except UserNotExist:
-                Gerer_requete.message("Ce compte n'existe pas, il se peut que vous ayez été bannis")
+                dialog.message("Ce compte n'existe pas, il se peut que vous ayez été bannis",last_screen)
             else:
                 animation_demarrage_application.texte = "Récupération de votre photo de profil"
                 chemin_pp = os.path.join("image_user","photo_profil_user.png") 
@@ -2958,7 +2964,7 @@ with open(os.path.join("Ressource", "compte_connecter.txt"), "r+") as fichier:
             dict_categorie = Gerer_requete.update_categorie_member()     
         except:
             recup_categorie = None
-            Gerer_requete.connection_failed()
+            dialog.message("Une erreur de connexion a eu lieu !",last_screen)
     try:
         animation_demarrage_application.texte = "Vérification des mises à jours"
         Gerer_requete.verifier_version_app()
@@ -2967,7 +2973,7 @@ with open(os.path.join("Ressource", "compte_connecter.txt"), "r+") as fichier:
         Gerer_requete.verifier_version_doc_aide_compte()
         Gerer_requete.verifier_version_doc_info_annonce()
     except Exception as e:
-        Gerer_requete.message(f"La vérification des mises à jours a echoué\nerreur : '{e}'")
+        dialog.message(f"La vérification des mises à jours a echoué\nerreur : '{e}'",last_screen)
         
 animation_demarrage_application.stop_anime()   
 comic_sans_ms = pygame.font.SysFont("Comic Sans Ms", 20)
@@ -3158,9 +3164,7 @@ while continuer:
     title(accueil, size = size_for_accueil, y = fond_nav.get_height()/2 - font(chivo_titre, size_for_accueil,True).size(accueil)[1]/2)
     for event in pygame.event.get():        
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_l:
-                dialog = BoiteDialogPygame(screen = screen)
-                dialog.ask_yes_no("nhu",last_screen)
+            pass
         if rect_photo_profil_user.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and connect:
             affiche_photo_profil(last_screen)
         elif event.type == pygame.QUIT:

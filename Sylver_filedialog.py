@@ -62,6 +62,7 @@ class BoiteDialogPygame:
             #creation logique fenetre
             surface.fill((0,0,0,0))
             pygame.draw.rect(surface,palette_couleur().Gris_clair,surface.get_rect(),0,35)
+            pygame.draw.rect(surface,palette_couleur().Noir,surface.get_rect(),1,35)
             barre_noir.fill((0,0,0,0))
             pygame.draw.rect(barre_noir,palette_couleur().Noir,barre_noir.get_rect(),0,0,35,35,0,0)
             surface.blit(barre_noir,(0,0))
@@ -146,6 +147,8 @@ class BoiteDialogPygame:
             #creation logique fenetre
             surface.fill((0,0,0,0))
             pygame.draw.rect(surface,palette_couleur().Gris_clair,surface.get_rect(),0,35)
+            pygame.draw.rect(surface,palette_couleur().Noir,surface.get_rect(),1,35)
+
             barre_noir.fill((0,0,0,0))
             pygame.draw.rect(barre_noir,palette_couleur().Noir,barre_noir.get_rect(),0,0,35,35,0,0)
             surface.blit(barre_noir,(0,0))
@@ -230,6 +233,8 @@ class BoiteDialogPygame:
             #creation logique fenetre
             surface.fill((0,0,0,0))
             pygame.draw.rect(surface,palette_couleur().Gris_clair,surface.get_rect(),0,35)
+            pygame.draw.rect(surface,palette_couleur().Noir,surface.get_rect(),1,35)
+
             barre_noir.fill((0,0,0,0))
             pygame.draw.rect(barre_noir,palette_couleur().Noir,barre_noir.get_rect(),0,0,35,35,0,0)
             surface.blit(barre_noir,(0,0))
