@@ -30,7 +30,7 @@ h_origine = taille_origine.current_h
 rect_screen = screen.get_rect()
 #palette de couleur qui regroupe toute les couleurs de l'app
 palette_couleur = Color()
-dialog = BoiteDialogPygame(screen = screen)
+dialog = BoiteDialogPygame(screen = screen,contour = 1,filtre_blanc=True,base_title="SylverService",echap_destroy_windows=True)
 #class animation qui servira a declencher des chargement de deux maniere, soit a des periodes bloquante ou non
 animation_chargement = Animation(screen,color = (255,)*3,ombre = True, W = w_origine)
 animation_mise_en_ligne = Animation(screen, text_chargement="Mise en ligne",color = (255,)*3,ombre=True,W = w_origine)
@@ -3162,34 +3162,37 @@ while continuer:
     draw_text(accueil_complement, size = 14, color=blanc, x = w_origine/2 - font(chivo_titre,14,True).size(accueil_complement)[0]/2,
             y = 5, importer= True, font=chivo_titre)
     title(accueil, size = size_for_accueil, y = fond_nav.get_height()/2 - font(chivo_titre, size_for_accueil,True).size(accueil)[1]/2)
-    for event in pygame.event.get():        
-        if event.type == pygame.KEYDOWN:
-            pass
-        if rect_photo_profil_user.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and connect:
-            affiche_photo_profil(last_screen)
-        elif event.type == pygame.QUIT:
-            continuer = False
-        elif info.collidepoint(mouse):
-            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                page_info()
-        if len(rect_dispo) > 0:
-            for index, rect in enumerate(rect_dispo):
-                if rect.collidepoint(mouse):
-                    text_choose = proposition[index]
-                    if etat[index] == "alpha":
-                        is_on[index] = True                        
-                    decal = 200
-                    pos_souris_relat_souris = (mouse[0] - rect.x, mouse[1] - rect.y)
-                    if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                        if text_choose == "MENU":
-                            menu()
-                        elif text_choose == "ANNONCE":
-                            request()
-                        else:
-                            compte()
-                else:
-                    is_on[index] = False
-                    color_text[index] = blanc    
+    try:
+        for event in pygame.event.get():        
+            if event.type == pygame.KEYDOWN:
+                pass
+            if rect_photo_profil_user.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and connect:
+                affiche_photo_profil(last_screen)
+            elif event.type == pygame.QUIT:
+                continuer = False
+            elif info.collidepoint(mouse):
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    page_info()
+            if len(rect_dispo) > 0:
+                for index, rect in enumerate(rect_dispo):
+                    if rect.collidepoint(mouse):
+                        text_choose = proposition[index]
+                        if etat[index] == "alpha":
+                            is_on[index] = True                        
+                        decal = 200
+                        pos_souris_relat_souris = (mouse[0] - rect.x, mouse[1] - rect.y)
+                        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                            if text_choose == "MENU":
+                                menu()
+                            elif text_choose == "ANNONCE":
+                                request()
+                            else:
+                                compte()
+                    else:
+                        is_on[index] = False
+                        color_text[index] = blanc    
+    except:
+        pass
     date = datetime.datetime.today().strftime('%Hh%M')
     draw_text(date, size = 20, color = blanc, x = w_origine - 70, y = fond_nav.get_height() +10)
     screen.blit(icone_aide,info)
