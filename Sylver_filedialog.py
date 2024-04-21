@@ -54,7 +54,6 @@ class BoiteDialogPygame:
                 surface_blanc_transparent = pygame.Surface((self.screen.get_width(), self.screen.get_height()),pygame.SRCALPHA)
                 surface_blanc_transparent.fill((255,255,255,90))
                 self.screen.blit(surface_blanc_transparent,(0,0))
-                print("blit")
         #creation de l'ombre arriere
         surface.fill((0,0,0,0))
         pygame.draw.rect(surface,palette_couleur().Noir,surface.get_rect(),0,35)
@@ -151,14 +150,18 @@ class BoiteDialogPygame:
             self.basic_setup(surface,dernier_ecran,x_surface,y_surface,barre_noir)
             mouse = pygame.mouse.get_pos()
             #evenement
-            for event in pygame.event.get():
-                if rect_btn_oui.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                    return True                
-                elif rect_btn_non.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                    return False
-                if self.echap_destroy_windows:
-                    if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                        return None
+            try:
+                for event in pygame.event.get():
+                    if rect_btn_oui.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                        return True                
+                    elif rect_btn_non.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                        return False
+                    if self.echap_destroy_windows:
+                        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                            return None
+            except:
+                print("erreur")
+                pass
             #affichage
             BoiteDialogPygame.affichage_text_et_titre_fenetre(surface,title,longueur_surface,taille_text,text,position_text,largeur_surface,hauteur_text)
             surface.blit(self.icone_interrogation,(20,10))
@@ -273,13 +276,16 @@ class BoiteDialogPygame:
             self.basic_setup(surface,dernier_ecran,x_surface,y_surface,barre_noir)
             mouse = pygame.mouse.get_pos()
             #evenement
-            for event in pygame.event.get():
-                if rect_btn_ok.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                    affiche = False        
-                if self.echap_destroy_windows:
+            try:
+                for event in pygame.event.get():
+                    if rect_btn_ok.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                        affiche = False        
+                    if self.echap_destroy_windows:
 
-                    if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                        affiche = False
+                        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                            affiche = False
+            except:
+                pass
             #affichage
             BoiteDialogPygame.affichage_text_et_titre_fenetre(surface,title,longueur_surface,taille_text,text,position_text,largeur_surface,hauteur_text)
             surface.blit(self.icone_exclamation,(20,10))

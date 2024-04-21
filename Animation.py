@@ -67,10 +67,10 @@ class Animation:
     
     """Class permettant de generer une animation de chargement
 
-        Args:
-            screen (pygame.Surface): Surface sur laquelle l'animation est dessiner
-            text_chargement (str, optional): Texte du chargement Defaults to "Chargement".
-            id_ (int, optional): id representant si l'animation est situé dans un endroit bloquant ou non. Defaults to 1.
+        ## Args:
+            * screen (pygame.Surface): Surface sur laquelle l'animation est dessiner
+            * text_chargement (str, optional): Texte du chargement Defaults to "Chargement".
+            * id_ (int, optional): id representant si l'animation est situé dans un endroit bloquant ou non. Defaults to 1.
     """
     def __init__(self,screen : pygame.Surface,text_chargement : str = "Chargement",id_ : int = 1, color = (0,0,0),ombre = False,font_name = apple_titre,size_text = 18,importer = True,W = None):
         self.screen = screen

@@ -806,6 +806,7 @@ class Gerer_requete():
             list: Liste comportant tout les tuto retourner
         """
         no_connection = False
+        tutos = None
         try:
             
             data_recup = [None]
@@ -820,7 +821,7 @@ class Gerer_requete():
             else:
                 no_connection = True
         except sql.Error as err:
-            no_connection = False
+            no_connection = True
             
         except noConnection as err:
             

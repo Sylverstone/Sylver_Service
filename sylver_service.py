@@ -210,10 +210,10 @@ def ecrire_tuto(user : User | None,pre_text = "",pre_titre = "",id_tuto_a_suppri
                                     animation_mise_en_ligne.stop_anime()
                                     go_back = True 
                             except noConnection:
-                                dialog.message("Une erreur de connexion a eu lieu !",last_screen)
+                                dialog.message("Une erreur de connexion a eu lieu !",last_screen,title="Erreur")
                                 
                             except Exception as e:
-                                dialog.message("Une erreur est survenue ! ", last_screen)
+                                dialog.message("Une erreur est survenue ! ", last_screen,title="Erreur")
                             else:
                                 if not pre_text:
                                     if rep != None:
@@ -793,7 +793,7 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
                                             user.modifier_tuto(path,"",nom_tuto,categorie,is_annonce,id_tuto)
                                             animation_mise_en_ligne.stop_anime()
                                         except:
-                                            dialog.message("Une erreur est survenue ! ", last_screen)
+                                            dialog.message("Une erreur est survenue ! ", last_screen,title = "Erreur")
                                         else:
                                             dialog.message("Votre tuto a bien été modifié !",last_screen)
             if rect_goback.collidepoint(mouse) and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -820,7 +820,7 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
                                 user.signalement(id_tuto, auteur, signalement_final)
                                 animation_mise_en_ligne.stop_anime()
                             else:
-                                dialog.message("Vous avez déjà signalé ce tuto ! ")
+                                dialog.message("Vous avez déjà signalé ce tuto ! ",last_screen)
                         except noConnection:
                             dialog.message("Une erreur de connexion a eu lieu !",last_screen)
                         except Exception as e:
@@ -932,7 +932,7 @@ def processus_delete_tuto(id_,l):
     try:
         recup_reponse_user = user.delete_tuto(id_)
     except:
-        dialog.message("Votre tuto n'a pas pû être supprimé ! ",l)
+        dialog.message("Votre tuto n'a pas pû être supprimé ! ",l,title="Erreur")
     else:
         if recup_reponse_user:
             dialog.message("Votre tuto a bien été supprimé :)",l) 
@@ -1089,7 +1089,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
             except Exception as e:
                 access = False
                 flop_de_recherche = True
-                dialog.message("Une erreur est survenue ! ", last_screen)
+                dialog.message("Une erreur est survenue ! ", last_screen,title="Erreur")
                 
     def start_tuto(data):
         global photo_deja_charger
@@ -1191,7 +1191,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
             print(err)
             enter_pressed = False
             processing = False
-            dialog.message("Une erreur de connexion a eu lieu !",last_screen)
+            dialog.message("Une erreur de connexion a eu lieu !",last_screen,title="Erreur")
             
         except noCategorie as e:
             processing = False
@@ -1204,7 +1204,7 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
             processing = False
             access = False
             display = True
-            dialog.message("Une erreur est survenue ! ", last_screen)
+            dialog.message("Une erreur est survenue ! ", last_screen,title="Erreur")
         
     
     global continuer
@@ -1387,9 +1387,9 @@ def menu(id_ : int = 0,auteur_rechercher : str = None):
                             else:
                                 Gerer_requete.demarrer_fichier(doc = os.path.join("Ressource","Information_page_annonce.docx"),with_path=True,ext = None)     
                         except OSError as e:
-                            dialog.message("L'ouverture de ce document à échouer !",last_screen)
+                            dialog.message("L'ouverture de ce document à échouer !",last_screen,title="Erreur")
                         except Exception as e:
-                            dialog.message("Une erreur est survenue ! ", last_screen)
+                            dialog.message("Une erreur est survenue ! ", last_screen,title="Erreur")
                         finally:
                             animation_ouverture.stop_anime()
 
@@ -1914,16 +1914,16 @@ def compte():
                                     thread_changement.start()
                                 pp_choisi = True
                             except OSError:
-                                dialog.message("L'ouverture de ce document à échouer !",last_screen) 
+                                dialog.message("L'ouverture de ce document à échouer !",last_screen,title="Erreur")
                                                 
                             except Exception:
-                                dialog.message("Une erreur est survenue ! ", last_screen)
+                                dialog.message("Une erreur est survenue ! ", last_screen,title="Erreur")
                                 
                         except AnnuleCropPhoto as err:
                             pass    
                         except Exception as e:
                             pass     
-                            dialog.message("Une erreur est survenue ! ", last_screen)
+                            dialog.message("Une erreur est survenue ! ", last_screen,title="Erreur")
                                         
                     except noFileException:
                         pass
@@ -1936,9 +1936,9 @@ def compte():
                         try:
                             Gerer_requete.demarrer_fichier(doc = os.path.join("Ressource","Aide_interface_compte.docx"),with_path=True,ext = None)
                         except OSError as e:
-                            dialog.message("L'ouverture de ce document à échouer !",last_screen)
+                            dialog.message("L'ouverture de ce document à échouer !",last_screen,title="Erreur")
                         except Exception as e:
-                            dialog.message("Une erreur est survenue ! ", last_screen)
+                            dialog.message("Une erreur est survenue ! ", last_screen,title="Erreur")
                         finally:
                             animation_ouverture.stop_anime()
 
@@ -1986,9 +1986,9 @@ def compte():
                             else:
                                 break
                         except noConnection:
-                            dialog.message("Une erreur de connexion a eu lieu !",last_screen)   
+                            dialog.message("Une erreur de connexion a eu lieu !",last_screen,title="Erreur") 
                         except Exception as e:
-                            dialog.message("Une erreur est survenue ! ", last_screen)  
+                            dialog.message("Une erreur est survenue ! ", last_screen,title="Erreur")
                         else:
                             if rep != None:
                                 dialog.message("Votre tuto a bien été mis en ligne ! ",last_screen)
@@ -2018,16 +2018,16 @@ def compte():
                                             dict_categorie[ancien_cate]["membre"] -= 1
                                         except noConnection:
                                             animation_update.stop_anime()
-                                            dialog.message("Une erreur de connexion a eu lieu !",last_screen)
+                                            dialog.message("Une erreur de connexion a eu lieu !",last_screen,title="Erreur")
                                         except Exception as e:
                                             animation_update.stop_anime()
-                                            dialog.message("Une erreur est survenue ! ", last_screen)
+                                            dialog.message("Une erreur est survenue ! ", last_screen,title="Erreur")
                                         else:
                                             animation_update.stop_anime()
                                             dialog.message("La catégorie de votre compte a bien été changeée",last_screen)
 
                             except Exception as e:
-                                dialog.message("Les catégories n'ont pas pu être récupéré",last_screen)
+                                dialog.message("Les catégories n'ont pas pu être récupéré",last_screen,title="Erreur")
                             
             elif creer_compte or not creer_compte:
                 if rect_visible.collidepoint(mouse):
@@ -2062,7 +2062,7 @@ def compte():
                                     try:                               
                                         user.save_user() 
                                     except noConnection:
-                                        dialog.message("Une erreur de connexion a eu lieu !",last_screen)
+                                        dialog.message("Une erreur de connexion a eu lieu !",last_screen,title="Erreur")
                                     else:
                                         connect = True
                                         #creer_compte = False
@@ -2109,7 +2109,7 @@ def compte():
                                     except userNonCharger:
                                         pas_correspondance = True
                                     except noConnection:
-                                        dialog.message("Une erreur de connexion a eu lieu !",last_screen)
+                                        dialog.message("Une erreur de connexion a eu lieu !",last_screen,title="Erreur")
                                     else:
                                         
                                         connect = True
@@ -2150,9 +2150,9 @@ def compte():
                                     n_pseudo = True
                                 
                             except noConnection:
-                                dialog.message("Une erreur de connexion a eu lieu !",last_screen)
+                                dialog.message("Une erreur de connexion a eu lieu !",last_screen,title="Erreur")
                             except Exception as e:
-                                dialog.message("Une erreur est survenue ! ", last_screen)
+                                dialog.message("Une erreur est survenue ! ", last_screen,title="Erreur")
                             finally:
                                 animation_connection.stop_anime()
                         else:
@@ -2509,7 +2509,7 @@ def compte():
                     try:
                         dict_categorie = Gerer_requete.update_categorie_member()
                     except:
-                        dialog.message("Une erreur est survenue ! ", last_screen)
+                        dialog.message("Une erreur est survenue ! ", last_screen,title="Erreur")
                         return
                 
                 try:
@@ -2900,10 +2900,10 @@ with open(os.path.join("Ressource", "compte_connecter.txt"), "r+") as fichier:
             dict_categorie = Gerer_requete.update_categorie_member()     
         except noConnection:
             recup_categorie = None
-            dialog.message("Une erreur de connexion a eu lieu !",last_screen)
+            dialog.message("Une erreur de connexion a eu lieu !",last_screen,title="Erreur")
         except Exception as e :
             recup_categorie = None
-            dialog.message("Une erreur est survenue ! ", last_screen)
+            dialog.message("Une erreur est survenue ! ", last_screen,title="Erreur")
         else:
             pseudo = contenu[0]
             mdp = contenu[1]
@@ -2911,11 +2911,17 @@ with open(os.path.join("Ressource", "compte_connecter.txt"), "r+") as fichier:
                 animation_demarrage_application.texte = "Connexion a votre compte"
                 user = User.log_user(pseudo,mdp)
             except userNonCharger:
-                dialog.message("Connection inachevé, il semblerait que le mot de passe ne corresponde pas !\n(Avez vous jouez dans les fichiers de l'appli ?)",last_screen)
+                animation_demarrage_application.stop_anime()
+                dialog.message("Connection inachevé, il semblerait que le mot de passe ne corresponde pas !\n(Avez vous jouez dans les fichiers de l'appli ?)",last_screen,title="Erreur")
+                animation_demarrage_application.start_anime(last_screen,20)
             except noConnection:
-                dialog.message("Une erreur de connexion a eu lieu !",last_screen)
+                animation_demarrage_application.stop_anime()
+                dialog.message("Une erreur de connexion a eu lieu !",last_screen,title="Erreur")
+                animation_demarrage_application.start_anime(last_screen,20)
             except UserNotExist:
-                dialog.message("Ce compte n'existe pas, il se peut que vous ayez été bannis",last_screen)
+                animation_demarrage_application.stop_anime()
+                dialog.message("Ce compte n'existe pas, il se peut que vous ayez été bannis",last_screen,title="Erreur")
+                animation_demarrage_application.start_anime(last_screen,20)
             else:
                 animation_demarrage_application.texte = "Récupération de votre photo de profil"
                 chemin_pp = os.path.join("image_user","photo_profil_user.png") 
@@ -2950,11 +2956,8 @@ with open(os.path.join("Ressource", "compte_connecter.txt"), "r+") as fichier:
                         rect_pp = pygame.Rect(rect_pp)
                     else:
                         rect_pp = pygame.Rect(0,0,*img_.get_size())
-                    
-                    
                     surf_image2 = resizeImage.rendre_transparent(img_,rect_pp,0)
                     surf_image2 = pygame.transform.smoothscale(surf_image2, size_grand)
-                    #pygame.time.delay(2000)
                 creer_compte = False
                 zone = 1
     else:
@@ -2964,7 +2967,9 @@ with open(os.path.join("Ressource", "compte_connecter.txt"), "r+") as fichier:
             dict_categorie = Gerer_requete.update_categorie_member()     
         except:
             recup_categorie = None
+            animation_demarrage_application.stop_anime() 
             dialog.message("Une erreur de connexion a eu lieu !",last_screen)
+            animation_demarrage_application.start_anime(last_screen)
     try:
         animation_demarrage_application.texte = "Vérification des mises à jours"
         Gerer_requete.verifier_version_app()
@@ -2973,12 +2978,11 @@ with open(os.path.join("Ressource", "compte_connecter.txt"), "r+") as fichier:
         Gerer_requete.verifier_version_doc_aide_compte()
         Gerer_requete.verifier_version_doc_info_annonce()
     except Exception as e:
-        dialog.message(f"La vérification des mises à jours a echoué\nerreur : '{e}'",last_screen)
+        animation_demarrage_application.stop_anime()  
+        dialog.message(f"La vérification des mises à jours a echoué\nerreur : '{e}'",last_screen,title="Erreur")
         
-animation_demarrage_application.stop_anime()   
+animation_demarrage_application.stop_anime()
 comic_sans_ms = pygame.font.SysFont("Comic Sans Ms", 20)
-
-
 input_apple = pygame.font.Font(apple_titre,40)
 
 blanc = (255,255,255)

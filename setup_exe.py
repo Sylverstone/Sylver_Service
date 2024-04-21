@@ -1,6 +1,6 @@
 
 from cx_Freeze import setup, Executable
-import platform,os,sys
+import platform,os
 
 # Obtenez le nom du système d'exploitation
 system_name = platform.system()
@@ -26,13 +26,15 @@ build_options = {
         ("Color.py","Color.py"),
         ("Animation.py","Animation.py"),
         ("FCP3","FCP3"),
+        ("Sylver_fonction_usuelle.py","Sylver_fonction_usuelle.py"),
+        ("Sylver_filedialog.py","Sylver_filedialog.py")
     ],
 }
 
 # Set up the setup function
 setup(
     name="Sylver.Service",
-    version='v1.8',
+    version='v1.8.5',
     options={"build_exe": build_options},
     author = "by Sylvio PELAGE MAXIME",
     executables=executables,
