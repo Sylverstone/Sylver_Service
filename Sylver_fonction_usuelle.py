@@ -40,6 +40,8 @@ def draw_text_(text, font = "Comic Sans Ms", color = (0,0,0), x = 0, y = 0,refer
         text_ = font_.render(str(text), True, color)
         contener.blit(text_, (x,y+(size + 2)*enum))
         
+        
+   
 def font(font_name,size,importer = False):
     if not importer:
         return pygame.font.SysFont(font_name,size)

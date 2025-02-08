@@ -107,7 +107,7 @@ class BoiteDialogPygame:
                     y = rect.y + rect.h/2 - font(TNN,17,True).size(texts[i])[1]/2, color=(255,)*3,
                     font = TNN, importer= True,size = 17)
             i+=1
-            
+           
     def ask_yes_no(self,text : str ,dernier_ecran : pygame.Surface,color_text : tuple = (0,0,0),title = "") -> bool | None:
         """Boite de dialogue permettant de posez une question fermer. Renvoie True pour oui, False pour non
 

@@ -9,3 +9,4 @@ __pycache__/
 *Copie.py
 *.iss
 Projet SylverService
+.venv/

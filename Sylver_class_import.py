@@ -1,4 +1,5 @@
 
+import hashlib
 import tkinter
 import tkinter.filedialog,tkinter.messagebox,pygame
 import pymysql as sql
@@ -109,15 +110,63 @@ def look_for_connection():
                 return False
             
             
-def categorie_plus_proche(noms_categories,categorie):
+"""def categorie_plus_proche(noms_categories,categorie):
     categorie_la_plus_proche = None
+    nom_categorie_use = [c for c in noms_categories if c[0][0] == categorie[0]]
     print(categorie)
-    for nom in noms_categories:
-        print(nom)
-        if categorie.lower() in nom[0].lower():
-            categorie_la_plus_proche = nom[0]
-            break    
-    return categorie_la_plus_proche
+    score_with_categorie = {n[0] : 0 for n in nom_categorie_use}
+    
+    for nom in nom_categorie_use:
+        i = 0
+        for lettre in nom[0]:
+            if i < len(categorie) and lettre == categorie[i]:
+                score_with_categorie[nom[0]] += 1
+            i+= 1
+    print(score_with_categorie)
+    return categorie_la_plus_proche"""
+    
+def categorie_plus_proche(noms_categories,categorie):
+    """Fonction permettant de reperer la catégorie qui ressemble le plus a l'entrée de l'utilisateur par rapport a une liste de forme [(nom,)]
+
+    Args:
+        noms_categories (list): liste des catégories existantes
+        categorie (str): catégorie entrez par l'utilisateur
+
+    Returns:
+        str: La catégorie la plus proche est retourner
+    """
+    if categorie in noms_categories: 
+        return categorie
+    
+    nom_categorie_use = [c[0] for c in noms_categories if c[0][0].lower() == categorie[0].lower()]
+    if len(nom_categorie_use) == 0: 
+        return None
+    
+    if len(nom_categorie_use) == 1:
+        return nom_categorie_use[0]
+    
+    score_with_categorie = {n : 0 for n in nom_categorie_use} #d'abord on calcule le score entre les catégories existante, leur nombre de lettre en commun
+    for nom in nom_categorie_use:
+        i = 0
+        for lettre in nom:
+            if i < len(categorie) and lettre.lower() == categorie[i].lower():
+                score_with_categorie[nom] += 1
+            i+= 1
+            
+    maxi = 0
+    for value in score_with_categorie.values():
+        if value > maxi:
+            maxi = value
+    all_max = [elt for elt in score_with_categorie.keys() if score_with_categorie[elt] == maxi] # On ne garde que les catégories qui on le plus au score avec l'entrée de l'utilisateur
+    if len(all_max) == 1:
+        return all_max[0]
+    difference_de_lettre = {c : len(c) - len(categorie) for c in all_max} #Maintenant on vérifie la différence de taille
+    mini = 100
+    for value in difference_de_lettre.values():
+        if value < mini:
+            mini = value
+    all_mini = [elt for elt in difference_de_lettre.keys() if difference_de_lettre[elt] == mini] #on garde la categorie avec la plus petite difference de taille
+    return all_mini[0]
 
 def changer_valeur_env(valeur,new_valeur):
     """Fonction permettant de changer une version du .env
@@ -391,7 +440,10 @@ class User:
                     rect_pp = Gerer_requete.separe_rect(self.rect_pp)
                 else:
                     rect_pp = None
-                infos = (self.nom,self.prenom,self.tuto_transmis,self.photo_profil,self.age,self.pseudo,self.mdp,rect_pp)
+                sha_256 = hashlib.sha256()
+                sha_256.update(bytes(self.mdp,"utf-8"))
+                mdp_hash = sha_256.hexdigest()
+                infos = (self.nom,self.prenom,self.tuto_transmis,self.photo_profil,self.age,self.pseudo,mdp_hash,rect_pp)
                 cursor.execute(request,infos)            
           
         except sql.Error as err:
@@ -566,6 +618,16 @@ class User:
                 temoin[0] = True
                 Gerer_requete.connection_failed()
             
+    @staticmethod
+    def verifier_mdp(input_user,mdp):
+        sha_256 = hashlib.sha256()
+        sha_256.update(bytes(input_user,"utf-8"))
+        if sha_256.hexdigest() == mdp:
+            return True
+        elif input_user == mdp:
+            print("mauvais endroit")
+            return True
+        return False
     
     @staticmethod    
     def log_user(pseudo,mdp):
@@ -612,7 +674,7 @@ class User:
         finally:
             if not no_connection:
                 if user_do_not_exist == False:
-                    if mdp != data[7]:
+                    if not User.verifier_mdp(mdp,data[7]):
                         raise userNonCharger("mauvais mdp")
                     else:
                         return User(data[1],data[2],data[5],data[6],data[7],data[4],tuto_transmis,data[8],data[10],annonce_transmis)
@@ -1344,9 +1406,28 @@ class Gerer_requete():
             else:
                 pass
         
-
+    @staticmethod
+    def hash_all_password():
+        # a ne surtout pas executer avant que les trophées nsi soit fini, rend les autres versions obsolète
+        # pas faire de commit dessus, que des print et test
+        try:
+            connection_principale = connect_to_database()
+            connection_principale.begin()
+            with connection_principale.cursor() as cursor:    
+                request = "SELECT id,mot_de_passe FROM utilisateur"
+                cursor.execute(request)
+                data = cursor.fetchall()
+                for elt in data:
+                    print(elt)
+                    mdp = elt[1]
+                    sha256 =  hashlib.sha256()
+                    sha256.update(bytes(mdp,"utf-8"))
+                    print("New password : ",sha256.hexdigest())
+                    break
+                    
+        except:
+            pass
 
 
 if __name__ == "__main__":
-    Gerer_requete.verifier_version_app()
-    
+    pass
