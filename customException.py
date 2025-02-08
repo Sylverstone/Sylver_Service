@@ -43,7 +43,11 @@ class noCategorie(Exception):
         self.what = what
         super().__init__(self.what)
 
-
+class cannotSignal(Exception):
+    def __init__(self, what) -> None:    
+        self.what = what
+        super().__init__(self.what)
+        
 class noFileException(Exception):
     """Class reprensentant aucun fichier choisi
 
