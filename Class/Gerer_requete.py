@@ -379,7 +379,7 @@ class Gerer_requete():
     def connecte_toi():
         """Fonction permettant de prévenir l'utilisateur qu'il doit se conecter pour signaler un tuto"""
         tkinter.messagebox.showerror("Erreur","Vous ne pouvez pas signaler sans être connecté !")
-    
+        
     @staticmethod
     def look_for_membre_categorie(categorie):
         """Fonction permmettant de récupérer les membres d'une catégorie

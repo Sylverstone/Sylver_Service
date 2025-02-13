@@ -2,11 +2,8 @@
 import threading
 import pygame
 import pymysql as sql 
-import os
-import dotenv
 from connection_fonction import connect_to_database
 from get_co import connection_principale
-dotenv.load_dotenv("/.env")
 
 
 

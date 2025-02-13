@@ -10,3 +10,4 @@ __pycache__/
 *.iss
 Projet SylverService
 .venv/
+get_var.txt

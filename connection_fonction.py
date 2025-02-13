@@ -5,10 +5,6 @@ import os
 
 from font_import import *
 from customException import *
-import dotenv
-
-dotenv.load_dotenv("/.env")
-
 
 def connect_to_database():
     """Fonction essayant d'établir une connecion avec la base

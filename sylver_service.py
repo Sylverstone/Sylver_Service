@@ -1,5 +1,6 @@
+import os
 from typing import Dict, List
-import pygame,os,datetime,sys,threading,keyboard,time,math,io,random,dotenv
+import pygame,datetime,sys,threading,keyboard,time,math,io,random,dotenv
 
 from Animation import Animation
 from Color import Color

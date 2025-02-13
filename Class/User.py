@@ -132,20 +132,11 @@ class User:
             connection_principale = connect_to_database()
             connection_principale.begin()
             with connection_principale.cursor() as cursor:
+                request = """ INSERT INTO `signalements` (`id_tuto_signaler`, `signalement`, `pseudo_accuseur`, `pseudo_accuse`)
+                            VALUES (%s,%s,%s,%s);"""
                 
-                
-                current_date = datetime.datetime.now()
-                current_date = current_date.strftime("%Y-%m-%d")
-                request = """ INSERT INTO `signalements` (`id_tuto_signaler`, `signalement`, `pseudo_accuseur`, `date`, `pseudo_accuse`)
-                            VALUES (%s,%s,%s,%s,%s);"""
-                
-                infos = (id_tuto_signaler, text_signalement, self.pseudo, current_date,  pseudo_accuser)
-                cursor.execute(request,infos)
-                request = f'UPDATE tuto SET signalement = signalement + 1 WHERE id = {id_tuto_signaler}'
-                cursor.execute(request)
-                
-                   
-                
+                infos = (id_tuto_signaler, text_signalement, self.pseudo,  pseudo_accuser)
+                cursor.execute(request,infos)                
         except sql.MySQLError as err:
             print("errr : ",err.args[1])
             if(err.args[1] == "CannotSignal"):
@@ -210,11 +201,6 @@ class User:
             with connection_principale.cursor() as cursor:
                 request = f"UPDATE utilisateur SET categorie = '{Nouvelle_value}' WHERE pseudo = %s "
                 cursor.execute(request,(self.pseudo))
-                if self.categorie != None:
-                    request = f"UPDATE categorie SET membre = membre - 1 WHERE nom = '{self.categorie}'"
-                    cursor.execute(request)
-                request = f"UPDATE categorie SET membre = membre + 1 WHERE nom = '{Nouvelle_value}'"
-                cursor.execute(request)
         except sql.Error as err:
             
             connection_principale.rollback()
@@ -246,9 +232,6 @@ class User:
             noConnection: Renvoie noConnection quand la conenction n'a pu être établie
         """
         no_connection = False     
-        current_date = datetime.datetime.now()
-        current_date = current_date.strftime("%Y-%m-%d")
-        date = current_date
         nom = nom_tuto
         
         auteur = f"{self.pseudo}, {self.nom} {self.prenom}"
@@ -260,17 +243,9 @@ class User:
                 if doc != None:
                     with open(doc,"rb") as fichier:
                         doc = fichier.read()
-                request =  "INSERT INTO `tuto` (`nom`,`date`,`doc`,`text_ctn`,`auteur`,`file`,`categorie`,`is_annonce`) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)"
-                infos = (nom,date,doc,Text,auteur,file,categorie,is_annonce)
+                request =  "INSERT INTO `tuto` (`nom`,`doc`,`text_ctn`,`auteur`,`file`,`categorie`,`is_annonce`) VALUES (%s,%s,%s,%s,%s,%s,%s)"
+                infos = (nom,doc,Text,auteur,file,categorie,is_annonce)
                 cursor.execute(request,infos)
-                request = f"UPDATE utilisateur SET tuto_transmis = tuto_transmis + 1 WHERE pseudo = '{self.pseudo}'"
-                cursor.execute(request)
-                request = f"UPDATE categorie SET tuto_count = tuto_count + 1 WHERE nom = '{categorie}'"
-                cursor.execute(request)
-                request = f"UPDATE utilisateur SET annonce_count = annonce_count + 1 WHERE pseudo = '{self.pseudo}'"
-                cursor.execute(request)
-                
-           
         except sql.Error as err:
             no_connection = True
         except Exception as err:
