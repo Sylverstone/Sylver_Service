@@ -1,7 +1,6 @@
 import pygame,threading,time
 from font_import import *
 
-
 def font(font_name,size,importer = False):
     if not importer:
         return pygame.font.SysFont(font_name,size)
@@ -93,6 +92,7 @@ class Animation:
             fond_ecran (list): Fond de l'ecran
             delay(int,optional) : delay représente le temp qu'il faut attendre avant de forcer l'arret de l'animation
         """
+        print("début animation chargement")
         self.running = 1
         self.id_ = 0
         th = threading.Thread(target=self.animate, args=(None,last_screen, "",delay),daemon=True)
@@ -154,5 +154,6 @@ class Animation:
             
     def stop_anime(self):
         """Fonction permettant d'arreter une animation qui a été démarrer dans une situation bloquante"""
+        print("fin animation chargement")
         self.running = False
         self.id_ = 1

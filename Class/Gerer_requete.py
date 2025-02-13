@@ -5,9 +5,10 @@ import tkinter.filedialog,tkinter.messagebox
 import pymysql as sql
 import os
 import webbrowser
+from typing import List
 
 from connection_fonction import connect_to_database
-from customException import *
+from Class.customException import *
 from get_co import connection_principale
 
 from Class.Tuto import Tuto
@@ -97,7 +98,7 @@ class Gerer_requete():
         return f"{rect[0]},{rect[1]},{rect[2]},{rect[3]}"
     
     @staticmethod
-    def take_categorie(selector = "*"):
+    def take_categorie():
         """Fonction récupérant tout sur les catégories
 
         Raises:
@@ -107,11 +108,11 @@ class Gerer_requete():
             list: donnée de toutes les catégories
         """
         no_connection = False     
-    
+        data = [[],[]]
         try:
             if look_for_connection():
                 with connection_principale.cursor() as cursor:    
-                    request = f"SELECT {selector} FROM categorie"
+                    request = f"SELECT * FROM categorie"
                     cursor.execute(request)
                     data = cursor.fetchall()
             else:
@@ -127,7 +128,7 @@ class Gerer_requete():
                 return data
     
     @staticmethod  
-    def rechercher_annonce()->list:
+    def rechercher_annonce()->List[Tuto]:
         """Fonction permettant de rechercher des tuto dans la base de données grâce a différente
            données relatives
 
@@ -172,7 +173,7 @@ class Gerer_requete():
              
 
     @staticmethod  
-    def rechercher_data(nom_tuto : str = None,nom_auteur : str = None,nom_categorie = None)->list:
+    def rechercher_data(nom_tuto : str = None,nom_auteur : str = None,nom_categorie = None)->List:
         """Fonction permettant de rechercher des tuto dans la base de données grâce a différente
            données relatives
 
@@ -222,19 +223,19 @@ class Gerer_requete():
                 no_connection = True
                 
         except sql.Error as err:
-            print(err)
-            no_connection = False
+            print("err 1 : ",err)
+            no_connection = True
             
         except noConnection as err:
-            print(err)
+            print("err 2 : ",err)
             no_connection = True
             
         except noCategorie as err:
-            print(err)
+            print("err 3 : ",err)
             no_categorie = True
         
         except Exception as err:
-            print(err)
+            print("err 4 : ",err)
             no_connection = True
             
         finally:
@@ -255,11 +256,12 @@ class Gerer_requete():
             nom_tuto (str, optional): Nom du projet ouvert. Defaults to "".
             auteur (str, optional): Nom de l'auteur du projet. Defaults to "".
         """
+        print("starting file")
         if not with_path:
             #créé le fichier si il n'existe pas
             if dir:
                 path = os.path.join(dir,f"{nom_tuto} par {auteur}{ext}")
-                document = Doc(path,doc,nom_tuto,auteur,ext)
+                document = Doc(path,Gerer_requete,doc,nom_tuto,auteur,ext)
                 document.start()
         else:
             path = doc
@@ -482,7 +484,7 @@ class Gerer_requete():
                     request = f"SELECT nom,membre,tuto_count FROM categorie"
                     cursor.execute(request)
                     data_recup = cursor.fetchall()
-                    dico_categorie = {data[0] : {"membre" : data[1], "nombre_de_tuto" : data[2]} for data in data_recup}
+                    #dico_categorie = data[0] : {"membre" : data[1], "nombre_de_tuto" : data[2]}
             else:
                raise noConnection("connection failed")
         except sql.Error as err:
@@ -494,7 +496,7 @@ class Gerer_requete():
             if no_connection:
                 raise noConnection("connection failed")
             else:
-                return dico_categorie
+                return None
             
     @staticmethod
     def askyesno_basic(title = None,message = ""):

@@ -2,9 +2,8 @@ from typing import Tuple
 import pygame,os,io
 from Class.User import User
 from font_import import *
-from Color import Color
-
-import Sylver_filedialog
+from Class.Color import Color
+from Class.Gerer_requete import Gerer_requete
 palette_couleur = Color()
 def draw_text(text, font = "Comic Sans Ms", color = (0,0,0), x = 0, y = 0,reference_center_x = None,contener = None,size = 20,importer = False, center_multi_line_y = False, ombre = False,center_multi_line = False):
     """Fonction affichant un texte a l'écran
@@ -69,6 +68,17 @@ def verification_size(contenaire : pygame.Rect, nom_font : pygame.font, size : i
             else:
                 return size       
  
+def processus_delete_tuto(id_,l,user : User,dialog):
+    try:
+        recup_reponse_user = user.delete_tuto(id_)
+    except:
+        dialog.message("Votre tuto n'a pas pû être supprimé ! ",l,title="Erreur")
+    else:
+        if recup_reponse_user:
+            dialog.message("Votre tuto a bien été supprimé :)",l) 
+        else:
+            pass 
+        
 def make_line(text : str,font : pygame.font,size_max : int):
     """Fonction permettant de faire le coupage d'un texte par rapport a son contenaire,
     renvoie le nombre de ligne du texte et ses zones de coupages en plus de sa hauteur
@@ -422,3 +432,8 @@ def fond_semi_colorer(screen : pygame.Surface, color : Tuple[int],alpha : int = 
     surface_blanc_transparent = pygame.Surface((screen.get_width(), screen.get_height()),pygame.SRCALPHA)
     surface_blanc_transparent.fill((*color,alpha))
     screen.blit(surface_blanc_transparent,(0,0))
+    
+def setup_categorie_data():
+    recup_categorie = Gerer_requete.take_categorie() #recuperer le nom de toutes les catégories
+    dict_categorie = {data[0] : {"membre" : data[2], "nombre_de_tuto" : data[3]} for data in recup_categorie}
+    return recup_categorie,dict_categorie

@@ -1,13 +1,13 @@
-import os
-import pygame
-from Animation import Animation
+import os,pygame
+from Class.Animation import Animation
 from Class.Gerer_requete import Gerer_requete
-from Sylver_filedialog import BoiteDialogPygame
-from customException import *
+from Class.customException import *
 from Class.User import User
 from Resize_image import resizeImage
+from base_variables import *
+from fonction_ui import setup_categorie_data
 
-def load_app(w_origine : float, h_origine : float, screen : pygame.Surface, dialog : BoiteDialogPygame):
+def load_app():
     
     animation_demarrage_application = Animation(screen,color = (255,255,255), text_chargement="Sylver.service",W = w_origine)
     chemin_image_logo_app = os.path.join("Image","Icone_accueil.png")
@@ -105,13 +105,11 @@ def load_app(w_origine : float, h_origine : float, screen : pygame.Surface, dial
         else:
             animation_demarrage_application.start_anime(last_screen) 
             try:
-                recup_categorie = Gerer_requete.take_categorie()
-                print("categorie passed")
-                dict_categorie = Gerer_requete.update_categorie_member()     
+                recup_categorie,dict_categorie = setup_categorie_data()
             except Exception as e:
                 print("errrrrrrror")
                 animation_demarrage_application.stop_anime() 
-                dialog.message("Une erreioioiur de connexion a eu lieu !",last_screen)
+                dialog.message("Une erreur de connexion a eu lieu !",last_screen)
                 animation_demarrage_application.start_anime(last_screen)
         try:
             animation_demarrage_application.texte = "Vérification des mises à jours"

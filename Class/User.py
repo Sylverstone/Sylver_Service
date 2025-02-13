@@ -2,15 +2,16 @@ import hashlib
 import tkinter
 import tkinter.filedialog,tkinter.messagebox,pygame
 import pymysql as sql
-import datetime
 from font_import import *
-from customException import *
+from Class.customException import *
 
 from connection_fonction import connect_to_database
 from Class.Gerer_requete import Gerer_requete
 from Class.Doc import Doc
 from Class.status_connection import connection_principale,look_for_connection
 import Sylver_filedialog
+
+
 class User:
     """Class Representant le compte de l'utilisateur
 
@@ -24,7 +25,9 @@ class User:
             tuto_transmis (int, optional): Nombre de tuto que l'utilisateur a transmis. Defaults to 0.
             rect_pp (pygame.Rect, optional): Rect de la photo de profil de l'utilisateur. Defaults to None.
     """
-    def __init__(self,nom,prenom,age,pseudo,mdp,photo_profil = None,tuto_transmis = 0,rect_pp = None,categorie = None,annonce_transmis = 0):
+    def __init__(self,nom :str,prenom : str,age : int,pseudo : str,mdp : str,
+                 photo_profil : bytes = None,tuto_transmis : int = 0,rect_pp : pygame.Rect = None,
+                 categorie : str = None,annonce_transmis : int = 0):
                 
         self.nom = nom
         self.prenom = prenom
@@ -46,13 +49,13 @@ class User:
             bool: Renvoie la réponse de l'utilisateur
         """
         dialog = Sylver_filedialog.BoiteDialogPygame(400,200,screen,1,True,echap_destroy_windows=True,base_title="Attention")
-        ans = dialog.ask_yes_no("Voulez-vous fermer Sylver.service?",last_screen)
+        ans = dialog.ask_yes_no("Voulez-vous fermer SylverService?",last_screen)
         ans = ans if False == None else ans
 
         return ans
     
     @staticmethod
-    def confirm_open(open = "RECHERCHE",aide = "La recherche",screen : pygame.Surface = None,BoiteDialogPygame = None):
+    def confirm_open(open = "RECHERCHE",aide = "La recherche",screen : pygame.Surface = None,last_screen : pygame.Surface = None):
         """Fonction permettant de confirmer une ouverture
 
         Args:
@@ -61,8 +64,8 @@ class User:
         Returns:
             boolean: Renvoie la reponse de l'utilisateur (True or False)
         """
-        dialog = BoiteDialogPygame(400,200,screen,1,True,echap_destroy_windows=True)
-        ans = dialog.ask_yes_no(f"Ouvrir le document d'aide pour {aide} ?",screen.copy())
+        dialog = Sylver_filedialog.BoiteDialogPygame(400,200,screen,1,True,echap_destroy_windows=True)
+        ans = dialog.ask_yes_no(f"Ouvrir le document d'aide pour {aide} ?",last_screen)
         ans = ans if False == None else ans
         return ans
     

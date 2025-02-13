@@ -17,5 +17,5 @@ class Tuto:
         self.is_annonce = is_annonce
     
     def get_tuto_as_list(self):
-        return [self.nom,self.date,"doc",self.contenu,self.auteur,self.extension,
+        return [self.nom,self.date,self.doc,self.contenu,self.auteur,self.extension,
                 self.nb_signalement,self.type_tuto,self.categorie,self.is_annonce,self.id_auteur]

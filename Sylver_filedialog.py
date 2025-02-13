@@ -1,5 +1,5 @@
 
-from Color import Color
+from Class.Color import Color
 import pygame
 from font_import import *
 from fonction_ui import *

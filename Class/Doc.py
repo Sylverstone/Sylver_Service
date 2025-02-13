@@ -1,5 +1,4 @@
 import os
-
 class Doc:    
     
     """Class représentant un fichier
@@ -41,6 +40,7 @@ class Doc:
     
     def start(self):
         """Fonction permettant de faire le processus afin de lancer un document"""
+        print("in start file")
         if os.path.exists(self.chemin):
             #verifier si le fichier existe déja, et donc le sup
             try:
@@ -48,13 +48,17 @@ class Doc:
             except:
                 pass
         try:
+            print(self.bytes)
             with open(self.chemin,"wb") as File:
                 File.write(self.bytes)
         except OSError as e:
-            
+            print("os error")
             self.Gerer_requete.fail_open(f"{self.nom_tuto} par {self.auteur}{self.ext}")
             return
+        except Exception as e:
+            print("err : ", e)
         else:
+            print("no error")
             #no erreur
             self.start_now()            
     
