@@ -6,6 +6,7 @@ from Class.User import User
 from Resize_image import resizeImage
 from base_variables import *
 from fonction_ui import setup_categorie_data
+from log.makelog import makelog
 
 def load_app():
     
@@ -41,9 +42,11 @@ def load_app():
                 dict_categorie = Gerer_requete.update_categorie_member()     
             except noConnection:
                 animation_demarrage_application.stop_anime()
+                makelog("Une erreur a eu lieu lors de la récupération des catégories","ERROR")
                 dialog.message("Une erreur de connexion a eu lieu !",last_screen,title="Erreur")
                 animation_demarrage_application.start_anime(last_screen,20)
             except Exception as e :
+                makelog("Une erreur a eu lieu lors de la récupération des catégories","ERROR")
                 animation_demarrage_application.stop_anime()
                 dialog.message("Une erreur est survenue ! ", last_screen,title="Erreur")
                 animation_demarrage_application.start_anime(last_screen,20)
@@ -54,14 +57,17 @@ def load_app():
                     animation_demarrage_application.texte = "Connexion a votre compte"
                     user = User.log_user(pseudo,mdp)
                 except userNonCharger:
+                    makelog("Le mot de passe ne correspond pas","ERROR")
                     animation_demarrage_application.stop_anime()
                     dialog.message("Connection inachevé, il semblerait que le mot de passe ne corresponde pas !\n(Avez vous jouez dans les fichiers de l'appli ?)",last_screen,title="Erreur")
                     animation_demarrage_application.start_anime(last_screen,20)
                 except noConnection:
+                    makelog("Erreur de connections","ERROR")
                     animation_demarrage_application.stop_anime()
                     dialog.message("Une erreur de connexion a eu lieu !",last_screen,title="Erreur")
                     animation_demarrage_application.start_anime(last_screen,20)
                 except UserNotExist:
+                    makelog("Ce compte n'existe pas","ERROR")
                     animation_demarrage_application.stop_anime()
                     dialog.message("Ce compte n'existe pas, il se peut que vous ayez été bannis",last_screen,title="Erreur")
                     animation_demarrage_application.start_anime(last_screen,20)
@@ -107,7 +113,7 @@ def load_app():
             try:
                 recup_categorie,dict_categorie = setup_categorie_data()
             except Exception as e:
-                print("errrrrrrror")
+                makelog("Une erreur a eu lieu lors de la récupération des catégories","ERROR")
                 animation_demarrage_application.stop_anime() 
                 dialog.message("Une erreur de connexion a eu lieu !",last_screen)
                 animation_demarrage_application.start_anime(last_screen)
@@ -119,6 +125,7 @@ def load_app():
             Gerer_requete.verifier_version_doc_aide_compte()
             Gerer_requete.verifier_version_doc_info_annonce()
         except Exception as e:
+            makelog(f"La vérification des mises à jours a echoué","ERROR")
             animation_demarrage_application.stop_anime()  
             dialog.message(f"La vérification des mises à jours a echoué\nerreur : '{e}'",last_screen,title="Erreur")
     animation_demarrage_application.stop_anime()

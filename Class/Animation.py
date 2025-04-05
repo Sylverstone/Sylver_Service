@@ -92,7 +92,6 @@ class Animation:
             fond_ecran (list): Fond de l'ecran
             delay(int,optional) : delay représente le temp qu'il faut attendre avant de forcer l'arret de l'animation
         """
-        print("début animation chargement")
         self.running = 1
         self.id_ = 0
         th = threading.Thread(target=self.animate, args=(None,last_screen, "",delay),daemon=True)
@@ -119,10 +118,7 @@ class Animation:
                       y = screen.get_rect()[3] - 2*self.font.size(self.texte + point)[1],contener=screen,
                       color = self.color,
                       importer=self.importer, ombre = self.ombre)
-        else:
-            print("chargement started")
-            
-            
+        else:            
             pygame.display.update()
             debut = time.time()
             while self.running:
@@ -150,10 +146,8 @@ class Animation:
                           importer=self.importer,ombre = self.ombre)
                 pygame.display.update(rect_a_update)
                 pygame.time.delay(250)
-            print("chargement ended")
             
     def stop_anime(self):
         """Fonction permettant d'arreter une animation qui a été démarrer dans une situation bloquante"""
-        print("fin animation chargement")
         self.running = False
         self.id_ = 1

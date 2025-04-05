@@ -1,6 +1,6 @@
-import os
+
 from typing import Dict, List,Tuple
-import pygame,datetime,sys,threading,keyboard,time,math,io,random,dotenv
+import pygame,datetime,sys,threading,keyboard,time,math,io,random,dotenv,os,webbrowser
 
 from Class.appElement import appElement
 from Class.Animation import Animation
@@ -10,10 +10,8 @@ from Sylver_filedialog import BoiteDialogPygame
 from chargement_accueil import load_app
 from font_import import *
 from Class.customException import *
+from log.makelog import makelog
 from fonction_ui import *
-import webbrowser
-import smtplib, ssl
-from email.message import EmailMessage
 
 #import des class
 from Class.Gerer_requete import Gerer_requete
@@ -25,7 +23,6 @@ from pages.menu import menu
 os.environ['SDL_VIDEO_CENTERED'] = '1'
 
 dotenv.load_dotenv()
-print("debut app")
 
 #reglage de l'ecran
 resolution = pygame.display.Info()
@@ -63,7 +60,6 @@ image_retour = pygame.transform.smoothscale(image_retour,(rect_goback.w,rect_gob
 
 photo_deja_charger = {} #dict qui va repertorier les photos déjà charger afin de ne pas les recharger
 
-    
 """
 def draw_text(text, font = "Comic Sans Ms", color = (0,0,0), x = 0, y = 0,reference_center_x = None,contener = screen,size = 20,importer = False, center_multi_line_y = False, ombre = False,center_multi_line = False):
    Fonction affichant un texte a l'écran
@@ -866,7 +862,6 @@ def page_info(id_ = 0,text = "",nom_projet = "",auteur = "",date : datetime.date
                             dialog.message("Une erreur de connexion a eu lieu !",last_screen)
                             
                         except Exception as e:
-                            print(e)
                             animation_mise_en_ligne.stop_anime()
                             pass
                         else:
@@ -1068,7 +1063,6 @@ def relative_at(rect : pygame.Rect,relative : pygame.Rect) -> pygame.Rect:
 
 def compte(creer_compte : bool,zone : int,connect : bool,pp_base : bytes,fond_nav : pygame.surface,
     dict_categorie : dict, recup_categorie,surf_image2 : pygame.Surface) -> pygame.Surface:
-    print("k")
     """Fonction affichant la partie compte de l'application"""
      #lobal continue_charging
     
@@ -1533,7 +1527,6 @@ def compte(creer_compte : bool,zone : int,connect : bool,pp_base : bytes,fond_na
                                             dialog.message("La catégorie de votre compte a bien été changeée",last_screen)
 
                             except Exception as e:
-                                print(e)
                                 dialog.message("Les catégories n'ont pas pu être récupéré",last_screen,title="Erreur")
                             
             elif creer_compte or not creer_compte:
@@ -2204,8 +2197,7 @@ def compte(creer_compte : bool,zone : int,connect : bool,pp_base : bytes,fond_na
         
 def request():
     menu(2,last_screen_accueil=last_screen,user=user,page_info=page_info,connect=connect,
-         image_pp_user=image_pp_user,input_apple=input_apple,
-         )
+         image_pp_user=image_pp_user,input_apple=input_apple)
 
 fond_ecran =  palette_couleur.Gris
 bleu_s = (106,178,202)
@@ -2292,7 +2284,6 @@ size_for_accueil = verification_size(pygame.Rect(0,0,w_origine * (1-60/100),0),c
 #Boucle principale de l'accueil
 
 
-
 dict_categorie = {}
 def update_categorie():
     """Fonction permettant de mettre a jour le nombre de participant dans les catégories, ainsi que récuperer leur nom"""
@@ -2312,6 +2303,7 @@ size_pp_user = (80,80)
 x_pp,y_pp = 20,fond_nav.get_height()/2 - size_pp_user[1]/2
 rect_photo_profil_user = pygame.Rect(x_pp,y_pp,*size_pp_user)
 last_screen = screen.copy()
+
 while continuer:
     Clock.tick(120)
     fps = Clock.get_fps()

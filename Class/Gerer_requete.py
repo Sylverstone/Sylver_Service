@@ -10,6 +10,8 @@ from typing import List
 from connection_fonction import connect_to_database
 from Class.customException import *
 from get_co import connection_principale
+from log.makelog import makelog
+from log.handleError import handleError
 
 from Class.Tuto import Tuto
 from Class.Doc import Doc
@@ -116,15 +118,19 @@ class Gerer_requete():
                     cursor.execute(request)
                     data = cursor.fetchall()
             else:
-                no_connection = True
+                raise noConnection("Pas de connection")
+            
         except sql.Error as err:
+            handleError("Une erreur sql a eu lieu (Gerer_requete.take_categorie)")
             no_connection = True
         except Exception as err:
+            handleError("Une erreur a eu lieu (Gerer_requete.take_categorie)")
             no_connection = True
         finally:
             if no_connection:
                 raise noConnection("connection failed")
             else:
+                makelog("Les catégories ont été récupérées")
                 return data
     
     @staticmethod  
@@ -156,18 +162,20 @@ class Gerer_requete():
                     for tuto in data_recup:
                         tutos.append(Tuto(*tuto))
             else:
-                no_connection = True
+                raise noConnection("Pas de connection")
+            
         except sql.Error as err:
+            handleError("Une erreur sql a eu lieu (Gerer_requete.rechercher_annonce)")
             no_connection = True
-            
         except noConnection as err:
-            
+            handleError("Une erreur de connection a eu lieu (Gerer_requete.rechercher_annonce)")
             no_connection = True
         except Exception as err:
-            no_connection = True
-            
+            handleError("Une erreur a eu lieu (Gerer_requete.rechercher_annonce)")
+            no_connection = True            
         finally:
             if not no_connection:
+                makelog(f"Les annonces ont été récupérées. nb : {len(tutos)}")
                 return tutos
             raise noConnection("l")
              
@@ -205,12 +213,10 @@ class Gerer_requete():
                     elif nom_auteur != None:
                         request = f"SELECT * FROM tuto WHERE auteur LIKE '{nom_auteur}%' AND is_annonce = 0 ORDER BY date DESC;"
                     elif nom_categorie != None:
-                        noms_categories = Gerer_requete.take_categorie("nom")
-                        print(noms_categories)
+                        noms_categories = Gerer_requete.take_categorie()
                         categorie_la_plus_proche = categorie_plus_proche(noms_categories,nom_categorie)
                         if categorie_la_plus_proche != None:
                             request = f"SELECT * from tuto WHERE categorie = '{categorie_la_plus_proche}' AND is_annonce = 0 ORDER BY date DESC;"
-                    print(request)
                     if request != None:
                         cursor.execute(request)
                         data_recup = cursor.fetchall()
@@ -220,26 +226,27 @@ class Gerer_requete():
                     else:
                         raise noCategorie("La catégorie n'existe pas !")
             else:
-                no_connection = True
+                raise noConnection("Pas de connection")
                 
         except sql.Error as err:
-            print("err 1 : ",err)
+            handleError("Une erreur sql a eu lieu (Gerer_requete.rechercher_data)")
             no_connection = True
             
         except noConnection as err:
-            print("err 2 : ",err)
+            handleError("Une erreur de connection a eu lieu (Gerer_requete.rechercher_data)")
             no_connection = True
             
         except noCategorie as err:
-            print("err 3 : ",err)
+            handleError("La catégorie n'existe pas (Gerer_requete.rechercher_data)")
             no_categorie = True
         
         except Exception as err:
-            print("err 4 : ",err)
+            handleError("Une erreur a eu lieu (Gerer_requete.rechercher_data)")
             no_connection = True
             
         finally:
             if not no_connection and not no_categorie:
+                makelog(f"Les tutos ont été récupérés. nb : {len(tutos)}")
                 return tutos,categorie_la_plus_proche
             if no_connection:
                 raise noConnection("l")
@@ -256,7 +263,7 @@ class Gerer_requete():
             nom_tuto (str, optional): Nom du projet ouvert. Defaults to "".
             auteur (str, optional): Nom de l'auteur du projet. Defaults to "".
         """
-        print("starting file")
+        makelog("Ouverture du docuement")
         if not with_path:
             #créé le fichier si il n'existe pas
             if dir:
@@ -318,22 +325,24 @@ class Gerer_requete():
         no_connection = False
         try:
             data_recup = [None]
-            
-            with connection_principale.cursor() as cursor:
-                request = f"SELECT photo_profil,rect_photo_profil FROM utilisateur WHERE pseudo = '{pseudo}'"
-                cursor.execute(request)
-                data_recup = cursor.fetchone()
+            if look_for_connection():
+                with connection_principale.cursor() as cursor:
+                    request = f"SELECT photo_profil,rect_photo_profil FROM utilisateur WHERE pseudo = '{pseudo}'"
+                    cursor.execute(request)
+                    data_recup = cursor.fetchone()
+            else:
+                raise noConnection("Pas de connection")
           
-        except sql.Error as err:
-            
+        except sql.Error as err:            
+            handleError("Une erreur sql a eu lieu (Gerer_requete.look_for_user_pp)")
             no_connection = False
             
-        except noConnection as e:
-            
+        except noConnection as err:
+            handleError("Une erreur de connection a eu lieu (Gerer_requete.look_for_user_pp)")
             no_connection = True
             
-        except Exception as e:
-            
+        except Exception as e:   
+            handleError("Une erreur a eu lieu (Gerer_requete.look_for_user_pp)")         
             no_connection = True
             
         finally:
@@ -402,11 +411,12 @@ class Gerer_requete():
             else:
                 no_connetion = True
         except sql.Error as e:
-            
             no_connetion = True
         except Exception as e :
-            
             no_connetion = True
+        except noConnection as e: 
+            no_connetion = True
+            handleError("Une erreur de connection a eu lieu (Gerer_requete.look_for_user_pp)")
         finally:
             if not no_connetion:
                 return data[0]
@@ -488,7 +498,6 @@ class Gerer_requete():
             else:
                raise noConnection("connection failed")
         except sql.Error as err:
-            print(err)
             no_connection = True
         except Exception as err:
             no_connection = True
@@ -694,11 +703,9 @@ class Gerer_requete():
                 cursor.execute(request)
                 data = cursor.fetchall()
                 for elt in data:
-                    print(elt)
                     mdp = elt[1]
                     sha256 =  hashlib.sha256()
                     sha256.update(bytes(mdp,"utf-8"))
-                    print("New password : ",sha256.hexdigest())
                     break
                     
         except:

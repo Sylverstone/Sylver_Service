@@ -161,7 +161,6 @@ def menu(id_ : int = 0,auteur_rechercher : str = None,
                         all_case_data.append(case_data)
                 can_add = False
             except Exception as e:
-                print("error 7 :",e)
                 access = False
                 flop_de_recherche = True
                 dialog.message("Une erreur est survenue ! ", last_screen,title="Erreur")
@@ -240,12 +239,13 @@ def menu(id_ : int = 0,auteur_rechercher : str = None,
         """Fonction effectuant la recherche
 
         Args:
-            data (dict): donnée au sujet du tuto selectionner
+            data (dict): Contient les données de l'input de l'utilisateur
+            id_ (int,optional) : si _id = 0 alors c'est une recherche de tuto, sinon c'est une recherche d'annonce
         """
 
 
         #global zone_page
-        infos_tuto = []
+        infos_tuto : List[Tuto]  = []
         categorie_rechercher = None
         try:      
             flop_de_recherche = False   
@@ -255,24 +255,19 @@ def menu(id_ : int = 0,auteur_rechercher : str = None,
             else:
                 infos_tuto = Gerer_requete.rechercher_annonce()
                 
-            infos_tuto : List[Tuto] 
             access = True
             
         except noConnection as e:
-            print("error : ",e)
             Gerer_requete.connection_failed()
             
         except noCategorie as e:
-            print("error : ",e)
-            pass       
+            Gerer_requete.error_occured()
              
         except Exception as e:
-            print("error : ",e)
             flop_de_recherche = True
             access = False
             Gerer_requete.error_occured()
             
-        print("research done")
         return flop_de_recherche,access,infos_tuto,categorie_rechercher
         
     def setup_default_research(flop_de_recherche,dict_recherche):
@@ -459,7 +454,6 @@ def menu(id_ : int = 0,auteur_rechercher : str = None,
                               
             if rect_btn_effacer.collidepoint(mouse):
                 if id_ == 0 and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and bool(input_host):
-                    print("click on sup")
                     access = False
                     all_case_data = []
                     display = True

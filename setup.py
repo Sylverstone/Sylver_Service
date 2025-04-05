@@ -20,14 +20,13 @@ build_options = {
         ("Ressource","Ressource"),
         ("Resize_image.py","Resize_image.py"),
         ("font_import.py","font_import.py"),
-        ("customException.py","customException.py"),
-        ("Color.py","Color.py"),
-        ("Animation.py","Animation.py"),
         ("FCP3","FCP3"),
         ("connection_fonction.py","connection_fonction.py"),
         ("get_co.py","get_co.py"),
         ("pages","pages"),
         ("Class","Class"),
+        ("log","log"),
+        ("base_variables.py","base_variables.py"),
         ("Sylver_filedialog.py","Sylver_filedialog.py")
     ],
 }
@@ -35,7 +34,7 @@ build_options = {
 # Set up the setup function
 setup(
     name="SylverService",
-    version='2',
+    version='2.1',
     options={"build_exe": build_options},
     author = "by Sylvio PELAGE MAXIME",
     executables=executables,
