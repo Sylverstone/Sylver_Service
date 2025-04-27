@@ -10,5 +10,6 @@ try:
         autocommit=True,collation="utf8mb4_unicode_ci"
         )
     connection_principale.ping(False)
+    print("La connection a été initialisé")
 except Exception as e:
     connection_principale = None

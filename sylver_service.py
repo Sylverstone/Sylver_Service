@@ -1,5 +1,6 @@
 
 from typing import Dict, List,Tuple
+
 import pygame,datetime,sys,threading,keyboard,time,math,io,random,dotenv,os,webbrowser
 
 from Class.appElement import appElement
@@ -21,6 +22,7 @@ from pages.contact import contact
 from pages.menu import menu
 
 os.environ['SDL_VIDEO_CENTERED'] = '1'
+
 
 dotenv.load_dotenv()
 
@@ -1619,8 +1621,7 @@ def compte(creer_compte : bool,zone : int,connect : bool,pp_base : bytes,fond_na
                                     except noConnection:
                                         animation_connection.stop_anime()
                                         dialog.message("Une erreur de connexion a eu lieu !",last_screen,title="Erreur")
-                                    else:
-                                        
+                                    else:                                        
                                         connect = True
                                         creer_compte = False
                                         with open(chemin_pp,"wb") as fichier:
@@ -2303,10 +2304,10 @@ def update_categorie():
     while continuer:
         try:
             recup_categorie,dict_categorie = setup_categorie_data()
-            time.sleep(20)
         except:
-            print("erreur lors de la récupération des catégories")
+            makelog("erreur lors de la récupération des catégories","ERROR")
             pass
+        time.sleep(20)
 
 threading.Thread(target=update_categorie,daemon = True).start()
 
