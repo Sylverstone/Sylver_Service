@@ -111,9 +111,10 @@ class Gerer_requete():
         """
         no_connection = False     
         data = [[],[]]
+        co = connect_to_database()
         try:
-            if look_for_connection():
-                with connection_principale.cursor() as cursor:    
+            if look_for_connection(co):
+                with co.cursor() as cursor:    
                     request = f"SELECT * FROM categorie"
                     cursor.execute(request)
                     data = cursor.fetchall()
@@ -125,8 +126,10 @@ class Gerer_requete():
             no_connection = True
         except Exception as err:
             handleError("Une erreur a eu lieu (Gerer_requete.take_categorie)")
+            print(err)
             no_connection = True
         finally:
+            co.close()
             if no_connection:
                 raise noConnection("connection failed")
             else:
@@ -151,10 +154,10 @@ class Gerer_requete():
         no_connection = False
         tutos = None
         try:
-            
+            co = connect_to_database()
             data_recup = [None]
-            if look_for_connection():
-                with connection_principale.cursor() as cursor:
+            if look_for_connection(co):
+                with co.cursor() as cursor:
                     request = "SELECT * FROM tuto WHERE is_annonce = 1 ORDER BY date DESC"
                     cursor.execute(request)
                     data_recup = cursor.fetchall()
@@ -174,6 +177,7 @@ class Gerer_requete():
             handleError("Une erreur a eu lieu (Gerer_requete.rechercher_annonce)")
             no_connection = True            
         finally:
+            co.close()
             if not no_connection:
                 makelog(f"Les annonces ont été récupérées. nb : {len(tutos)}")
                 return tutos
@@ -201,9 +205,9 @@ class Gerer_requete():
         try:
             
             data_recup = [None]
-                
-            if look_for_connection():
-                with connection_principale.cursor() as cursor:
+            co = connect_to_database()
+            if look_for_connection(co):
+                with co.cursor() as cursor:
                     request = None
                     if nom_tuto != None:
                         if nom_tuto != "*":
@@ -245,6 +249,7 @@ class Gerer_requete():
             no_connection = True
             
         finally:
+            co.close()
             if not no_connection and not no_categorie:
                 makelog(f"Les tutos ont été récupérés. nb : {len(tutos)}")
                 return tutos,categorie_la_plus_proche
@@ -324,9 +329,10 @@ class Gerer_requete():
     def look_for_user_pp(pseudo):
         no_connection = False
         try:
+            co = connect_to_database()
             data_recup = [None]
-            if look_for_connection():
-                with connection_principale.cursor() as cursor:
+            if look_for_connection(co):
+                with co.cursor() as cursor:
                     request = f"SELECT photo_profil,rect_photo_profil FROM utilisateur WHERE pseudo = '{pseudo}'"
                     cursor.execute(request)
                     data_recup = cursor.fetchone()
@@ -346,6 +352,7 @@ class Gerer_requete():
             no_connection = True
             
         finally:
+            co.close()
             if not no_connection:
                 return data_recup
             raise noConnection("l")
@@ -403,8 +410,9 @@ class Gerer_requete():
         """
         no_connetion = False
         try:
-            if look_for_connection():
-                with connection_principale.cursor() as cursor:
+            co = connect_to_database()
+            if look_for_connection(co):
+                with co.cursor() as cursor:
                     request = "SELECT membre FROM categorie WHERE nom = %s"
                     cursor.execute(request,(categorie))
                     data = cursor.fetchone()                    
@@ -418,6 +426,7 @@ class Gerer_requete():
             no_connetion = True
             handleError("Une erreur de connection a eu lieu (Gerer_requete.look_for_user_pp)")
         finally:
+            co.close()
             if not no_connetion:
                 return data[0]
             else:
@@ -442,23 +451,25 @@ class Gerer_requete():
         """Fonnction permettant de remettre a jour les informations des categories concernant les tutos/membres"""
         no_connection = False     
         try:
-            connection_principale = connect_to_database()
-            connection_principale.begin()
-            with connection_principale.cursor() as cursor:    
-                request = """UPDATE categorie AS c
-                                SET c.tuto_count = (
-                                SELECT COUNT(*)
-                                FROM tuto AS t
-                                WHERE t.categorie = c.nom
-                                )"""
-                cursor.execute(request)
-                request = """UPDATE categorie AS c
-                                SET c.membre = (
-                                SELECT COUNT(*)
-                                FROM utilisateur AS t
-                                WHERE t.categorie = c.nom
-                                )"""
-                cursor.execute(request)
+            co = connect_to_database()
+            if look_for_connection(co):
+                with connection_principale.cursor() as cursor:    
+                    request = """UPDATE categorie AS c
+                                    SET c.tuto_count = (
+                                    SELECT COUNT(*)
+                                    FROM tuto AS t
+                                    WHERE t.categorie = c.nom
+                                    )"""
+                    cursor.execute(request)
+                    request = """UPDATE categorie AS c
+                                    SET c.membre = (
+                                    SELECT COUNT(*)
+                                    FROM utilisateur AS t
+                                    WHERE t.categorie = c.nom
+                                    )"""
+                    cursor.execute(request)
+            else:
+                raise noConnection("Pas de connection")
            
         except sql.Error as err:
             
@@ -467,11 +478,10 @@ class Gerer_requete():
             
             no_connection = True
         finally:
+            co.close()
             if no_connection:
                 raise noConnection("connection failed")
-            else:
-                connection_principale.commit()
-                connection_principale.close()
+           
                 
     @staticmethod
     def modifier_stat_tuto(id_tuto : int):
@@ -489,8 +499,9 @@ class Gerer_requete():
         """
         no_connection = False     
         try:
-            if look_for_connection():
-                with connection_principale.cursor() as cursor:                    
+            co = connect_to_database()
+            if look_for_connection(co):
+                with co.cursor() as cursor:                    
                     request = f"SELECT nom,membre,tuto_count FROM categorie"
                     cursor.execute(request)
                     data_recup = cursor.fetchall()
@@ -502,10 +513,10 @@ class Gerer_requete():
         except Exception as err:
             no_connection = True
         finally:
+            co.close()
             if no_connection:
                 raise noConnection("connection failed")
-            else:
-                return None
+            return None
             
     @staticmethod
     def askyesno_basic(title = None,message = ""):
@@ -537,8 +548,9 @@ class Gerer_requete():
         """Fonction permettant de vérifier la version de l'app, et donc de proposer une mise a jour si besoin"""
         no_connection = False
         try:
-            if look_for_connection():
-                with connection_principale.cursor() as cursor:
+            co = connect_to_database()
+            if look_for_connection(co):
+                with co.cursor() as cursor:
                     request = """SELECT Version,date_de_publication FROM VERSIONNAGE WHERE nom = 'SylverService' ORDER BY id DESC LIMIT 1"""
                     cursor.execute(request)
                     data_recup = cursor.fetchone()
@@ -550,6 +562,7 @@ class Gerer_requete():
             
             no_connection = True
         else:
+            co.close()
             if not no_connection and data_recup[0] != os.environ.get("VERSION") and not no_connection:
                 
                 ans = Gerer_requete.askyesno_basic("NOUVELLE VERSION",f"Une Nouvelle version de l'application est disponible !\n({os.environ['VERSION']} -> {data_recup[0]})\n Souhaitez vous l'installer ?")
@@ -578,8 +591,9 @@ class Gerer_requete():
         """Fonction permet de vérifier la version du document aide de l'interface Menu et donc de changer le doc si besoin"""
         no_connection = False
         try:
-            if look_for_connection():
-                with connection_principale.cursor() as cursor:
+            co = connect_to_database()
+            if look_for_connection(co):
+                with co.cursor() as cursor:
                     request = """SELECT Version,date_de_publication,doc FROM VERSIONNAGE WHERE nom = 'Fichier_aide_sylver_service' ORDER BY id DESC LIMIT 1"""
                     cursor.execute(request)
                     data_recup = cursor.fetchone()
@@ -591,6 +605,7 @@ class Gerer_requete():
             
             no_connection = True
         else:
+            co.close()
             if not no_connection and data_recup[0] != os.environ.get("VERSION_DOC_AIDE") and not no_connection:
                 
                 os.remove("Ressource/SYLVER.docx")
@@ -607,8 +622,9 @@ class Gerer_requete():
         """Fonction permet de vérifier la version du document info sur SylverService et donc de changer le doc si besoin"""
         no_connection = False
         try:
-            if look_for_connection():
-                with connection_principale.cursor() as cursor:
+            co = connect_to_database()
+            if look_for_connection(co):
+                with co.cursor() as cursor:
                     request = """SELECT Version,date_de_publication,doc FROM VERSIONNAGE WHERE nom = 'Fichier_info_sylver_service' ORDER BY id DESC LIMIT 1"""
                     cursor.execute(request)
                     data_recup = cursor.fetchone()
@@ -620,6 +636,7 @@ class Gerer_requete():
             
             no_connection = True
         else:
+            co.close()
             if not no_connection and data_recup[0] != os.environ.get("VERSION_DOC_INFO") and not no_connection:
                 
                 os.remove("Ressource/fichier_info.txt")
@@ -636,8 +653,9 @@ class Gerer_requete():
         """Fonction permet de vérifier la version du document info sur SylverService et donc de changer le doc si besoin"""
         no_connection = False
         try:
-            if look_for_connection():
-                with connection_principale.cursor() as cursor:
+            co = connect_to_database()
+            if look_for_connection(co):
+                with co.cursor() as cursor:
                     request = """SELECT Version,date_de_publication,doc FROM VERSIONNAGE WHERE nom = 'Fichier_info_annonce' ORDER BY id DESC LIMIT 1"""
                     cursor.execute(request)
                     data_recup = cursor.fetchone()
@@ -649,6 +667,7 @@ class Gerer_requete():
             
             no_connection = True
         else:
+            co.close()
             if not no_connection and data_recup[0] != os.environ.get("VERSION_DOC_INFO_ANNONCE") and not no_connection:
                 
                 Gerer_requete.message("pas a jour detect")
@@ -667,8 +686,9 @@ class Gerer_requete():
         """Fonction permet de vérifier la version du document aide de l'interface compte et donc de changer le doc si besoin"""
         no_connection = False
         try:
-            if look_for_connection():
-                with connection_principale.cursor() as cursor:
+            co = connect_to_database()
+            if look_for_connection(co):
+                with co.cursor() as cursor:
                     request = """SELECT Version,date_de_publication,doc FROM VERSIONNAGE WHERE nom = 'Fichier_aide_compte' ORDER BY id DESC LIMIT 1"""
                     cursor.execute(request)
                     data_recup = cursor.fetchone()
@@ -680,6 +700,7 @@ class Gerer_requete():
             
             no_connection = True
         else:
+            co.close()
             if  not no_connection and data_recup[0] != os.environ.get("VERSION_DOC_AIDE_COMPTE") :
                 
                 os.remove("Ressource/Aide_interface_compte.docx")
@@ -706,7 +727,6 @@ class Gerer_requete():
                     mdp = elt[1]
                     sha256 =  hashlib.sha256()
                     sha256.update(bytes(mdp,"utf-8"))
-                    break
-                    
+                    break                    
         except:
             pass

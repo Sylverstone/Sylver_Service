@@ -3,8 +3,6 @@
 import pymysql as sql
 import os
 
-from font_import import *
-from Class.customException import *
 
 def connect_to_database():
     """Fonction essayant d'établir une connecion avec la base

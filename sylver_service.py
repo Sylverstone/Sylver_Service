@@ -1,5 +1,6 @@
 
 from typing import Dict, List,Tuple
+
 import pygame,datetime,sys,threading,keyboard,time,math,io,random,dotenv,os,webbrowser
 
 from Class.appElement import appElement
@@ -21,6 +22,15 @@ from pages.contact import contact
 from pages.menu import menu
 
 os.environ['SDL_VIDEO_CENTERED'] = '1'
+os.environ["SQL_MOT_DE_PASSE"] = "Daryll0815447sylverstone"
+os.environ["HOST"] = "mysql-sylverbase.alwaysdata.net"
+os.environ["USER"] = "343290_sylvers"
+os.environ["DB_NAME"] = "sylverbase_sylverservice"
+os.environ["VERSION"] = "2.1.5"
+os.environ["VERSION_DOC_AIDE"] = "2.2"
+os.environ["VERSION_DOC_INFO"] = "1.2"
+os.environ["VERSION_DOC_AIDE_COMPTE"] = "1.0.5"
+os.environ["VERSION_DOC_INFO_ANNONCE"] = "1.0"
 
 dotenv.load_dotenv()
 
@@ -2303,10 +2313,10 @@ def update_categorie():
     while continuer:
         try:
             recup_categorie,dict_categorie = setup_categorie_data()
-            time.sleep(20)
         except:
-            print("erreur lors de la récupération des catégories")
+            makelog("erreur lors de la récupération des catégories","ERROR")
             pass
+        time.sleep(20)
 
 threading.Thread(target=update_categorie,daemon = True).start()
 
