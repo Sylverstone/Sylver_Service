@@ -129,7 +129,8 @@ class Gerer_requete():
             print(err)
             no_connection = True
         finally:
-            co.close()
+            if(co != None): 
+                co.close()
             if no_connection:
                 raise noConnection("connection failed")
             else:
@@ -177,7 +178,8 @@ class Gerer_requete():
             handleError("Une erreur a eu lieu (Gerer_requete.rechercher_annonce)")
             no_connection = True            
         finally:
-            co.close()
+            if(co != None): 
+                co.close()
             if not no_connection:
                 makelog(f"Les annonces ont été récupérées. nb : {len(tutos)}")
                 return tutos
@@ -211,16 +213,16 @@ class Gerer_requete():
                     request = None
                     if nom_tuto != None:
                         if nom_tuto != "*":
-                            request = f" SELECT * FROM tuto WHERE nom LIKE '%{nom_tuto}%' AND is_annonce = 0 ORDER BY date DESC;"
+                            request = f" SELECT * FROM tuto WHERE nom LIKE '%{nom_tuto}%' AND is_annonce = 0 ORDER BY date DESC"
                         else:
-                            request = f" SELECT * FROM tuto  WHERE is_annonce = 0 ORDER BY date DESC;"
+                            request = f" SELECT * FROM tuto  WHERE is_annonce = 0 ORDER BY date DESC"
                     elif nom_auteur != None:
-                        request = f"SELECT * FROM tuto WHERE auteur LIKE '{nom_auteur}%' AND is_annonce = 0 ORDER BY date DESC;"
+                        request = f"SELECT * FROM tuto WHERE auteur LIKE '{nom_auteur}%' AND is_annonce = 0 ORDER BY date DESC"
                     elif nom_categorie != None:
                         noms_categories = Gerer_requete.take_categorie()
                         categorie_la_plus_proche = categorie_plus_proche(noms_categories,nom_categorie)
                         if categorie_la_plus_proche != None:
-                            request = f"SELECT * from tuto WHERE categorie = '{categorie_la_plus_proche}' AND is_annonce = 0 ORDER BY date DESC;"
+                            request = f"SELECT * from tuto WHERE categorie = '{categorie_la_plus_proche}' AND is_annonce = 0 ORDER BY date DESC"
                     if request != None:
                         cursor.execute(request)
                         data_recup = cursor.fetchall()
@@ -249,7 +251,8 @@ class Gerer_requete():
             no_connection = True
             
         finally:
-            co.close()
+            if(co != None): 
+                co.close()
             if not no_connection and not no_categorie:
                 makelog(f"Les tutos ont été récupérés. nb : {len(tutos)}")
                 return tutos,categorie_la_plus_proche
@@ -352,7 +355,8 @@ class Gerer_requete():
             no_connection = True
             
         finally:
-            co.close()
+            if(co != None): 
+                co.close()
             if not no_connection:
                 return data_recup
             raise noConnection("l")
@@ -426,7 +430,8 @@ class Gerer_requete():
             no_connetion = True
             handleError("Une erreur de connection a eu lieu (Gerer_requete.look_for_user_pp)")
         finally:
-            co.close()
+            if(co != None): 
+                co.close()
             if not no_connetion:
                 return data[0]
             else:
@@ -478,7 +483,8 @@ class Gerer_requete():
             
             no_connection = True
         finally:
-            co.close()
+            if(co != None): 
+                co.close()
             if no_connection:
                 raise noConnection("connection failed")
            
@@ -513,7 +519,8 @@ class Gerer_requete():
         except Exception as err:
             no_connection = True
         finally:
-            co.close()
+            if(co != None): 
+                co.close()
             if no_connection:
                 raise noConnection("connection failed")
             return None
@@ -562,7 +569,8 @@ class Gerer_requete():
             
             no_connection = True
         else:
-            co.close()
+            if(co != None):
+                co.close()
             if not no_connection and data_recup[0] != os.environ.get("VERSION") and not no_connection:
                 
                 ans = Gerer_requete.askyesno_basic("NOUVELLE VERSION",f"Une Nouvelle version de l'application est disponible !\n({os.environ['VERSION']} -> {data_recup[0]})\n Souhaitez vous l'installer ?")
@@ -605,7 +613,8 @@ class Gerer_requete():
             
             no_connection = True
         else:
-            co.close()
+            if(co != None): 
+                co.close()
             if not no_connection and data_recup[0] != os.environ.get("VERSION_DOC_AIDE") and not no_connection:
                 
                 os.remove("Ressource/SYLVER.docx")
@@ -636,7 +645,8 @@ class Gerer_requete():
             
             no_connection = True
         else:
-            co.close()
+            if(co != None): 
+                co.close()
             if not no_connection and data_recup[0] != os.environ.get("VERSION_DOC_INFO") and not no_connection:
                 
                 os.remove("Ressource/fichier_info.txt")
@@ -667,7 +677,8 @@ class Gerer_requete():
             
             no_connection = True
         else:
-            co.close()
+            if(co != None): 
+                co.close()
             if not no_connection and data_recup[0] != os.environ.get("VERSION_DOC_INFO_ANNONCE") and not no_connection:
                 
                 Gerer_requete.message("pas a jour detect")
@@ -700,7 +711,8 @@ class Gerer_requete():
             
             no_connection = True
         else:
-            co.close()
+            if(co != None): 
+                co.close()
             if  not no_connection and data_recup[0] != os.environ.get("VERSION_DOC_AIDE_COMPTE") :
                 
                 os.remove("Ressource/Aide_interface_compte.docx")

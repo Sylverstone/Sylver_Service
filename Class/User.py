@@ -363,9 +363,9 @@ class User:
         no_connection = False
         user_do_not_exist = False
         try:
-            if look_for_connection():
-                with connection_principale.cursor() as cursor:
-                    cursor = connection_principale.cursor()
+            co = connect_to_database()
+            if look_for_connection(co):
+                with co.cursor() as cursor:
                     request =f"SELECT * FROM `utilisateur` WHERE pseudo = '{pseudo}';"
                     cursor.execute(request)
                     data = cursor.fetchone()
@@ -388,6 +388,8 @@ class User:
             
             no_connection = True            
         finally:
+            if(co != None):
+                co.close()
             if not no_connection:
                 if user_do_not_exist == False:
                     if not User.verifier_mdp(mdp,data[7]):
@@ -415,8 +417,9 @@ class User:
         disponible = True
         no_connection = False
         try:
-            if look_for_connection():
-                with connection_principale.cursor() as cursor:
+            co = connect_to_database()
+            if look_for_connection(co):
+                with co.cursor() as cursor:
                     request = f"SELECT `pseudo` FROM `utilisateur` WHERE `pseudo` LIKE '{pseudo}%';"
                     cursor.execute(request)
                     all_pseudo = cursor.fetchall()
@@ -434,6 +437,8 @@ class User:
             
             no_connection = True
         finally:
+            if(co != None):
+                co.close()
             if not no_connection:
                 return disponible
             else:
@@ -469,23 +474,23 @@ class User:
         no_connection = False
         if rep_user:
             try:
-                connection_principale = connect_to_database()
-                connection_principale.begin()
-                with connection_principale.cursor() as cursor:
+                co = connect_to_database()
+                co.begin()
+                with co.cursor() as cursor:
                     request = "DELETE FROM tuto WHERE id = %s"
                     cursor.execute(request,id_tuto)
             except sql.Error as err:
                 
-                connection_principale.rollback()
+                co.rollback()
                 no_connection = True
             except Exception as err:
                 
-                connection_principale.rollback()
+                co.rollback()
                 no_connection = True
             finally:
                 if not no_connection:
-                    connection_principale.commit()
-                    connection_principale.close()
+                    co.commit()
+                    co.close()
                     return rep_user
                 else:
                     raise noConnection("Connexion non initialisé")

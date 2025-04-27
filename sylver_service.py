@@ -23,9 +23,6 @@ from pages.menu import menu
 
 os.environ['SDL_VIDEO_CENTERED'] = '1'
 
-
-dotenv.load_dotenv()
-
 #reglage de l'ecran
 resolution = pygame.display.Info()
 width = resolution.current_w

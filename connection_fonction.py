@@ -3,7 +3,6 @@
 import pymysql as sql
 import os
 
-
 def connect_to_database():
     """Fonction essayant d'établir une connecion avec la base
 
@@ -21,6 +20,7 @@ def connect_to_database():
         conn.ping(False)
         return conn
     except Exception as e:
+        print(e)
         return None
     
 
