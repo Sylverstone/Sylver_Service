@@ -1435,8 +1435,10 @@ def compte(creer_compte : bool,zone : int,connect : bool,pp_base : bytes,fond_na
                         try:
                             Gerer_requete.demarrer_fichier(doc = os.path.join("Ressource","Aide_interface_compte.docx"),with_path=True,ext = None)
                         except OSError as e:
+                            animation_ouverture.stop_anime()
                             dialog.message("L'ouverture de ce document à échouer !",last_screen,title="Erreur")
                         except Exception as e:
+                            animation_ouverture.stop_anime()
                             dialog.message("Une erreur est survenue ! ", last_screen,title="Erreur")
                         finally:
                             animation_ouverture.stop_anime()
@@ -1485,10 +1487,13 @@ def compte(creer_compte : bool,zone : int,connect : bool,pp_base : bytes,fond_na
                             else:
                                 break
                         except noConnection:
+                            animation_mise_en_ligne.stop_anime()
                             dialog.message("Une erreur de connexion a eu lieu !",last_screen,title="Erreur") 
                         except Exception as e:
+                            animation_mise_en_ligne.stop_anime()
                             dialog.message("Une erreur est survenue ! ", last_screen,title="Erreur")
                         else:
+                            animation_mise_en_ligne.stop_anime()
                             if rep != None:
                                 dialog.message("Votre tuto a bien été mis en ligne ! ",last_screen)
                         finally:
@@ -1540,7 +1545,9 @@ def compte(creer_compte : bool,zone : int,connect : bool,pp_base : bytes,fond_na
                     
                 else:
                     color_edit = (0,0,200)
+                #Click sur le bouton connexion
                 condi_1 = btn_submit.collidepoint(mouse) and (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1)   
+                #Appuie de la touche entrée en étant dans l'input mdp
                 condi_2 = in_input_mdp_zone(dict_input) and (event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN and not click_return)
                 if condi_1 or condi_2:
                     click_return = True                        
@@ -1562,6 +1569,7 @@ def compte(creer_compte : bool,zone : int,connect : bool,pp_base : bytes,fond_na
                                     try:                               
                                         user.save_user() 
                                     except noConnection:
+                                        animation_connection.stop_anime()
                                         dialog.message("Une erreur de connexion a eu lieu !",last_screen,title="Erreur")
                                     else:
                                         connect = True
@@ -1609,6 +1617,7 @@ def compte(creer_compte : bool,zone : int,connect : bool,pp_base : bytes,fond_na
                                     except userNonCharger:
                                         pas_correspondance = True
                                     except noConnection:
+                                        animation_connection.stop_anime()
                                         dialog.message("Une erreur de connexion a eu lieu !",last_screen,title="Erreur")
                                     else:
                                         
@@ -1650,8 +1659,10 @@ def compte(creer_compte : bool,zone : int,connect : bool,pp_base : bytes,fond_na
                                     n_pseudo = True
                                 
                             except noConnection:
+                                animation_connection.stop_anime()
                                 dialog.message("Une erreur de connexion a eu lieu !",last_screen,title="Erreur")
                             except Exception as e:
+                                animation_connection.stop_anime()
                                 dialog.message("Une erreur est survenue ! ", last_screen,title="Erreur")
                             finally:
                                 animation_connection.stop_anime()
@@ -2208,7 +2219,7 @@ connect = False
 
 #chargement des données de l'app
 result_dict : Dict = load_app()
-
+#Recuperation des variables
 pp_base  : bytes = result_dict["pp_base"]
 connect : bool= result_dict["connect"]
 zone : int = result_dict["zone"]
@@ -2303,7 +2314,7 @@ size_pp_user = (80,80)
 x_pp,y_pp = 20,fond_nav.get_height()/2 - size_pp_user[1]/2
 rect_photo_profil_user = pygame.Rect(x_pp,y_pp,*size_pp_user)
 last_screen = screen.copy()
-
+image_pp_user = None
 while continuer:
     Clock.tick(120)
     fps = Clock.get_fps()
